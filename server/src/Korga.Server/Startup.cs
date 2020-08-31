@@ -1,3 +1,5 @@
+using Korga.Server.Database;
+using Korga.Server.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +20,10 @@ namespace Korga.Server
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.ConfigureKorga(Configuration);
+
+            services.AddDbContext<DatabaseContext>();
+
             services.AddControllers();
         }
 
@@ -29,6 +35,8 @@ namespace Korga.Server
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseMigrations();
+            
             app.UseRouting();
 
             app.UseAuthorization();
