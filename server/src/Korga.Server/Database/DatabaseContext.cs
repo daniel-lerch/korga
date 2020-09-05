@@ -73,7 +73,16 @@ namespace Korga.Server.Database
             sendRole.HasOne(r => r.GroupRole).WithMany().HasForeignKey(r => r.GroupRoleId);
             sendRole.HasOne(r => r.DistributionList).WithMany().HasForeignKey(r => r.DistributionListId);
 
-            // TODO: Add entities for messages and moderation
+            var message = modelBuilder.Entity<Message>();
+            message.HasKey(m => m.Id);
+            message.HasOne(m => m.DistributionList).WithMany().HasForeignKey(m => m.DistributionListId);
+            message.Property(m => m.ReceptionTime).HasDefaultValueSql(currentTimestamp);
+
+            var messageReview = modelBuilder.Entity<MessageReview>();
+            messageReview.HasKey(r => r.Id);
+            messageReview.HasOne(r => r.Message).WithMany().HasForeignKey(r => r.MessageId).OnDelete(DeleteBehavior.Cascade);
+            messageReview.HasOne(r => r.Person).WithMany().HasForeignKey(r => r.PersonId).OnDelete(DeleteBehavior.Cascade);
+            messageReview.Property(r => r.CreationTime).HasDefaultValueSql(currentTimestamp);
         }
     }
 }
