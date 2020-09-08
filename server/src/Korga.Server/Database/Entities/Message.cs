@@ -6,9 +6,6 @@ namespace Korga.Server.Database.Entities
     {
         public int Id { get; set; }
 
-        public int DistributionListId { get; set; }
-        public DistributionList? DistributionList { get; set; }
-
         /// <summary>
         /// Gets or sets the time when this message was received by the Korga server
         /// </summary>

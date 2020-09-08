@@ -14,12 +14,12 @@ namespace Korga.Server.Models
         /// </summary>
         Passive = 1,
         /// <summary>
-        /// Active review permission as long as nobody disagrees.
+        /// Active review permission for messages from other users.
         /// </summary>
-        Consensus = 2,
+        Active = 2,
         /// <summary>
-        /// Dictatorship. Approve or deny any message permanently.
+        /// Change the distribution lists which this message is assigned to.
         /// </summary>
-        Overrule = 4
+        Reassign = 4
     }
 }

@@ -42,26 +42,25 @@ namespace Korga.Server.Database
 
             var group = modelBuilder.Entity<Group>();
             group.HasKey(g => g.Id);
-            group.Property(g => g.Name).IsRequired();
             group.Property(g => g.CreationTime).HasDefaultValueSql(currentTimestamp);
 
             var groupRole = modelBuilder.Entity<GroupRole>();
             groupRole.HasKey(r => r.Id);
             groupRole.HasOne(r => r.Group).WithMany().HasForeignKey(r => r.GroupId);
-            groupRole.Property(r => r.Name).IsRequired();
             groupRole.Property(r => r.CreationTime).HasDefaultValueSql(currentTimestamp);
 
+            // Immutable entity → preserves history
             var groupMember = modelBuilder.Entity<GroupMember>();
-            groupMember.HasKey(m => new { m.PersonId, m.GroupRoleId });
+            groupMember.HasKey(m => m.Id);
             groupMember.HasOne(m => m.Person).WithMany().HasForeignKey(m => m.PersonId);
             groupMember.HasOne(m => m.GroupRole).WithMany().HasForeignKey(m => m.GroupRoleId);
             groupMember.Property(m => m.AccessionTime).HasDefaultValueSql(currentTimestamp);
+            groupMember.HasOne(m => m.Accessor).WithMany().HasForeignKey(m => m.AccessorId).OnDelete(DeleteBehavior.SetNull);
+            groupMember.HasOne(m => m.Resignator).WithMany().HasForeignKey(m => m.ResignatorId).OnDelete(DeleteBehavior.SetNull);
 
             var distributionList = modelBuilder.Entity<DistributionList>();
             distributionList.HasKey(l => l.Id);
             distributionList.HasAlternateKey(l => l.Alias);
-            distributionList.Property(l => l.Alias).IsRequired();
-            distributionList.Property(l => l.Name).IsRequired();
 
             var receiveRole = modelBuilder.Entity<ReceiveRole>();
             receiveRole.HasKey(r => new { r.GroupRoleId, r.DistributionListId });
@@ -73,15 +72,25 @@ namespace Korga.Server.Database
             sendRole.HasOne(r => r.GroupRole).WithMany().HasForeignKey(r => r.GroupRoleId);
             sendRole.HasOne(r => r.DistributionList).WithMany().HasForeignKey(r => r.DistributionListId);
 
+            // Immutable entity → preserves history
             var message = modelBuilder.Entity<Message>();
             message.HasKey(m => m.Id);
-            message.HasOne(m => m.DistributionList).WithMany().HasForeignKey(m => m.DistributionListId);
             message.Property(m => m.ReceptionTime).HasDefaultValueSql(currentTimestamp);
 
+            // Immutable entity → preserves history
+            var messageAssignment = modelBuilder.Entity<MessageAssignment>();
+            messageAssignment.HasKey(a => a.Id);
+            messageAssignment.HasOne(a => a.Message).WithMany().HasForeignKey(a => a.MessageId);
+            messageAssignment.HasOne(a => a.DistributionList).WithMany().HasForeignKey(a => a.DistributionListId);
+            messageAssignment.Property(a => a.CreationTime).HasDefaultValueSql(currentTimestamp);
+            messageAssignment.HasOne(a => a.Creator).WithMany().HasForeignKey(a => a.CreatorId).OnDelete(DeleteBehavior.SetNull);
+            messageAssignment.HasOne(a => a.Deletor).WithMany().HasForeignKey(a => a.DeletorId).OnDelete(DeleteBehavior.SetNull);
+
+            // Immutable entity → preserves history
             var messageReview = modelBuilder.Entity<MessageReview>();
             messageReview.HasKey(r => r.Id);
-            messageReview.HasOne(r => r.Message).WithMany().HasForeignKey(r => r.MessageId).OnDelete(DeleteBehavior.Cascade);
-            messageReview.HasOne(r => r.Person).WithMany().HasForeignKey(r => r.PersonId).OnDelete(DeleteBehavior.Cascade);
+            messageReview.HasOne(r => r.MessageAssignment).WithMany().HasForeignKey(r => r.MessageAssignmentId);
+            messageReview.HasOne(r => r.Person).WithMany().HasForeignKey(r => r.PersonId);
             messageReview.Property(r => r.CreationTime).HasDefaultValueSql(currentTimestamp);
         }
     }

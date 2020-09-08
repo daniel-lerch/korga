@@ -7,8 +7,8 @@ namespace Korga.Server.Database.Entities
     {
         public int Id { get; set; }
 
-        public int MessageId { get; set; }
-        public Message? Message { get; set; }
+        public int MessageAssignmentId { get; set; }
+        public MessageAssignment? MessageAssignment { get; set; }
 
         public int PersonId { get; set; }
         public Person? Person { get; set; }
