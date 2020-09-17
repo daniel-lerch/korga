@@ -1,12 +1,17 @@
-﻿using System;
-
-namespace Korga.Server.Database.Entities
+﻿namespace Korga.Server.Database.Entities
 {
-    public class Person
+    public class Person : EntityBase
     {
+        public Person(string givenName, string familyName)
+        {
+            GivenName = givenName;
+            FamilyName = familyName;
+        }
+
         public int Id { get; set; }
 
-        public DateTime CreationTime { get; set; }
-        public DateTime DeletionTime { get; set; }
+        public string GivenName { get; set; }
+        public string FamilyName { get; set; }
+        public string? MailAddress { get; set; }
     }
 }

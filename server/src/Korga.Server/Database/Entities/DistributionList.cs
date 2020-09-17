@@ -1,10 +1,9 @@
 ﻿namespace Korga.Server.Database.Entities
 {
-    public class DistributionList
+    public class DistributionList : EntityBase
     {
-        public DistributionList(int id, string alias, string name)
+        public DistributionList(string alias, string name)
         {
-            Id = id;
             Alias = alias;
             Name = name;
         }

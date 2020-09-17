@@ -1,6 +1,7 @@
 ﻿using Korga.Server.Configuration;
 using Korga.Server.Database.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.Extensions.Options;
 
 namespace Korga.Server.Database
@@ -38,39 +39,41 @@ namespace Korga.Server.Database
 
             var person = modelBuilder.Entity<Person>();
             person.HasKey(p => p.Id);
-            person.Property(p => p.CreationTime).HasDefaultValueSql(currentTimestamp);
+            ConfigureEntityBase(person);
 
             var group = modelBuilder.Entity<Group>();
             group.HasKey(g => g.Id);
-            group.Property(g => g.CreationTime).HasDefaultValueSql(currentTimestamp);
+            ConfigureEntityBase(group);
 
             var groupRole = modelBuilder.Entity<GroupRole>();
             groupRole.HasKey(r => r.Id);
             groupRole.HasOne(r => r.Group).WithMany().HasForeignKey(r => r.GroupId);
-            groupRole.Property(r => r.CreationTime).HasDefaultValueSql(currentTimestamp);
+            ConfigureEntityBase(groupRole);
 
             // Immutable entity → preserves history
             var groupMember = modelBuilder.Entity<GroupMember>();
             groupMember.HasKey(m => m.Id);
             groupMember.HasOne(m => m.Person).WithMany().HasForeignKey(m => m.PersonId);
             groupMember.HasOne(m => m.GroupRole).WithMany().HasForeignKey(m => m.GroupRoleId);
-            groupMember.Property(m => m.AccessionTime).HasDefaultValueSql(currentTimestamp);
-            groupMember.HasOne(m => m.Accessor).WithMany().HasForeignKey(m => m.AccessorId).OnDelete(DeleteBehavior.SetNull);
-            groupMember.HasOne(m => m.Resignator).WithMany().HasForeignKey(m => m.ResignatorId).OnDelete(DeleteBehavior.SetNull);
+            ConfigureEntityBase(groupMember);
 
             var distributionList = modelBuilder.Entity<DistributionList>();
             distributionList.HasKey(l => l.Id);
             distributionList.HasAlternateKey(l => l.Alias);
+            ConfigureEntityBase(distributionList);
 
+            // Immutable entity → preserves history
             var receiveRole = modelBuilder.Entity<ReceiveRole>();
             receiveRole.HasKey(r => new { r.GroupRoleId, r.DistributionListId });
             receiveRole.HasOne(r => r.GroupRole).WithMany().HasForeignKey(r => r.GroupRoleId);
             receiveRole.HasOne(r => r.DistributionList).WithMany().HasForeignKey(r => r.DistributionListId);
+            ConfigureEntityBase(receiveRole);
 
             var sendRole = modelBuilder.Entity<SendRole>();
             sendRole.HasKey(r => new { r.GroupRoleId, r.DistributionListId });
             sendRole.HasOne(r => r.GroupRole).WithMany().HasForeignKey(r => r.GroupRoleId);
             sendRole.HasOne(r => r.DistributionList).WithMany().HasForeignKey(r => r.DistributionListId);
+            ConfigureEntityBase(sendRole);
 
             // Immutable entity → preserves history
             var message = modelBuilder.Entity<Message>();
@@ -82,9 +85,7 @@ namespace Korga.Server.Database
             messageAssignment.HasKey(a => a.Id);
             messageAssignment.HasOne(a => a.Message).WithMany().HasForeignKey(a => a.MessageId);
             messageAssignment.HasOne(a => a.DistributionList).WithMany().HasForeignKey(a => a.DistributionListId);
-            messageAssignment.Property(a => a.CreationTime).HasDefaultValueSql(currentTimestamp);
-            messageAssignment.HasOne(a => a.Creator).WithMany().HasForeignKey(a => a.CreatorId).OnDelete(DeleteBehavior.SetNull);
-            messageAssignment.HasOne(a => a.Deletor).WithMany().HasForeignKey(a => a.DeletorId).OnDelete(DeleteBehavior.SetNull);
+            ConfigureEntityBase(messageAssignment);
 
             // Immutable entity → preserves history
             var messageReview = modelBuilder.Entity<MessageReview>();
@@ -92,6 +93,17 @@ namespace Korga.Server.Database
             messageReview.HasOne(r => r.MessageAssignment).WithMany().HasForeignKey(r => r.MessageAssignmentId);
             messageReview.HasOne(r => r.Person).WithMany().HasForeignKey(r => r.PersonId);
             messageReview.Property(r => r.CreationTime).HasDefaultValueSql(currentTimestamp);
+        }
+
+        /// <summary>
+        /// Configures common properties for creation and deletion tracking.
+        /// </summary>
+        private static void ConfigureEntityBase(EntityTypeBuilder entityBuilder)
+        {
+            // Generics and LINQ expressions cannot be used for a base class
+            entityBuilder.Property(nameof(EntityBase.CreationTime)).HasDefaultValueSql(currentTimestamp);
+            entityBuilder.HasOne(nameof(EntityBase.Creator)).WithMany().HasForeignKey(nameof(EntityBase.CreatorId)).OnDelete(DeleteBehavior.SetNull);
+            entityBuilder.HasOne(nameof(EntityBase.Deletor)).WithMany().HasForeignKey(nameof(EntityBase.DeletorId)).OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

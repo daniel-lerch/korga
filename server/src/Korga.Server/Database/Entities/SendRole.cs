@@ -2,7 +2,7 @@
 
 namespace Korga.Server.Database.Entities
 {
-    public class SendRole
+    public class SendRole : EntityBase
     {
         public int GroupRoleId { get; set; }
         public GroupRole? GroupRole { get; set; }

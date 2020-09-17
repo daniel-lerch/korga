@@ -1,8 +1,6 @@
-﻿using System;
-
-namespace Korga.Server.Database.Entities
+﻿namespace Korga.Server.Database.Entities
 {
-    public class GroupMember
+    public class GroupMember : EntityBase
     {
         public int Id { get; set; }
 
@@ -11,13 +9,5 @@ namespace Korga.Server.Database.Entities
 
         public int GroupRoleId { get; set; }
         public GroupRole? GroupRole { get; set; }
-
-        public DateTime AccessionTime { get; set; }
-        public int? AccessorId { get; set; }
-        public Person? Accessor { get; set; }
-
-        public DateTime ResignationTime { get; set; }
-        public int? ResignatorId { get; set; }
-        public Person? Resignator { get; set; }
     }
 }

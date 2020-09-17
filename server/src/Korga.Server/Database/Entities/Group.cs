@@ -1,19 +1,14 @@
-﻿using System;
-
-namespace Korga.Server.Database.Entities
+﻿namespace Korga.Server.Database.Entities
 {
-    public class Group
+    public class Group : EntityBase
     {
-        public Group(int id, string name)
+        public Group(string name)
         {
-            Id = id;
             Name = name;
         }
 
         public int Id { get; set; }
 
         public string Name { get; set; }
-        public DateTime CreationTime { get; set; }
-        public DateTime DeletionTime { get; set; }
     }
 }

@@ -1,8 +1,6 @@
-﻿using System;
-
-namespace Korga.Server.Database.Entities
+﻿namespace Korga.Server.Database.Entities
 {
-    public class MessageAssignment
+    public class MessageAssignment : EntityBase
     {
         public int Id { get; set; }
 
@@ -11,13 +9,5 @@ namespace Korga.Server.Database.Entities
 
         public int DistributionListId { get; set; }
         public DistributionList? DistributionList { get; set; }
-
-        public DateTime CreationTime { get; set; }
-        public int? CreatorId { get; set; }
-        public Person? Creator { get; set; }
-
-        public DateTime DeletionTime { get; set; }
-        public int? DeletorId { get; set; }
-        public Person? Deletor { get; set; }
     }
 }
