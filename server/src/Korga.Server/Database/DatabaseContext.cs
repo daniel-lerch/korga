@@ -12,12 +12,19 @@ namespace Korga.Server.Database
         private readonly IOptions<DatabaseOptions> options;
 
         public DbSet<Person> People => Set<Person>();
+        public DbSet<PersonSnapshot> PersonSnapshots => Set<PersonSnapshot>();
         public DbSet<Group> Groups => Set<Group>();
+        public DbSet<GroupSnapshot> GroupSnapshots => Set<GroupSnapshot>();
         public DbSet<GroupRole> GroupRoles => Set<GroupRole>();
+        public DbSet<GroupRoleSnapshot> GroupRoleSnapshots => Set<GroupRoleSnapshot>();
         public DbSet<GroupMember> GroupMembers => Set<GroupMember>();
         public DbSet<DistributionList> DistributionLists => Set<DistributionList>();
         public DbSet<ReceiveRole> ReceiveRoles => Set<ReceiveRole>();
         public DbSet<SendRole> SendRoles => Set<SendRole>();
+        public DbSet<SendRoleSnapshot> SendRoleSnapshots => Set<SendRoleSnapshot>();
+        public DbSet<Message> Messages => Set<Message>();
+        public DbSet<MessageAssignment> MessageAssignments => Set<MessageAssignment>();
+        public DbSet<MessageReview> MessageReviews => Set<MessageReview>();
 
         public DatabaseContext(IOptions<DatabaseOptions> options)
         {
@@ -35,20 +42,52 @@ namespace Korga.Server.Database
         {
             base.OnModelCreating(modelBuilder);
 
-            // TODO: Implement a versioning strategy to show changes for all entities
+            // Versioning strategies:
+            //
+            // 1. Immutable entities
+            //      EntityBase contains all necessary fields to track creation and deletion
+            //      New values (e.g. deletion) might be added but no existing values are overridden
+            // 2. Mutable entities
+            //      Creation and deletion are tracked by EntityBase but data is stored in snapshot entities
+            //      Relationships are immutable and stored in the principal entity
+            //      Each time when properties are changed, a new snapshot entity with the latest data is created
+            // 3. Other entities
+            //      Some entities do not fit in these two patterns are handled individually
 
+
+            // Mutable entity → snapshots preserve history
             var person = modelBuilder.Entity<Person>();
             person.HasKey(p => p.Id);
-            ConfigureEntityBase(person);
+            ConfigureMutableEntityBase(person);
 
+            var personSnapshot = modelBuilder.Entity<PersonSnapshot>();
+            personSnapshot.HasKey(ps => new { ps.PersonId, ps.Version });
+            personSnapshot.HasOne(ps => ps.Person).WithMany().HasForeignKey(ps => ps.PersonId);
+            ConfigureSnapshotBase(personSnapshot);
+
+
+            // Mutable entity → snapshots preserve history
             var group = modelBuilder.Entity<Group>();
             group.HasKey(g => g.Id);
-            ConfigureEntityBase(group);
+            ConfigureMutableEntityBase(group);
 
+            var groupSnapshot = modelBuilder.Entity<GroupSnapshot>();
+            groupSnapshot.HasKey(gs => new { gs.GroupId, gs.Version });
+            groupSnapshot.HasOne(gs => gs.Group).WithMany().HasForeignKey(gs => gs.GroupId);
+            ConfigureSnapshotBase(groupSnapshot);
+
+
+            // Mutable entity → snapshots preserve history
             var groupRole = modelBuilder.Entity<GroupRole>();
             groupRole.HasKey(r => r.Id);
             groupRole.HasOne(r => r.Group).WithMany().HasForeignKey(r => r.GroupId);
-            ConfigureEntityBase(groupRole);
+            ConfigureMutableEntityBase(groupRole);
+
+            var groupRoleSnapshot = modelBuilder.Entity<GroupRoleSnapshot>();
+            groupRoleSnapshot.HasKey(rs => new { rs.GroupRoleId, rs.Version });
+            groupRoleSnapshot.HasOne(rs => rs.GroupRole).WithMany().HasForeignKey(rs => rs.GroupRoleId);
+            ConfigureSnapshotBase(groupRoleSnapshot);
+
 
             // Immutable entity → preserves history
             var groupMember = modelBuilder.Entity<GroupMember>();
@@ -57,28 +96,40 @@ namespace Korga.Server.Database
             groupMember.HasOne(m => m.GroupRole).WithMany().HasForeignKey(m => m.GroupRoleId);
             ConfigureEntityBase(groupMember);
 
+
+            // TODO: Find a solution to save unique aliases as snapshots
             var distributionList = modelBuilder.Entity<DistributionList>();
             distributionList.HasKey(l => l.Id);
             distributionList.HasAlternateKey(l => l.Alias);
             ConfigureEntityBase(distributionList);
 
+
             // Immutable entity → preserves history
             var receiveRole = modelBuilder.Entity<ReceiveRole>();
-            receiveRole.HasKey(r => new { r.GroupRoleId, r.DistributionListId });
+            receiveRole.HasKey(r => r.Id);
             receiveRole.HasOne(r => r.GroupRole).WithMany().HasForeignKey(r => r.GroupRoleId);
             receiveRole.HasOne(r => r.DistributionList).WithMany().HasForeignKey(r => r.DistributionListId);
             ConfigureEntityBase(receiveRole);
 
+
+            // Mutable entity → snapshots preserve history
             var sendRole = modelBuilder.Entity<SendRole>();
-            sendRole.HasKey(r => new { r.GroupRoleId, r.DistributionListId });
+            sendRole.HasKey(r => r.Id);
             sendRole.HasOne(r => r.GroupRole).WithMany().HasForeignKey(r => r.GroupRoleId);
             sendRole.HasOne(r => r.DistributionList).WithMany().HasForeignKey(r => r.DistributionListId);
-            ConfigureEntityBase(sendRole);
+            ConfigureMutableEntityBase(sendRole);
 
+            var sendRoleSnapshot = modelBuilder.Entity<SendRoleSnapshot>();
+            sendRoleSnapshot.HasKey(rs => new { rs.SendRoleId, rs.Version });
+            sendRoleSnapshot.HasOne(rs => rs.SendRole).WithMany().HasForeignKey(rs => rs.SendRoleId);
+            ConfigureSnapshotBase(sendRoleSnapshot);
+
+            
             // Immutable entity → preserves history
             var message = modelBuilder.Entity<Message>();
             message.HasKey(m => m.Id);
             message.Property(m => m.ReceptionTime).HasDefaultValueSql(currentTimestamp);
+
 
             // Immutable entity → preserves history
             var messageAssignment = modelBuilder.Entity<MessageAssignment>();
@@ -86,6 +137,7 @@ namespace Korga.Server.Database
             messageAssignment.HasOne(a => a.Message).WithMany().HasForeignKey(a => a.MessageId);
             messageAssignment.HasOne(a => a.DistributionList).WithMany().HasForeignKey(a => a.DistributionListId);
             ConfigureEntityBase(messageAssignment);
+
 
             // Immutable entity → preserves history
             var messageReview = modelBuilder.Entity<MessageReview>();
@@ -95,15 +147,23 @@ namespace Korga.Server.Database
             messageReview.Property(r => r.CreationTime).HasDefaultValueSql(currentTimestamp);
         }
 
-        /// <summary>
-        /// Configures common properties for creation and deletion tracking.
-        /// </summary>
-        private static void ConfigureEntityBase(EntityTypeBuilder entityBuilder)
+        private static void ConfigureEntityBase<T>(EntityTypeBuilder<T> entity) where T : EntityBase
         {
-            // Generics and LINQ expressions cannot be used for a base class
-            entityBuilder.Property(nameof(EntityBase.CreationTime)).HasDefaultValueSql(currentTimestamp);
-            entityBuilder.HasOne(nameof(EntityBase.Creator)).WithMany().HasForeignKey(nameof(EntityBase.CreatorId)).OnDelete(DeleteBehavior.SetNull);
-            entityBuilder.HasOne(nameof(EntityBase.Deletor)).WithMany().HasForeignKey(nameof(EntityBase.DeletorId)).OnDelete(DeleteBehavior.SetNull);
+            entity.Property(x => x.CreationTime).HasDefaultValueSql(currentTimestamp);
+            entity.HasOne(x => x.Creator).WithMany().HasForeignKey(x => x.CreatorId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(x => x.Deletor).WithMany().HasForeignKey(x => x.DeletorId).OnDelete(DeleteBehavior.SetNull);
+        }
+
+        private static void ConfigureMutableEntityBase<T>(EntityTypeBuilder<T> entity) where T : MutableEntityBase
+        {
+            entity.Property(x => x.Version).IsConcurrencyToken();
+            ConfigureEntityBase(entity);
+        }
+
+        private static void ConfigureSnapshotBase<T>(EntityTypeBuilder<T> entity) where T : SnapshotBase
+        {
+            entity.Property(x => x.CreationTime).HasDefaultValueSql(currentTimestamp);
+            entity.HasOne(x => x.Creator).WithMany().HasForeignKey(x => x.CreatorId).OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

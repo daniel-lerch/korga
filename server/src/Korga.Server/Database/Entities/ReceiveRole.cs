@@ -2,6 +2,8 @@
 {
     public class ReceiveRole : EntityBase
     {
+        public int Id { get; set; }
+
         public int GroupRoleId { get; set; }
         public GroupRole? GroupRole { get; set; }
 
