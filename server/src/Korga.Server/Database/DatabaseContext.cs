@@ -97,11 +97,16 @@ namespace Korga.Server.Database
             ConfigureEntityBase(groupMember);
 
 
-            // TODO: Find a solution to save unique aliases as snapshots
+            // Mutable entity → snapshots preserve history
             var distributionList = modelBuilder.Entity<DistributionList>();
             distributionList.HasKey(l => l.Id);
             distributionList.HasAlternateKey(l => l.Alias);
-            ConfigureEntityBase(distributionList);
+            ConfigureMutableEntityBase(distributionList);
+
+            var distributionListSnapshot = modelBuilder.Entity<DistributionListSnapshot>();
+            distributionListSnapshot.HasKey(ls => new { ls.DistributionListId, ls.Version });
+            distributionListSnapshot.HasOne(ls => ls.DistributionList).WithMany().HasForeignKey(ls => ls.DistributionListId);
+            ConfigureSnapshotBase(distributionListSnapshot);
 
 
             // Immutable entity → preserves history

@@ -1,6 +1,6 @@
 # Korga
 
-> ⚠ This project is work in progress far away from being usable. For more information see _roadmap_ below.
+> ⚠ This project is work in progress and far away from being usable. For more information see _roadmap_ below.
 
 ## What is Korga planned to be?
 
@@ -27,7 +27,7 @@ Documentation
 Server
 - [x] Project creation
 - [x] Basic database model
-- [ ] Change log for important entities
+- [x] Changelog for important entities
 - [ ] Permission model
 - [ ] Identity provider
 - [ ] Mailing lists
