@@ -34,7 +34,8 @@ Server
 - ...
 
 Client
-- [ ] Project creation
+- [x] Project creation
+- [ ] People view
 - [ ] Login
 - [ ] PWA support
 - ...
