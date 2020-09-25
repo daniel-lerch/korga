@@ -3,6 +3,7 @@
     public class Person : MutableEntityBase
     {
         public int Id { get; set; }
+        public string? MailAddress { get; set; }
     }
 
     public class PersonSnapshot : SnapshotBase

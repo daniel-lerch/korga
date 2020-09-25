@@ -12,6 +12,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{28945597-DB66-4C
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "server-tests", "server-tests", "{86DB2784-54F6-43CC-8F86-94E059B7DE59}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Korga.Server.Tests", "server\tests\Korga.Server.Tests\Korga.Server.Tests.csproj", "{2A484A88-F6BD-4B36-92C8-0675ADDD8CDB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,12 +26,17 @@ Global
 		{E1C5CDEB-C3D5-4BE1-B823-5FD650AB1D08}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E1C5CDEB-C3D5-4BE1-B823-5FD650AB1D08}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E1C5CDEB-C3D5-4BE1-B823-5FD650AB1D08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A484A88-F6BD-4B36-92C8-0675ADDD8CDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A484A88-F6BD-4B36-92C8-0675ADDD8CDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A484A88-F6BD-4B36-92C8-0675ADDD8CDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A484A88-F6BD-4B36-92C8-0675ADDD8CDB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E1C5CDEB-C3D5-4BE1-B823-5FD650AB1D08} = {565B1C55-E3A4-4B7E-9F8E-EF14AA917618}
+		{2A484A88-F6BD-4B36-92C8-0675ADDD8CDB} = {86DB2784-54F6-43CC-8F86-94E059B7DE59}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {638049AA-35BE-4FFE-8370-373448555D24}

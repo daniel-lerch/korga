@@ -42,6 +42,13 @@ namespace Korga.Server.Database
         {
             base.OnModelCreating(modelBuilder);
 
+            // TODO: Change versioning strategy for mutable entities.
+            // Mutable entities with snapshots do not work with alternate keys and indices.
+            // Concurrent updates either cause unique constraint violations or concurrency 
+            // exceptions which is hard to handle. Keeping old values in separate entities
+            // does not guarantee a clean changelog at every time but generally comes with
+            // less problems for this application.
+
             // Versioning strategies:
             //
             // 1. Immutable entities
@@ -58,6 +65,7 @@ namespace Korga.Server.Database
             // Mutable entity → snapshots preserve history
             var person = modelBuilder.Entity<Person>();
             person.HasKey(p => p.Id);
+            person.HasIndex(p => p.MailAddress).IsUnique();
             ConfigureMutableEntityBase(person);
 
             var personSnapshot = modelBuilder.Entity<PersonSnapshot>();
@@ -167,6 +175,7 @@ namespace Korga.Server.Database
 
         private static void ConfigureSnapshotBase<T>(EntityTypeBuilder<T> entity) where T : SnapshotBase
         {
+            entity.Property(x => x.Version).ValueGeneratedNever();
             entity.Property(x => x.CreationTime).HasDefaultValueSql(currentTimestamp);
             entity.HasOne(x => x.Creator).WithMany().HasForeignKey(x => x.CreatorId).OnDelete(DeleteBehavior.SetNull);
         }
