@@ -12,4 +12,9 @@ namespace Korga.Server.Database.Entities
         public int? DeletorId { get; set; }
         public Person? Deletor { get; set; }
     }
+
+    public abstract class MutableEntityBase : EntityBase
+    {
+        public int Version { get; set; }
+    }
 }

@@ -2,13 +2,16 @@
 {
     public class DistributionList : MutableEntityBase
     {
-        public DistributionList(string alias)
+        public DistributionList(string alias, string name)
         {
             Alias = alias;
+            Name = name;
         }
 
         public int Id { get; set; }
         public string Alias { get; set; }
+        public string Name { get; set; }
+        public string? Description { get; set; }
     }
 
     public class DistributionListSnapshot : SnapshotBase

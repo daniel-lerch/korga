@@ -37,25 +37,24 @@ namespace Korga.Server.Tests
             using (IServiceScope scope = serviceProvider.CreateScope())
             {
                 var database = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-                var snapshot = new PersonSnapshot("Max", "Mustermann")
-                {
-                    Person = new Person
-                    {
-                        Version = 1,
-                        MailAddress = "max.mustermann@example.com"
-                    },
-                    Version = 1,
-                    MailAddress = "max.mustermann@example.com"
-                };
-                database.PersonSnapshots.Add(snapshot);
+
+                Person[] old = await database.People.Where(p => EF.Functions.Like(p.MailAddress, "mustermann%@example.com")).ToArrayAsync();
+                database.People.RemoveRange(old);
                 await database.SaveChangesAsync();
 
-                personId = snapshot.PersonId;
+                var person = new Person("Max", "Mustermann")
+                {
+                    MailAddress = "mustermann@example.com"
+                };
+                database.People.Add(person);
+                await database.SaveChangesAsync();
+
+                personId = person.Id;
             }
 
-            await Task.WhenAll(Enumerable.Range(0, 16).Select(i => addSnapshot()));
+            await Task.WhenAll(Enumerable.Range(0, 16).Select(i => addSnapshot(i)));
 
-            async Task addSnapshot()
+            async Task addSnapshot(int index)
             {
                 using IServiceScope scope = serviceProvider.CreateScope();
                 var database = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
@@ -66,13 +65,18 @@ namespace Korga.Server.Tests
                 {
                     try
                     {
-                        var snapshot = new PersonSnapshot("Max", "Mustermann")
+                        string? oldAddress = person.MailAddress;
+
+                        person.MailAddress = $"mustermann{index}@example.com";
+                        person.Version++;
+                        await database.SaveChangesAsync();
+
+                        database.PersonSnapshots.Add(new PersonSnapshot("Max", "Mustermann")
                         {
                             PersonId = personId,
-                            Version = ++person.Version
-                        };
-
-                        database.PersonSnapshots.Add(snapshot);
+                            Version = person.Version,
+                            MailAddress = oldAddress
+                        });
 
                         await database.SaveChangesAsync();
 

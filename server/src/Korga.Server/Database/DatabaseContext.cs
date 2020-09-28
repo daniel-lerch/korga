@@ -42,22 +42,17 @@ namespace Korga.Server.Database
         {
             base.OnModelCreating(modelBuilder);
 
-            // TODO: Change versioning strategy for mutable entities.
-            // Mutable entities with snapshots do not work with alternate keys and indices.
-            // Concurrent updates either cause unique constraint violations or concurrency 
-            // exceptions which is hard to handle. Keeping old values in separate entities
-            // does not guarantee a clean changelog at every time but generally comes with
-            // less problems for this application.
-
             // Versioning strategies:
             //
             // 1. Immutable entities
-            //      EntityBase contains all necessary fields to track creation and deletion
-            //      New values (e.g. deletion) might be added but no existing values are overridden
+            //      EntityBase contains all necessary fields to track creation and deletion.
+            //      New values (e.g. deletion) might be added but no existing values are overridden.
             // 2. Mutable entities
-            //      Creation and deletion are tracked by EntityBase but data is stored in snapshot entities
-            //      Relationships are immutable and stored in the principal entity
-            //      Each time when properties are changed, a new snapshot entity with the latest data is created
+            //      Creation and deletion are tracked by MutableEntityBase which also contains
+            //      a version column and the current data. Relationships are immutable and stored
+            //      in the principal entity. Each time when properties are changed, the version
+            //      column is incremented and a new snapshot entity with the previous data and
+            //      information about the editor and edit time is created.
             // 3. Other entities
             //      Some entities do not fit in these two patterns are handled individually
 
@@ -176,8 +171,8 @@ namespace Korga.Server.Database
         private static void ConfigureSnapshotBase<T>(EntityTypeBuilder<T> entity) where T : SnapshotBase
         {
             entity.Property(x => x.Version).ValueGeneratedNever();
-            entity.Property(x => x.CreationTime).HasDefaultValueSql(currentTimestamp);
-            entity.HasOne(x => x.Creator).WithMany().HasForeignKey(x => x.CreatorId).OnDelete(DeleteBehavior.SetNull);
+            entity.Property(x => x.EditTime).HasDefaultValueSql(currentTimestamp);
+            entity.HasOne(x => x.Editor).WithMany().HasForeignKey(x => x.EditorId).OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

@@ -11,6 +11,8 @@ namespace Korga.Server.Database.Entities
 
         public int DistributionListId { get; set; }
         public DistributionList? DistributionList { get; set; }
+
+        public ReviewPermission Permission { get; set; }
     }
 
     public class SendRoleSnapshot : SnapshotBase

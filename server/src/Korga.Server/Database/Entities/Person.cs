@@ -2,7 +2,16 @@
 {
     public class Person : MutableEntityBase
     {
+        public Person(string givenName, string familyName)
+        {
+            GivenName = givenName;
+            FamilyName = familyName;
+        }
+
         public int Id { get; set; }
+
+        public string GivenName { get; set; }
+        public string FamilyName { get; set; }
         public string? MailAddress { get; set; }
     }
 
