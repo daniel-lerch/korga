@@ -12,8 +12,10 @@ export class Person {
   mailAddress: string | null;
 }
 
-export function getPeople (): Promise<Person[]> {
-  return fetch('http://localhost:50805/api/people')
-    .then(response => response.json())
-    .then(response => response as Person[])
+export async function getPeople (): Promise<Person[]> {
+  const response = await fetch('http://localhost:50805/api/people')
+  if (response.ok === false) {
+    throw new Error('Unexpected status code ' + response.status)
+  }
+  return await response.json()
 }
