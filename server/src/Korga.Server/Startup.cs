@@ -24,6 +24,14 @@ namespace Korga.Server
 
             services.AddDbContext<DatabaseContext>();
 
+            services.AddCors(options =>
+            {
+                options.AddPolicy("Development", builder =>
+                {
+                    builder.AllowAnyOrigin();
+                });
+            });
+
             services.AddControllers();
         }
 
@@ -36,8 +44,13 @@ namespace Korga.Server
             }
 
             app.UseMigrations();
-            
+
             app.UseRouting();
+
+            if (env.IsDevelopment())
+            {
+                app.UseCors("Development");
+            }
 
             app.UseAuthorization();
 
