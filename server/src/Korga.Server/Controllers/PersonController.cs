@@ -26,6 +26,7 @@ namespace Korga.Server.Controllers
         public async Task<IActionResult> Index([FromQuery] int offset = 0, [FromQuery] int count = 50)
         {
             var people = await database.People
+                .OrderBy(p => p.FamilyName).ThenBy(p => p.GivenName)
                 .Select(p => new Person(p.Id, p.GivenName, p.FamilyName, p.MailAddress))
                 .Skip(offset).Take(count).ToListAsync();
 

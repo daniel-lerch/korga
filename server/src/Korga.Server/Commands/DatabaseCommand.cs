@@ -73,13 +73,14 @@ namespace Korga.Server.Commands
             await database.SaveChangesAsync();
 
             var member = new GroupRole("Teilnehmer") { GroupId = group.Id, CreatorId = admin.Id };
-            var leader = new GroupRole("Leader") { GroupId = group.Id, CreatorId = admin.Id };
+            var leader = new GroupRole("Leiter") { GroupId = group.Id, CreatorId = admin.Id };
             database.GroupRoles.Add(member);
             database.GroupRoles.Add(leader);
             await database.SaveChangesAsync();
 
             database.GroupMembers.Add(new GroupMember { PersonId = person.Id, GroupRoleId = member.Id, CreatorId = admin.Id });
             database.GroupMembers.Add(new GroupMember { PersonId = admin.Id, GroupRoleId = member.Id, CreatorId = admin.Id });
+            database.GroupMembers.Add(new GroupMember { PersonId = admin.Id, GroupRoleId = leader.Id, CreatorId = admin.Id });
             await database.SaveChangesAsync();
         }
     }
