@@ -12,7 +12,7 @@ Returns a list of people. Query parameters:
     "id": 1,
     "givenName": "Karl-Heinz",
     "familyName": "Günther",
-    "mailAddress": "karl-heinz.guenther@example.com"               
+    "mailAddress": "gunther@example.com"               
   },
   {
     "id": 2,
@@ -31,7 +31,7 @@ Returns detailed information about a single person.
   "version": 2,
   "givenName": "Max",
   "familyName": "Mustermann",
-  "mailAddress": "max.mustermann@example.com",
+  "mailAddress": "mustermann@example.com",
   "memberships": {
     "group": {
       "id": 1,
@@ -55,7 +55,7 @@ Returns detailed information about a single person.
       "id": 1,
       "givenName": "Karl-Heinz",
       "familyName": "Günther",
-      "mailAddress": "karl-heinz.guenther@example.com"               
+      "mailAddress": "gunther@example.com"               
     },
     "deletionTime": null,
     "deletor": null
@@ -65,7 +65,7 @@ Returns detailed information about a single person.
     "id": 1,
     "givenName": "Karl-Heinz",
     "familyName": "Günther",
-    "mailAddress": "karl-heinz.guenther@example.com"
+    "mailAddress": "gunther@example.com"
   },
   "deletionTime": null,
   "deletor": null,
@@ -80,7 +80,7 @@ Returns detailed information about a single person.
         "id": 1,
         "givenName": "Karl-Heinz",
         "familyName": "Günther",
-        "mailAddress": "karl-heinz.guenther@example.com"               
+        "mailAddress": "gunther@example.com"               
       }
     }
   ]
@@ -128,7 +128,7 @@ Returns detailed information about a single group
         "id": 1,
         "givenName": "Karl-Heinz",
         "familyName": "Günther",
-        "mailAddress": "karl-heinz.guenther@example.com"               
+        "mailAddress": "gunther@example.com"               
       },
       "creationTime": "2020-09-30T10:15:31.0829675+02:00",
       "deletionTime": null,
@@ -143,7 +143,7 @@ Returns detailed information about a single group
         "id": 1,
         "givenName": "Karl-Heinz",
         "familyName": "Günther",
-        "mailAddress": "karl-heinz.guenther@example.com"               
+        "mailAddress": "gunther@example.com"               
       },
       "creationTime": "2020-09-30T10:15:31.0829675+02:00",
       "deletionTime": null,
@@ -157,7 +157,7 @@ Returns detailed information about a single group
             "id": 1,
             "givenName": "Karl-Heinz",
             "familyName": "Günther",
-            "mailAddress": "karl-heinz.guenther@example.com"               
+            "mailAddress": "gunther@example.com"               
           }
         }
       ]
@@ -169,7 +169,7 @@ Returns detailed information about a single group
         "id": 2,
         "givenName": "Max",
         "familyName": "Mustermann",
-        "mailAddress": "max.mustermann@example.com"
+        "mailAddress": "mustermann@example.com"
       },
       "roleId": 1,
       "creationTime": "",
@@ -177,7 +177,7 @@ Returns detailed information about a single group
         "id": 1,
         "givenName": "Karl-Heinz",
         "familyName": "Günther",
-        "mailAddress": "karl-heinz.guenther@example.com"               
+        "mailAddress": "gunther@example.com"               
       },
       "deletionTime": null,
       "deletor": null
@@ -187,7 +187,7 @@ Returns detailed information about a single group
         "id": 1,
         "givenName": "Karl-Heinz",
         "familyName": "Günther",
-        "mailAddress": "karl-heinz.guenther@example.com"               
+        "mailAddress": "gunther@example.com"               
       },
       "roleId": 2,
       "creationTime": "",
@@ -195,7 +195,7 @@ Returns detailed information about a single group
         "id": 1,
         "givenName": "Karl-Heinz",
         "familyName": "Günther",
-        "mailAddress": "karl-heinz.guenther@example.com"               
+        "mailAddress": "gunther@example.com"               
       },
       "deletionTime": null,
       "deletor": null
@@ -206,7 +206,7 @@ Returns detailed information about a single group
     "id": 1,
     "givenName": "Karl-Heinz",
     "familyName": "Günther",
-    "mailAddress": "karl-heinz.guenther@example.com"               
+    "mailAddress": "gunther@example.com"               
   },
   "deletionTime": null,
   "deletor": null,
@@ -220,7 +220,7 @@ Returns detailed information about a single group
         "id": 1,
         "givenName": "Karl-Heinz",
         "familyName": "Günther",
-        "mailAddress": "karl-heinz.guenther@example.com"               
+        "mailAddress": "gunther@example.com"               
       }
     }
   ]
