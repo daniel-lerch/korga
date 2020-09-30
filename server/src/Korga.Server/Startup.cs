@@ -43,8 +43,6 @@ namespace Korga.Server
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseMigrations();
-
             app.UseRouting();
 
             if (env.IsDevelopment())
