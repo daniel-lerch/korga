@@ -2,7 +2,7 @@
   <tr>
     <td>{{ person.givenName }}</td>
     <td>{{ person.familyName }}</td>
-    <td><a v-if="person.mailAddress !== null" href="mailto:{{ person.mailAddress }}">{{ person.mailAddress }}</a></td>
+    <td><a v-if="person.mailAddress !== null" :href="`mailto:${person.mailAddress}`">{{ person.mailAddress }}</a></td>
   </tr>
 </template>
 
