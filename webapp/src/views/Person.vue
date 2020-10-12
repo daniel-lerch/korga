@@ -1,5 +1,14 @@
 <template>
-  <p>{{ person?.givenName }}</p>
+  <div v-if="state !== 1" class="page-load-container">
+    <div v-if="state === 0" class="spinner-border" role="status"></div>
+    <div v-if="state === -1" class="alert alert-danger" role="alert">
+      {{ errorMessage }}
+    </div>
+  </div>
+  <div v-else class="page-loaded-container">
+    Vorname: {{ person.givenName }}<br>
+    Nachname: {{ person.familyName }}
+  </div>
 </template>
 
 <script lang="ts">

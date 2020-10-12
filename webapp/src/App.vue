@@ -61,10 +61,20 @@ a.subdued {
   align-items: center;
   width: 100%;
   height: 100%;
+  animation: fadein 1.4s;
+}
+
+.page-loaded-container {
+  animation: fadein 0.7s;
 }
 
 .page-load-container .spinner-border {
   width: 3rem;
   height: 3rem;
+}
+
+@keyframes fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 </style>

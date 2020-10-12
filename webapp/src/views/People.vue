@@ -5,7 +5,7 @@
       {{ errorMessage }}
     </div>
   </div>
-  <div v-else class="container">
+  <div v-else class="container page-loaded-container">
     <PersonRow v-for="person in people" :key="person.id" :person="person" />
   </div>
 </template>
