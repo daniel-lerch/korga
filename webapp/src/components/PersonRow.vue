@@ -13,13 +13,13 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, PropType } from 'vue'
 import { Person } from '../services/person'
 
 export default defineComponent({
   props: {
     person: {
-      type: Person,
+      type: Object as PropType<Person>,
       required: true
     }
   },

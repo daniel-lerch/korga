@@ -1,29 +1,11 @@
-export class Person {
-  constructor (id: number, givenName: string, familyName: string, mailAddress: string | null) {
-    this.id = id
-    this.givenName = givenName
-    this.familyName = familyName
-    this.mailAddress = mailAddress
-  }
-
+export interface Person {
   id: number;
   givenName: string;
   familyName: string;
   mailAddress: string | null;
 }
 
-export class Person2 extends Person {
-  constructor (id: number, version: number, givenName: string, familyName: string, mailAddress: string | null,
-    creationTime: Date, creator: Person | null, deletionTime: Date | null, deletor: Person | null, history: Array<PersonSnapshot>) {
-    super(id, givenName, familyName, mailAddress)
-    this.version = version
-    this.creationTime = creationTime
-    this.creator = creator
-    this.deletionTime = deletionTime
-    this.deletor = deletor
-    this.history = history
-  }
-
+export interface Person2 extends Person {
   version: number;
   creationTime: Date;
   creator: Person | null;
@@ -32,16 +14,7 @@ export class Person2 extends Person {
   history: Array<PersonSnapshot>;
 }
 
-export class PersonSnapshot {
-  constructor (version: number, givenName: string, familyName: string, mailAddress: string | null, editTime: Date, editor: Person | null) {
-    this.version = version
-    this.givenName = givenName
-    this.familyName = familyName
-    this.mailAddress = mailAddress
-    this.editTime = editTime
-    this.editor = editor
-  }
-
+export interface PersonSnapshot {
   version: number;
   givenName: string;
   familyName: string;
