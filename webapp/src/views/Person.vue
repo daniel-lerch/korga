@@ -4,18 +4,24 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { getPerson } from '../services/person'
+import { Person2, getPerson } from '../services/person'
 
 export default defineComponent({
+  props: {
+    id: {
+      type: Number,
+      required: true
+    }
+  },
   data () {
     return {
-      person: null,
+      person: null as Person2 | null,
       state: 0,
       errorMessage: ''
     }
   },
   mounted () {
-    getPerson(this.$route.params.id).then(
+    getPerson(this.id).then(
       response => {
         this.state = 1
         this.person = response
