@@ -5,12 +5,9 @@
       {{ errorMessage }}
     </div>
   </div>
-  <table v-else>
-    <th>Given name</th>
-    <th>Family name</th>
-    <th>Mail address</th>
-    <PersonRow v-for="person in people" :key="person.id" v-bind:person="person" />
-  </table>
+  <div v-else class="container">
+    <PersonRow v-for="person in people" :key="person.id" :person="person" />
+  </div>
 </template>
 
 <script lang="ts">

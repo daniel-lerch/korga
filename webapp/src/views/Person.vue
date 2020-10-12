@@ -9,7 +9,7 @@ import { Person2, getPerson } from '../services/person'
 export default defineComponent({
   props: {
     id: {
-      type: Number,
+      type: String,
       required: true
     }
   },
@@ -21,7 +21,7 @@ export default defineComponent({
     }
   },
   mounted () {
-    getPerson(this.id).then(
+    getPerson(parseInt(this.id)).then(
       response => {
         this.state = 1
         this.person = response

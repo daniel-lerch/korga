@@ -1,9 +1,15 @@
 <template>
-  <tr>
-    <td>{{ person.givenName }}</td>
-    <td>{{ person.familyName }}</td>
-    <td><a v-if="person.mailAddress !== null" :href="`mailto:${person.mailAddress}`">{{ person.mailAddress }}</a></td>
-  </tr>
+  <div class="row">
+    <div class="col">
+      <router-link :to="link" class="subdued">{{ person.givenName }}</router-link>
+    </div>
+    <div class="col">
+      <router-link :to="link" class="subdued">{{ person.familyName }}</router-link>
+    </div>
+    <div class="col">
+      <a v-if="person.mailAddress !== null" :href="`mailto:${person.mailAddress}`">{{ person.mailAddress }}</a>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -15,6 +21,16 @@ export default defineComponent({
     person: {
       type: Person,
       required: true
+    }
+  },
+  data () {
+    return {
+      link: {
+        name: 'Person',
+        params: {
+          id: this.person.id
+        }
+      }
     }
   }
 })

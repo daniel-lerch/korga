@@ -51,6 +51,10 @@ footer {
   color: rgba(0,0,0,.9)!important;
 }
 
+a.subdued {
+  color: #212529;
+}
+
 .page-load-container {
   display: flex;
   justify-content: center;
