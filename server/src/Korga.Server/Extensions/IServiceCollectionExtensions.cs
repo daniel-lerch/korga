@@ -11,6 +11,9 @@ namespace Korga.Server.Extensions
             services.AddOptions<DatabaseOptions>()
                 .Bind(configuration.GetSection("Database"))
                 .ValidateDataAnnotations();
+            services.AddOptions<LdapOptions>()
+                .Bind(configuration.GetSection("Ldap"))
+                .ValidateDataAnnotations();
 
             return services;
         }
