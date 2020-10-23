@@ -1,8 +1,6 @@
 using Korga.Server.Database;
 using Korga.Server.Database.Entities;
-using Korga.Server.Extensions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -19,14 +17,7 @@ namespace Korga.Server.Tests
         [TestInitialize]
         public void Initialize()
         {
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false)
-                .Build();
-
-            var services = new ServiceCollection();
-            services.ConfigureKorga(configuration);
-            services.AddDbContext<DatabaseContext>();
-            serviceProvider = services.BuildServiceProvider();
+            serviceProvider = TestServiceCollection.CreateDefault().BuildServiceProvider();
         }
 
         [TestMethod]
