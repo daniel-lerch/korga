@@ -8,5 +8,6 @@ namespace Korga.Server.Configuration
         [Required] public string Host { get; set; } = null!;
         [Required] public string BindDn { get; set; } = null!;
         [Required] public string BindPassword { get; set; } = null!;
+        [Required] public string BaseDn { get; set; } = null!;
     }
 }
