@@ -20,5 +20,9 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --configuration Release --no-restore
+    - name: Launch MySQL server
+      run: sudo systemctl start mysql.service
+    - name: Create database model
+      run: dotnet run --configuration Release --no-build --project server/src/Korga.Server -- database create
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test --configuration Release --no-build --verbosity normal
