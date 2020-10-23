@@ -1,5 +1,6 @@
 using Korga.Server.Database;
 using Korga.Server.Extensions;
+using Korga.Server.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +22,8 @@ namespace Korga.Server
         public void ConfigureServices(IServiceCollection services)
         {
             services.ConfigureKorga(Configuration);
+
+            services.AddSingleton<LdapService>();
 
             services.AddDbContext<DatabaseContext>();
 

@@ -23,6 +23,7 @@
       "launchUrl": "",
       "applicationUrl": "http://localhost:50805",
       "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     }

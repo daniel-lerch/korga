@@ -5,7 +5,7 @@
 namespace Korga.Server.Commands
 {
     [Command("korga", Description = "Korga server management console")]
-    [Subcommand(typeof(DatabaseCommand))]
+    [Subcommand(typeof(DatabaseCommand), typeof(LdapCommand))]
     public class KorgaCommand
     {
         private int OnExecute(CommandLineApplication app)

@@ -33,10 +33,17 @@ namespace Korga.Server.Services
         {
             if (disposed) throw new ObjectDisposedException(nameof(LdapService));
 
-            var connection = this.connection.Value;
             var request = new SearchRequest(options.Value.BaseDn, ldapFilter: null, SearchScope.OneLevel);
-            var response = (SearchResponse)connection.SendRequest(request);
+            var response = (SearchResponse)connection.Value.SendRequest(request);
             return response.Entries.Count;
+        }
+
+        public void Add(string distinguishedName, string objectClass)
+        {
+            if (disposed) throw new ObjectDisposedException(nameof(LdapService));
+
+            var request = new AddRequest(distinguishedName, objectClass);
+            var response = (AddResponse)connection.Value.SendRequest(request);
         }
 
         public void Dispose()

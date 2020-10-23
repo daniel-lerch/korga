@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Korga.Server.Commands
 {
     [Command("database")]
-    [Subcommand(typeof(Create), typeof(Delete))]
+    [Subcommand(typeof(Create), typeof(Delete), typeof(Populate))]
     public class DatabaseCommand
     {
         private const string populateDescription = "Fills an existing database with example data for testing.";

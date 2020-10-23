@@ -1,9 +1,11 @@
 using Korga.Server.Commands;
 using Korga.Server.Database;
 using Korga.Server.Extensions;
+using Korga.Server.Services;
 using Korga.Server.Utilities;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
@@ -51,9 +53,17 @@ namespace Korga.Server
 
         private static IHostBuilder CreateCliHostBuilder() =>
             Host.CreateDefaultBuilder()
+                .ConfigureAppConfiguration((context, config) =>
+                {
+                    if (context.HostingEnvironment.IsDevelopment())
+                    {
+                        config.AddUserSecrets<Program>();
+                    }
+                })
                 .ConfigureServices((context, services) =>
                 {
                     services.ConfigureKorga(context.Configuration);
+                    services.AddSingleton<LdapService>();
                     services.AddDbContext<DatabaseContext>();
                 });
     }
