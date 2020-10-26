@@ -19,12 +19,14 @@ jobs:
     - name: Restore NuGet packages
       run: dotnet restore
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build -c Release --no-restore
     - name: Repare test environment
       run: |
+        set -x
+
         # Launch and prepare MySQL server  
         sudo systemctl start mysql.service
-        dotnet run --configuration Release --no-build --project server/src/Korga.Server -- database create
+        dotnet run -c Release --no-build -p server/src/Korga.Server -- database create
 
         # Install and configure OpenLDAP server
         sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends slapd
@@ -45,6 +47,6 @@ jobs:
 
         # Launch and prepare OpenLDAP server
         sudo systemctl start slapd.service
-        dotnet run --configuration Release --no-build --project server/src/Korga.Server -- create
+        dotnet run -c Release --no-build -p server/src/Korga.Server -- ldap create
     - name: Test
-      run: dotnet test --configuration Release --no-build --verbosity normal
+      run: dotnet test -c Release --no-build --verbosity normal
