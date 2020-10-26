@@ -20,9 +20,31 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --configuration Release --no-restore
-    - name: Launch MySQL server
-      run: sudo systemctl start mysql.service
-    - name: Create database model
-      run: dotnet run --configuration Release --no-build --project server/src/Korga.Server -- database create
+    - name: Repare test environment
+      run: |
+        # Launch and prepare MySQL server  
+        sudo systemctl start mysql.service
+        dotnet run --configuration Release --no-build --project server/src/Korga.Server -- database create
+
+        # Install and configure OpenLDAP server
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends slapd
+        cat <<EOF | sudo debconf-set-selections
+        slapd slapd/internal/generated_adminpw password admin
+        slapd slapd/internal/adminpw password admin
+        slapd slapd/password2 password admin
+        slapd slapd/password1 password admin
+        slapd slapd/dump_database_destdir string /var/backups/slapd-VERSION
+        slapd slapd/domain string example.com
+        slapd shared/organization string Example Church
+        slapd slapd/purge_database boolean true
+        slapd slapd/move_old_database boolean true
+        slapd slapd/allow_ldap_v2 boolean false
+        slapd slapd/no_configuration boolean false
+        EOF
+        sudo dpkg-reconfigure -f noninteractive slapd
+
+        # Launch and prepare OpenLDAP server
+        sudo systemctl start slapd.service
+        dotnet run --configuration Release --no-build --project server/src/Korga.Server -- create
     - name: Test
       run: dotnet test --configuration Release --no-build --verbosity normal
