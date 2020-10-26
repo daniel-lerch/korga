@@ -35,7 +35,14 @@ namespace Korga.Server
             {
                 try
                 {
-                    return await CreateCliHostBuilder().RunCommandLineApplicationAsync<KorgaCommand>(args);
+                    IServiceScope? scope = null;
+                    int result = await CreateCliHostBuilder().RunCommandLineApplicationAsync<KorgaCommand>(args, app =>
+                    {
+                        scope = app.CreateScope();
+                        app.Conventions.UseConstructorInjection(scope.ServiceProvider);
+                    });
+                    scope?.Dispose();
+                    return result;
                 }
                 catch (UnrecognizedCommandParsingException) // Host integration of v3.0.0 does not support disabling this exception
                 {
