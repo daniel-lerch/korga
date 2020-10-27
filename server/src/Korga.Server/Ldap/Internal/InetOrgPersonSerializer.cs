@@ -1,13 +1,33 @@
 ﻿using Korga.Server.Ldap.ObjectClasses;
-using System;
 
 namespace Korga.Server.Ldap.Internal
 {
     internal class InetOrgPersonSerializer : ILdapSerializer<InetOrgPerson>
     {
-        public InetOrgPerson Deserialize()
+        public string[] Attributes => new[] 
         {
-            throw new NotImplementedException();
+            "cn",
+            "objectClass",
+            "sn",
+            "displayName",
+            "employeeNumber",
+            "givenName",
+            "mail",
+            "uid",
+            "userPassword"
+        };
+
+        public InetOrgPerson Deserialize(AttributeCollection attributes)
+        {
+            return new InetOrgPerson(attributes.GetRequiredValue("cn"), attributes.GetRequiredValue("sn"))
+            {
+                DisplayName = attributes.GetValue("displayName"),
+                EmployeeNumber = attributes.GetValue("employeeNumber"),
+                GivenName = attributes.GetValue("givenName"),
+                Mail = attributes.GetValue("mail"),
+                Uid = attributes.GetValue("uid"),
+                UserPassword = attributes.GetValue("userPassword")
+            };
         }
 
         public void Serialize(AttributeCollection attributes, InetOrgPerson entry)

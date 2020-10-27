@@ -2,7 +2,8 @@
 {
     internal interface ILdapSerializer<T>
     {
-        T Deserialize();
+        string[] Attributes { get; }
+        T Deserialize(AttributeCollection attributes);
         void Serialize(AttributeCollection attributes, T entry);
     }
 }

@@ -34,9 +34,8 @@ namespace Korga.Server.Services
         {
             if (disposed) throw new ObjectDisposedException(nameof(LdapService));
 
-            var request = new SearchRequest(options.Value.BaseDn, "(objectClass=inetOrgPerson)", SearchScope.OneLevel);
-            var response = (SearchResponse)connection.SendRequest(request);
-            return response.Entries.Count;
+            InetOrgPerson[] result = mapper.Search<InetOrgPerson>(options.Value.BaseDn, "(objectClass=inetOrgPerson)", SearchScope.OneLevel);
+            return result.Length;
         }
 
         public void AddOrganizationalUnit(string distinguishedName, string name)

@@ -5,9 +5,19 @@ namespace Korga.Server.Ldap.Internal
 {
     internal class OrganizationalUnitSerializer : ILdapSerializer<OrganizationalUnit>
     {
-        public OrganizationalUnit Deserialize()
+        public string[] Attributes => new[]
         {
-            throw new NotImplementedException();
+            "objectClass",
+            "ou",
+            "description"
+        };
+
+        public OrganizationalUnit Deserialize(AttributeCollection attributes)
+        {
+            return new OrganizationalUnit(attributes.GetRequiredValue("ou"))
+            {
+                Description = attributes.GetValue("description")
+            };
         }
 
         public void Serialize(AttributeCollection attributes, OrganizationalUnit entry)
