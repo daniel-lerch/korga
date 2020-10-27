@@ -4,7 +4,7 @@ using System.DirectoryServices.Protocols;
 
 namespace Korga.Server.Ldap
 {
-    public class LdapMapper
+    public class LdapMapper : IDisposable
     {
         private readonly LdapConnection connection;
 
@@ -13,7 +13,7 @@ namespace Korga.Server.Ldap
             this.connection = connection;
         }
 
-        private void Add<T>(string distinguishedName, T entry) where T : notnull
+        public void Add<T>(string distinguishedName, T entry) where T : notnull
         {
             const string @namespace = nameof(Korga) + "." + nameof(Server) + "." + nameof(Ldap) + "." + nameof(Internal);
 
@@ -27,6 +27,11 @@ namespace Korga.Server.Ldap
             serializer.Serialize(attributes, entry);
             var request = new AddRequest(distinguishedName, attributes.ToArray());
             var response = (AddResponse)connection.SendRequest(request);
+        }
+
+        public void Dispose()
+        {
+            connection.Dispose();
         }
     }
 }

@@ -22,7 +22,7 @@ namespace Korga.Server.Commands
         {
             private void OnExecute(IOptions<LdapOptions> options, LdapService ldap)
             {
-                ldap.Add(options.Value.BaseDn, "organizationalUnit");
+                ldap.AddOrganizationalUnit(options.Value.BaseDn, "members");
             }
         }
     }
