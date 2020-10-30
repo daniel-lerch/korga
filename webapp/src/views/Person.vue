@@ -30,14 +30,17 @@ export default defineComponent({
     }
   },
   mounted () {
+    document.title = 'Loading - Korga'
     getPerson(parseInt(this.id)).then(
       response => {
         this.state = 1
         this.person = response
+        document.title = response.givenName + ' ' + response.familyName + ' - Korga'
       },
       error => {
         this.state = -1
         this.errorMessage = error.toString()
+        document.title = 'Error - Korga'
       })
   }
 })

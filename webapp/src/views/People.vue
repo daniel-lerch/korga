@@ -27,14 +27,17 @@ export default defineComponent({
     }
   },
   mounted () {
+    document.title = 'People - Korga'
     getPeople().then(
       response => {
         this.state = 1
         this.people.push(...response)
+        document.title = 'People - Korga'
       },
       error => {
         this.state = -1
         this.errorMessage = error.toString()
+        document.title = 'Error - Korga'
       })
   }
 })
