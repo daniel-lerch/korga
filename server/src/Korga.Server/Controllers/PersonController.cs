@@ -3,12 +3,10 @@ using Korga.Server.Database.Entities;
 using Korga.Server.Models.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
-using DbPerson = Korga.Server.Database.Entities.Person;
-using Person = Korga.Server.Models.Json.Person;
 
 namespace Korga.Server.Controllers
 {
@@ -27,7 +25,7 @@ namespace Korga.Server.Controllers
         {
             var people = await database.People
                 .OrderBy(p => p.FamilyName).ThenBy(p => p.GivenName)
-                .Select(p => new Person(p.Id, p.GivenName, p.FamilyName, p.MailAddress))
+                .Select(p => new PersonResponse(p.Id, p.GivenName, p.FamilyName, p.MailAddress))
                 .Skip(offset).Take(count).ToListAsync();
 
             return new JsonResult(people);
@@ -36,12 +34,26 @@ namespace Korga.Server.Controllers
         [HttpGet("~/api/person/{id}")]
         public async Task<IActionResult> GetPerson(int id)
         {
-            DbPerson? person = await database.People.Where(p => p.Id == id).Include(p => p.Creator).Include(p => p.Deletor).SingleOrDefaultAsync();
+            Person? person = await database.People.Where(p => p.Id == id).Include(p => p.Creator).Include(p => p.Deletor).SingleOrDefaultAsync();
             if (person == null) return StatusCode(404);
 
             List<PersonSnapshot> snapshots = await database.PersonSnapshots.Where(ps => ps.PersonId == id).Include(ps => ps.Editor).ToListAsync();
 
-            return new JsonResult(new Person2(person, snapshots));
+            return new JsonResult(new PersonResponse2(person, snapshots));
+        }
+
+        [HttpPost("~/api/person/new")]
+        public async Task<IActionResult> CreatePerson([FromBody] CreatePersonRequest request)
+        {
+            Person person = new Person(request.GivenName, request.FamilyName)
+            {
+                MailAddress = request.MailAddress
+            };
+
+            database.People.Add(person);
+            await database.SaveChangesAsync();
+
+            return new JsonResult(new PersonResponse2(person, Array.Empty<PersonSnapshot>()));
         }
     }
 }

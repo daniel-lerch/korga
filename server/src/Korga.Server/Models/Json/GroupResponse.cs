@@ -2,9 +2,9 @@
 
 namespace Korga.Server.Models.Json
 {
-    public class Group
+    public class GroupResponse
     {
-        public Group(int id, string name, string? description, int memberCount)
+        public GroupResponse(int id, string name, string? description, int memberCount)
         {
             Id = id;
             Name = name;

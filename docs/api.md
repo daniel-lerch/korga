@@ -6,6 +6,8 @@ This API is intended for internal use and might change without notice at any tim
 Returns a list of people. Query parameters:
 - `offset` Start index of results
 - `count` Limit number of results to this value
+
+Response body: `PersonResponse`
 ```json
 [
   {
@@ -25,6 +27,8 @@ Returns a list of people. Query parameters:
 
 ### `GET /api/person/{id}`
 Returns detailed information about a single person.
+
+Response body: `PersonResponse2`
 ```json
 {
   "id": 2,
@@ -87,9 +91,25 @@ Returns detailed information about a single person.
 }
 ```
 
+### `POST /api/person/new`
+Creates a new person.
+```json
+{
+  "givenName": "Max",
+  "familyName": "Mustermann",
+  "mailAddress": "max.mustermann@example.com"
+}
+```
+
+Response body: `PersonResponse2` (see example above)
+
+---
+
 ## Group
 ### `GET /api/groups`
 Returns a list of groups
+
+Response body: `GroupResponse`
 ```json
 [
   {
@@ -113,6 +133,8 @@ Returns a list of groups
 
 ### `GET /api/group/{id}`
 Returns detailed information about a single group
+
+Response body: `GroupResponse2`
 ```json
 {
   "id": 1,

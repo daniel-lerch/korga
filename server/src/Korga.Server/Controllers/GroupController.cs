@@ -45,20 +45,20 @@ namespace Korga.Server.Controllers
                  select new { GroupId = grouping.Key, MemberCount = grouping /*.Distinct()*/ .Count() })
             .ToDictionaryAsync(x => x.GroupId, x => x.MemberCount);
 
-            var result = new List<Group>();
-            Group? principal = null;
+            var result = new List<GroupResponse>();
+            GroupResponse? principal = null;
 
             foreach (var group in groups)
             {
                 if (principal?.Id != group.Id)
                 {
-                    principal = new Group(group.Id, group.Name, group.Description, members[group.Id]);
+                    principal = new GroupResponse(group.Id, group.Name, group.Description, members[group.Id]);
                     result.Add(principal);
                 }
 
                 if (group.RoleId != default)
                 {
-                    principal.Roles.Add(new Group.Role(group.RoleId, group.RoleName));
+                    principal.Roles.Add(new GroupResponse.Role(group.RoleId, group.RoleName));
                 }
             }
 

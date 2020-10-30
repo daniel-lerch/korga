@@ -3,13 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using DbPerson = Korga.Server.Database.Entities.Person;
-
 namespace Korga.Server.Models.Json
 {
-    public class Person
+    public class PersonResponse
     {
-        public Person(int id, string givenName, string familyName, string? mailAddress)
+        public PersonResponse(int id, string givenName, string familyName, string? mailAddress)
         {
             Id = id;
             GivenName = givenName;
@@ -17,7 +15,7 @@ namespace Korga.Server.Models.Json
             MailAddress = mailAddress;
         }
 
-        public Person(DbPerson person) : this(person.Id, person.GivenName, person.FamilyName, person.MailAddress) { }
+        public PersonResponse(Person person) : this(person.Id, person.GivenName, person.FamilyName, person.MailAddress) { }
 
         public int Id { get; set; }
         public string GivenName { get; set; }
@@ -25,9 +23,9 @@ namespace Korga.Server.Models.Json
         public string? MailAddress { get; set; }
     }
 
-    public class Person2
+    public class PersonResponse2
     {
-        public Person2(DbPerson person, IList<PersonSnapshot> history)
+        public PersonResponse2(Person person, IList<PersonSnapshot> history)
         {
             Id = person.Id;
             Version = person.Version;
@@ -35,9 +33,9 @@ namespace Korga.Server.Models.Json
             FamilyName = person.FamilyName;
             MailAddress = person.MailAddress;
             CreationTime = person.CreationTime;
-            Creator = person.Creator == null ? null : new Person(person.Creator);
+            Creator = person.Creator == null ? null : new PersonResponse(person.Creator);
             DeletionTime = person.DeletionTime == default ? null : (DateTime?)person.DeletionTime;
-            Deletor = person.Deletor == null ? null : new Person(person.Deletor);
+            Deletor = person.Deletor == null ? null : new PersonResponse(person.Deletor);
             History = new List<Snapshot>(history.Select(ps => new Snapshot(ps)));
         }
 
@@ -47,9 +45,9 @@ namespace Korga.Server.Models.Json
         public string FamilyName { get; set; }
         public string? MailAddress { get; set; }
         public DateTime CreationTime { get; set; }
-        public Person? Creator { get; set; }
+        public PersonResponse? Creator { get; set; }
         public DateTime? DeletionTime { get; set; }
-        public Person? Deletor { get; set; }
+        public PersonResponse? Deletor { get; set; }
         public IList<Snapshot> History { get;set; }
 
         public class Snapshot
@@ -61,7 +59,7 @@ namespace Korga.Server.Models.Json
                 FamilyName = snapshot.FamilyName;
                 MailAddress = snapshot.MailAddress;
                 EditTime = snapshot.EditTime;
-                Editor = snapshot.Editor == null ? null : new Person(snapshot.Editor);
+                Editor = snapshot.Editor == null ? null : new PersonResponse(snapshot.Editor);
             }
 
             public int Version { get; set; }
@@ -69,7 +67,7 @@ namespace Korga.Server.Models.Json
             public string FamilyName { get; set; }
             public string? MailAddress { get; set; }
             public DateTime EditTime { get; set; }
-            public Person? Editor { get; set; }
+            public PersonResponse? Editor { get; set; }
         }
     }
 }
