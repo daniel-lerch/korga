@@ -14,12 +14,12 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from 'vue'
-import { Person } from '../services/person'
+import { PersonResponse } from '../services/person'
 
 export default defineComponent({
   props: {
     person: {
-      type: Object as PropType<Person>,
+      type: Object as PropType<PersonResponse>,
       required: true
     }
   },

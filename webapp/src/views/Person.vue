@@ -13,7 +13,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { Person2, getPerson } from '../services/person'
+import { PersonResponse2, getPerson } from '../services/person'
 
 export default defineComponent({
   props: {
@@ -24,7 +24,7 @@ export default defineComponent({
   },
   data () {
     return {
-      person: null as Person2 | null,
+      person: null as PersonResponse2 | null,
       state: 0,
       errorMessage: ''
     }

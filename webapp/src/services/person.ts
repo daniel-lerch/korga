@@ -1,16 +1,16 @@
-export interface Person {
+export interface PersonResponse {
   id: number;
   givenName: string;
   familyName: string;
   mailAddress: string | null;
 }
 
-export interface Person2 extends Person {
+export interface PersonResponse2 extends PersonResponse {
   version: number;
   creationTime: Date;
-  creator: Person | null;
+  creator: PersonResponse | null;
   deletionTime: Date | null;
-  deletor: Person | null;
+  deletor: PersonResponse | null;
   history: Array<PersonSnapshot>;
 }
 
@@ -20,10 +20,16 @@ export interface PersonSnapshot {
   familyName: string;
   mailAddress: string | null;
   editTime: Date;
-  editor: Person | null;
+  editor: PersonResponse | null;
 }
 
-async function getResonse<T> (query: string): Promise<T> {
+export interface CreatePersonRequest {
+  givenName: string;
+  familyName: string;
+  mailAddress: string | null;
+}
+
+async function get<T> (query: string): Promise<T> {
   const response = await fetch('http://localhost:50805' + query)
   if (response.ok === false) {
     throw new Error('Unexpected status code ' + response.status)
@@ -31,10 +37,28 @@ async function getResonse<T> (query: string): Promise<T> {
   return await response.json() as T
 }
 
-export function getPeople (): Promise<Person[]> {
-  return getResonse('/api/people')
+async function post<T> (query: string, body: object): Promise<T> {
+  const response = await fetch('http://localhost:50805' + query, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  })
+  if (response.ok === false) {
+    throw new Error('Unexpected status code ' + response.status)
+  }
+  return await response.json() as T
 }
 
-export function getPerson (id: number): Promise<Person2> {
-  return getResonse('/api/person/' + id)
+export function getPeople (): Promise<PersonResponse[]> {
+  return get('/api/people')
+}
+
+export function getPerson (id: number): Promise<PersonResponse2> {
+  return get('/api/person/' + id)
+}
+
+export function createPerson (person: CreatePersonRequest): Promise<PersonResponse2> {
+  return post<PersonResponse2>('/api/person/new', person)
 }

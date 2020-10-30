@@ -12,7 +12,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { Person, getPeople } from '../services/person'
+import { PersonResponse, getPeople } from '../services/person'
 import PersonRow from '@/components/PersonRow.vue'
 
 export default defineComponent({
@@ -21,7 +21,7 @@ export default defineComponent({
   },
   data () {
     return {
-      people: new Array<Person>(),
+      people: new Array<PersonResponse>(),
       state: 0,
       errorMessage: ''
     }
