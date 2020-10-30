@@ -2,11 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace Korga.Server.Models.Json
 {
     public class PersonResponse
     {
+        [JsonConstructor]
         public PersonResponse(int id, string givenName, string familyName, string? mailAddress)
         {
             Id = id;
@@ -25,6 +27,14 @@ namespace Korga.Server.Models.Json
 
     public class PersonResponse2
     {
+        [JsonConstructor]
+        public PersonResponse2(string givenName, string familyName, IList<Snapshot> history)
+        {
+            GivenName = givenName;
+            FamilyName = familyName;
+            History = history;
+        }
+
         public PersonResponse2(Person person, IList<PersonSnapshot> history)
         {
             Id = person.Id;
@@ -52,6 +62,13 @@ namespace Korga.Server.Models.Json
 
         public class Snapshot
         {
+            [JsonConstructor]
+            public Snapshot(string givenName, string familyName)
+            {
+                GivenName = givenName;
+                FamilyName = familyName;
+            }
+
             public Snapshot(PersonSnapshot snapshot)
             {
                 Version = snapshot.Version;

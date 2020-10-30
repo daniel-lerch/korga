@@ -1,6 +1,7 @@
 ﻿using Korga.Server.Database;
 using Korga.Server.Extensions;
 using Korga.Server.Services;
+using Korga.Server.Tests.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,8 +12,7 @@ namespace Korga.Server.Tests
         public static IServiceCollection CreateDefault()
         {
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false)
-                .AddUserSecrets<Program>()
+                .AddKorga()
                 .Build();
 
             var services = new ServiceCollection();
