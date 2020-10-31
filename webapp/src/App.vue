@@ -1,16 +1,13 @@
 <template>
   <header>
     <nav class="navbar navbar-expand-md navbar-light bg-light">
-      <router-link to="/" class="navbar-brand">Korga</router-link>
+      <router-link to="/people" class="navbar-brand">Korga</router-link>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
         <span class="navbar-toggler-icon"></span>
       </button>
 
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav">
-          <li class="nav-item">
-            <router-link :to="{ name: 'Home' }" class="nav-link">Home</router-link>
-          </li>
           <li class="nav-item">
             <router-link :to="{ name: 'People' }" class="nav-link">People</router-link>
           </li>
