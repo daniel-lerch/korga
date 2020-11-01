@@ -12,6 +12,11 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Person',
     component: () => import('../views/Person.vue'),
     props: true
+  },
+  {
+    path: '/groups',
+    name: 'Groups',
+    component: () => import('../views/Groups.vue')
   }
 ]
 
