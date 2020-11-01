@@ -1,10 +1,5 @@
 <template>
-  <div v-if="state !== 1" class="page-load-container">
-    <div v-if="state === 0" class="spinner-border" role="status"></div>
-    <div v-if="state === -1" class="alert alert-danger" role="alert">
-      {{ errorMessage }}
-    </div>
-  </div>
+  <Loading v-if="state.loaded === false" :state="state" />
   <div v-else class="page-loaded-container">
     Vorname: {{ person.givenName }}<br>
     Nachname: {{ person.familyName }}
@@ -12,36 +7,42 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, onMounted, ref } from 'vue'
 import { PersonResponse2, getPerson } from '../services/person'
+import Loading from '@/components/Loading.vue'
 
 export default defineComponent({
+  components: {
+    Loading
+  },
   props: {
     id: {
       type: String,
       required: true
     }
   },
-  data () {
+  setup (props) {
+    const person = ref<PersonResponse2 | null>(null)
+    const state = ref({ loaded: false, error: null })
+
+    onMounted(() => {
+      document.title = 'Loading - Korga'
+      getPerson(parseInt(props.id)).then(
+        response => {
+          state.value.loaded = true
+          person.value = response
+          document.title = response.givenName + ' ' + response.familyName + ' - Korga'
+        },
+        error => {
+          state.value.error = error
+          document.title = 'Error - Korga'
+        })
+    })
+
     return {
-      person: null as PersonResponse2 | null,
-      state: 0,
-      errorMessage: ''
+      person,
+      state
     }
-  },
-  mounted () {
-    document.title = 'Loading - Korga'
-    getPerson(parseInt(this.id)).then(
-      response => {
-        this.state = 1
-        this.person = response
-        document.title = response.givenName + ' ' + response.familyName + ' - Korga'
-      },
-      error => {
-        this.state = -1
-        this.errorMessage = error.toString()
-        document.title = 'Error - Korga'
-      })
   }
 })
 </script>
