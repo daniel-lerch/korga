@@ -23,9 +23,11 @@ It is rather the link between several open source applications, while it itself 
 Person API
 - [x] List
 - [x] Details
-- [ ] Create
+- [x] Create
 - [ ] Modify
 - [ ] Delete
+- [ ] Avatar
+- [ ] Profile image
 - [ ] LDAP person integration
 
 Group API
@@ -49,6 +51,8 @@ Server
 - [ ] Permission model
 - [ ] Identity provider
 - [ ] Mailing lists
+- [ ] Single sign on for external applications
+- [ ] Bridges to popular messaging networks
 - ...
 
 Client
