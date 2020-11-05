@@ -11,7 +11,8 @@
     "core-js": "^3.6.5",
     "vue": "^3.0.2",
     "vue-router": "^4.0.0-rc.1",
-    "vuex": "^4.0.0-rc.1"
+    "vuex": "^4.0.0-rc.1",
+    "webpack-require-from": "^1.8.2"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^2.33.0",
