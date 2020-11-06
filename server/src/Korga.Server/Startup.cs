@@ -11,8 +11,11 @@ namespace Korga.Server
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        private readonly IWebHostEnvironment environment;
+
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
+            environment = env;
             Configuration = configuration;
         }
 
@@ -26,6 +29,8 @@ namespace Korga.Server
             services.AddSingleton<LdapService>();
 
             services.AddDbContext<DatabaseContext>();
+
+            services.AddSpaStaticFiles(options => options.RootPath = environment.WebRootPath);
 
             services.AddCors(options =>
             {
@@ -46,6 +51,8 @@ namespace Korga.Server
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseSpaStaticFiles();
+
             app.UseRouting();
 
             if (env.IsDevelopment())
@@ -58,6 +65,11 @@ namespace Korga.Server
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+            });
+
+            app.UseSpa(spa =>
+            {
+                spa.Options.SourcePath = env.WebRootPath;
             });
         }
     }

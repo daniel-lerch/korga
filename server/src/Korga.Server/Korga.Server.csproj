@@ -9,9 +9,14 @@
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="3.1.0-beta.356" />
     <PackageReference Include="McMaster.Extensions.Hosting.CommandLine" Version="3.1.0-beta.356" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="3.1.9" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="3.2.3" />
     <PackageReference Include="System.DirectoryServices.Protocols" Version="5.0.0-rc.2.20475.5" />
     <PackageReference Include="System.Text.Json" Version="5.0.0-rc.2.20475.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
   </ItemGroup>
 
 

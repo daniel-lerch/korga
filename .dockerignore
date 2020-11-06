@@ -1,4 +1,7 @@
 /.git/
+/.github/
+/docs/
+/webapp/dist/
 /webapp/node_modules/
 
 bin/
