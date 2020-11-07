@@ -32,13 +32,16 @@ namespace Korga.Server
 
             services.AddSpaStaticFiles(options => options.RootPath = environment.WebRootPath);
 
-            services.AddCors(options =>
+            if (environment.IsDevelopment())
             {
-                options.AddPolicy("Development", builder =>
+                services.AddCors(options =>
                 {
-                    builder.AllowAnyOrigin();
+                    options.AddDefaultPolicy(builder =>
+                    {
+                        builder.AllowAnyOrigin();
+                    });
                 });
-            });
+            }
 
             services.AddControllers();
         }
@@ -51,13 +54,15 @@ namespace Korga.Server
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseHosting();
+
             app.UseSpaStaticFiles();
 
             app.UseRouting();
 
             if (env.IsDevelopment())
             {
-                app.UseCors("Development");
+                app.UseCors();
             }
 
             app.UseAuthorization();
