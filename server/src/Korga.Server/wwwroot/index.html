@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Korga Backend</title>
+  <style>
+    body {
+      background-color: #7a00aa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      width: 100vw;
+      height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    main {
+      background-color: white;
+      max-width: 720px;
+      margin: 2rem;
+      padding: 2rem;
+      border-radius: 5px;
+    }
+    h1 {
+      margin-block-start: .3em;
+      text-align: center;
+    }
+    p {
+      margin-block-end: 0;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Korga Backend</h1>
+    <hr>
+    <p>
+      This Korga server does not have an optimized production build of the frontend in its web root.
+    </p>
+    <p>
+      To use the frontend in development setups run <code>npm&nbsp;run&nbsp;serve</code> in the <code>webapp</code> directory.
+    </p>
+    <p>
+      If you get this page in production from an official Docker container, please report an issue on <a href="https://github.com/daniel-lerch/korga/issues">GitHub</a>.<br>
+      In case you are not using our Docker container, make sure that you have built the frontend with <code>npm&nbsp;run&nbsp;build</code>
+      and copied the contents of <code>webapp/dist</code> to the <code>wwwroot</code> folder of the ASP.NET Core backend server.
+    </p>
+  </main>
+</body>
+</html>

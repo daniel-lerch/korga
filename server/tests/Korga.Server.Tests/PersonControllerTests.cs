@@ -21,6 +21,8 @@ namespace Korga.Server.Tests
         public void Initialize()
         {
             server = new TestServer(new WebHostBuilder()
+                // Working directory: tests/Korga.Server.Tests/bin/Release/netcoreapp3.1
+                .UseWebRoot("../../../../../src/Korga.Server/wwwroot")
                 .ConfigureAppConfiguration(builder =>
                 {
                     builder.AddKorga();
