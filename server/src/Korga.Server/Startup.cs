@@ -72,10 +72,7 @@ namespace Korga.Server
                 endpoints.MapControllers();
             });
 
-            app.UseSpa(spa =>
-            {
-                spa.Options.SourcePath = env.WebRootPath;
-            });
+            app.UseSpa(spa => spa.UseVueSpaFileProvider());
         }
     }
 }
