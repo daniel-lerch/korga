@@ -18,6 +18,37 @@ It is rather the link between several open source applications, while it itself 
 | Chat | Synapse (Matrix),<br>Rocket.Chat,<br>Nextcloud Talk |
 | Website | WordPress |
 
+## Installation
+
+The only officially supported distribution are Docker containers. As there have not been releases so far you have to build the container locally:
+
+```
+$ docker build -t daniel-lerch/korga https://github.com/daniel-lerch/korga.git
+```
+
+If you are using Docker Compose, take a look our example compose file in the `docs` folder.
+
+## Contributing
+
+Contributions are highly welcome. Please open an issue before implementing a feature to discuss your plans.
+
+Korga's source code is split into the backend (located in `server`) and the frontend (located in `webapp`).
+The following instructions are written for Windows but generally also apply to Linux development setups.
+
+### Backend
+- Visual Studio 2019
+- .NET Core SDK 3.1
+- MySQL or MariaDB _(e.g. from [PSModules](https://github.com/daniel-lerch/psmodules))_
+- OpenLDAP server
+
+### Frontend
+- Visual Studio Code
+- Vetur Extension
+- NodeJS 14 LTS
+
+During development the frontend running on the Vue CLI development server will use _http://localhost:50805_ as API endpoint.
+That means the backend can be running in Visual Studio with Debugger attached.
+
 ## Roadmap
 
 Person API
