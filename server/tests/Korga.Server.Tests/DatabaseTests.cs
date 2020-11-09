@@ -17,7 +17,7 @@ namespace Korga.Server.Tests
         [TestInitialize]
         public void Initialize()
         {
-            serviceProvider = TestServiceCollection.CreateDefault().BuildServiceProvider();
+            serviceProvider = TestHost.CreateServiceCollection().BuildServiceProvider();
         }
 
         [TestMethod]

@@ -1,6 +1,4 @@
 ﻿using Korga.Server.Models.Json;
-using Korga.Server.Tests.Extensions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
@@ -8,7 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 
-namespace Korga.Server.Tests
+namespace Korga.Server.Tests.Http
 {
     [TestClass]
     public class PersonControllerTests
@@ -20,15 +18,7 @@ namespace Korga.Server.Tests
         [TestInitialize]
         public void Initialize()
         {
-            server = new TestServer(new WebHostBuilder()
-                // Working directory: tests/Korga.Server.Tests/bin/Release/netcoreapp3.1
-                .UseWebRoot("../../../../../src/Korga.Server/wwwroot")
-                .ConfigureAppConfiguration(builder =>
-                {
-                    builder.AddKorga();
-                })
-                .UseStartup<Startup>());
-
+            server = TestHost.CreateTestServer();
             client = server.CreateClient();
         }
 
