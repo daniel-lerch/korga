@@ -7,12 +7,12 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
-    name: Build and integration tests
+  server:
+    name: Backend build and integration tests
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
-    - name: Setup .NET Core SDK
+    - name: Setup .NET SDK
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.x
@@ -29,6 +29,7 @@ jobs:
         dotnet run -c Release --no-build -p server/src/Korga.Server -- database create --populate
 
         # Install and configure OpenLDAP server
+        sudo apt-get update -yq
         sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends slapd
         cat <<EOF | sudo debconf-set-selections
         slapd slapd/internal/generated_adminpw password admin
@@ -50,3 +51,19 @@ jobs:
         dotnet run -c Release --no-build -p server/src/Korga.Server -- ldap create
     - name: Test
       run: dotnet test -c Release --no-build --verbosity normal
+
+  webapp:
+    name: Frontend build
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup NodeJS
+      uses: actions/setup-node@v1
+      with:
+        node-version: '14'
+    - name: Restore NPM packages
+      run: npm install
+      working-directory: webapp
+    - name: Build
+      run: npm run build
+      working-directory: webapp
