@@ -1,7 +1,8 @@
 <template>
   <nav class="navbar navbar-light bg-light">
-    <form @submit.prevent class="form-inline">
-      <input type="search" v-model="searchQuery" class="form-control" placeholder="Search">
+    <form @submit.prevent class="form-inline my-2 my-lg-0">
+      <input type="search" v-model="searchQuery" class="form-control mr-sm-2" placeholder="Search">
+      <router-link :to="{ name: 'Person', params: { id: 'new' }}" class="btn btn-outline-primary my-2 my-sm-0">Create a person</router-link>
     </form>
   </nav>
   <Loading v-if="state.loaded === false" :state="state" />

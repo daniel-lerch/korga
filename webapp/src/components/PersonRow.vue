@@ -35,3 +35,11 @@ export default defineComponent({
   }
 })
 </script>
+
+<style scoped>
+.col {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+</style>
