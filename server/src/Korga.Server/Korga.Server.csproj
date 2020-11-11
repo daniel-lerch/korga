@@ -1,18 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UserSecretsId>0b7f922b-d34d-492a-8f1b-558cfd52ea3b</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="3.1.0-beta.356" />
-    <PackageReference Include="McMaster.Extensions.Hosting.CommandLine" Version="3.1.0-beta.356" />
-    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="3.1.9" />
-    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="3.2.3" />
-    <PackageReference Include="System.DirectoryServices.Protocols" Version="5.0.0-rc.2.20475.5" />
-    <PackageReference Include="System.Text.Json" Version="5.0.0-rc.2.20475.5" />
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="3.1.0-rc.371" />
+    <PackageReference Include="McMaster.Extensions.Hosting.CommandLine" Version="3.1.0-rc.371" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="5.0.0" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="3.2.4" />
+    <PackageReference Include="System.DirectoryServices.Protocols" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -22,7 +22,7 @@ namespace Korga.Server
             if (Debugger.IsAttached && !NativeMethods.IsRunningInProcessIIS())
             {
                 Console.Write("Korga server is running in debug mode. Please enter your command: ");
-                args = Console.ReadLine().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                args = Console.ReadLine()?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
                 Console.WriteLine();
             }
 #endif

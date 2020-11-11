@@ -26,8 +26,9 @@ namespace Korga.Server.Tests.Http
         public async Task TestGetPeople()
         {
             var people = await client.GetFromJsonAsync<PersonResponse[]>("/api/people");
-            Assert.IsTrue(people.Length > 0, "No people found. Please make sure to populate the database before testing.");
-            Assert.IsTrue(people.Any(person => person.GivenName == "Karl-Heinz" && person.FamilyName == "Günther" && person.MailAddress == "gunther@example.com"));
+            Assert.IsNotNull(people);
+            Assert.IsTrue(people!.Length > 0, "No people found. Please make sure to populate the database before testing.");
+            Assert.IsTrue(people!.Any(person => person.GivenName == "Karl-Heinz" && person.FamilyName == "Günther" && person.MailAddress == "gunther@example.com"));
         }
 
         [TestMethod]
@@ -36,10 +37,11 @@ namespace Korga.Server.Tests.Http
             var request = new CreatePersonRequest("Lara", "Croft", mailAddress: null);
             var response = await client.PostAsJsonAsync("/api/person/new", request);
             var person = await response.Content.ReadFromJsonAsync<PersonResponse2>();
-            Assert.AreNotEqual(0, person.Id);
-            Assert.AreEqual("Lara", person.GivenName);
-            Assert.AreEqual("Croft", person.FamilyName);
-            Assert.AreNotEqual(default, person.CreationTime);
+            Assert.IsNotNull(person);
+            Assert.AreNotEqual(0, person!.Id);
+            Assert.AreEqual("Lara", person!.GivenName);
+            Assert.AreEqual("Croft", person!.FamilyName);
+            Assert.AreNotEqual(default, person!.CreationTime);
         }
     }
 }

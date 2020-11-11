@@ -16,7 +16,7 @@ namespace Korga.Server.Tests.Http
             HttpClient client = server.CreateClient();
 
             var response = await client.GetAsync("/");
-            Assert.AreEqual("text/html", response.Content.Headers.ContentType.MediaType);
+            Assert.AreEqual("text/html", response.Content.Headers.ContentType?.MediaType);
             string body = await response.Content.ReadAsStringAsync();
             Assert.IsTrue(body.StartsWith("<!DOCTYPE html>"), "Body is missing DOCTYPE");
             Assert.IsTrue(body.Contains("window.resourceBasePath = '/'"), "Body is missing pathbase");
@@ -31,7 +31,7 @@ namespace Korga.Server.Tests.Http
             HttpClient client = server.CreateClient();
 
             var response = await client.GetAsync(pathbase);
-            Assert.AreEqual("text/html", response.Content.Headers.ContentType.MediaType);
+            Assert.AreEqual("text/html", response.Content.Headers.ContentType?.MediaType);
             string body = await response.Content.ReadAsStringAsync();
             Assert.IsTrue(body.StartsWith("<!DOCTYPE html>"), "Body is missing DOCTYPE");
             Assert.IsTrue(body.Contains($"window.resourceBasePath = '{pathbase}/'"), "Body is missing pathbase");

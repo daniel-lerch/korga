@@ -10,7 +10,8 @@ namespace Korga.Server.Tests
     [TestClass]
     public class LdapServiceTests
     {
-        private IServiceProvider? serviceProvider;
+        // This variable is set by the test host
+        private IServiceProvider serviceProvider = null!;
 
         [TestInitialize]
         public void Initizalize()
