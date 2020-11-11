@@ -1,8 +1,11 @@
 ﻿using Korga.Server.Database;
 using Korga.Server.Database.Entities;
 using McMaster.Extensions.CommandLineUtils;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
+#pragma warning disable CA1822 // Mark members as static
 #pragma warning disable IDE0051 // Remove unused private members
 
 namespace Korga.Server.Commands
@@ -61,26 +64,59 @@ namespace Korga.Server.Commands
 
         private static async Task PopulateDatabase(DatabaseContext database)
         {
+            // Admin
             var admin = new Person("Karl-Heinz", "Günther") { MailAddress = "gunther@example.com" };
             database.People.Add(admin);
             await database.SaveChangesAsync();
 
-            var person = new Person("Max", "Mustermann") { MailAddress = "mustermann@example.com", CreatorId = admin.Id };
-            database.People.Add(person);
+            // Members of multiple groups/roles
+            var max = new Person("Max", "Mustermann") { MailAddress = "mustermann@example.com", CreatorId = admin.Id };
+            var linda = new Person("Linda", "Koch") { MailAddress = "lindakoch@example.com", CreatorId = admin.Id };
+            database.People.AddRange(max, linda);
 
-            var group = new Group("Jugend") { Description = "Gruppe für Jugendliche ab 14 Jahren", CreatorId = admin.Id };
-            database.Groups.Add(group);
+            // Official members
+            List<Person> members = new()
+            {
+                new("Susanne", "Günther") { MailAddress = "susanne.gunther@example.com", CreatorId = admin.Id },
+                new("David", "Neumann") { MailAddress = "neumann@example.com", CreatorId = admin.Id },
+                new("Eva", "Neumann") { MailAddress = "neumann@example.com", CreatorId = admin.Id },
+                new("Johannes", "Schäfer") { MailAddress = "j.schaefer@example.com", CreatorId = admin.Id },
+                new("Katharina", "Schäfer") { MailAddress = "k.schaefer@example.com", CreatorId = admin.Id }
+            };
+            database.People.AddRange(members);
+            members.AddRange(new[] { admin, max, linda});
+
+            // Youth members
+            List<Person> youths = new()
+            {
+                new("Elias", "Müller") { CreatorId = admin.Id },
+                new("Leonie", "Neumann") { CreatorId = admin.Id },
+                new("Jonas", "Neumann") { CreatorId = admin.Id },
+                new("Sarah", "Schulz") { CreatorId = admin.Id },
+                new("Anna", "Schäfer") { CreatorId = admin.Id },
+                new("Lukas", "Meyer") { CreatorId = admin.Id }
+            };
+            database.People.AddRange(youths);
+            youths.AddRange(new[] { max, linda });
+
+            var memberGroup = new Group("Mitglieder") { Description = "Mitglieder der Gemeinde", CreatorId = admin.Id };
+            var youthGroup = new Group("Jugend") { Description = "Gruppe für Jugendliche ab 14 Jahren", CreatorId = admin.Id };
+            database.Groups.AddRange(memberGroup, youthGroup);
             await database.SaveChangesAsync();
 
-            var member = new GroupRole("Teilnehmer") { GroupId = group.Id, CreatorId = admin.Id };
-            var leader = new GroupRole("Leiter") { GroupId = group.Id, CreatorId = admin.Id };
-            database.GroupRoles.Add(member);
-            database.GroupRoles.Add(leader);
+            var memberMember = new GroupRole("Mitglied") { GroupId = memberGroup.Id, CreatorId = admin.Id };
+            var youthMember = new GroupRole("Teilnehmer") { GroupId = youthGroup.Id, CreatorId = admin.Id };
+            var youthLeader = new GroupRole("Leiter") { GroupId = youthGroup.Id, CreatorId = admin.Id };
+            database.GroupRoles.AddRange(memberMember, youthMember, youthLeader);
             await database.SaveChangesAsync();
 
-            database.GroupMembers.Add(new GroupMember { PersonId = person.Id, GroupRoleId = member.Id, CreatorId = admin.Id });
-            database.GroupMembers.Add(new GroupMember { PersonId = admin.Id, GroupRoleId = member.Id, CreatorId = admin.Id });
-            database.GroupMembers.Add(new GroupMember { PersonId = admin.Id, GroupRoleId = leader.Id, CreatorId = admin.Id });
+            database.GroupMembers.AddRange(
+                members.Select(m => new GroupMember { PersonId = m.Id, GroupRoleId = memberMember.Id, CreatorId = admin.Id }));
+
+            database.GroupMembers.Add(new GroupMember { PersonId = max.Id, GroupRoleId = youthLeader.Id, CreatorId = admin.Id });
+            database.GroupMembers.AddRange(
+                youths.Select(y => new GroupMember { PersonId = y.Id, GroupRoleId = youthMember.Id, CreatorId = admin.Id }));
+
             await database.SaveChangesAsync();
         }
     }

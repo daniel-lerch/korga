@@ -60,7 +60,6 @@ namespace Korga.Server.Database
             // Mutable entity → snapshots preserve history
             var person = modelBuilder.Entity<Person>();
             person.HasKey(p => p.Id);
-            person.HasIndex(p => p.MailAddress).IsUnique();
             ConfigureMutableEntityBase(person);
 
             var personSnapshot = modelBuilder.Entity<PersonSnapshot>();

@@ -37,7 +37,7 @@ The following instructions are written for Windows but generally also apply to L
 
 ### Backend
 - Visual Studio 2019
-- .NET Core SDK 3.1
+- .NET SDK 5.0
 - MySQL or MariaDB _(e.g. from [PSModules](https://github.com/daniel-lerch/psmodules))_
 - OpenLDAP server
 
