@@ -21,6 +21,7 @@
 
 <script lang="ts">
 import { defineComponent, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { PersonResponse, getPerson, createPerson } from '../services/person'
 import Loading from '@/components/Loading.vue'
 
@@ -35,6 +36,7 @@ export default defineComponent({
     }
   },
   setup (props) {
+    const router = useRouter()
     const person = ref<PersonResponse | null>(null)
     const state = ref({ loaded: false, error: null })
     const exists = ref(props.id !== 'new')
@@ -80,7 +82,7 @@ export default defineComponent({
           person.value = response
           state.value.loaded = true
           document.title = response.givenName + ' ' + response.familyName + ' - Korga'
-          // TODO change router path
+          router.replace({ name: 'Person', params: { id: response.id.toString() } })
         })
       }
       e.preventDefault()
