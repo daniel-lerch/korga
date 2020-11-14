@@ -53,38 +53,11 @@ namespace Korga.Server.Tests
 
                 Person person = await database.People.AsTracking().SingleAsync(p => p.Id == personId);
 
-                while (true)
+                await database.UpdatePerson(person, p =>
                 {
-                    try
-                    {
-                        string? oldAddress = person.MailAddress;
-
-                        person.MailAddress = $"mustermann{index}@example.com";
-                        person.Version++;
-                        await database.SaveChangesAsync();
-
-                        database.PersonSnapshots.Add(new PersonSnapshot("Max", "Mustermann")
-                        {
-                            PersonId = personId,
-                            Version = person.Version,
-                            MailAddress = oldAddress
-                        });
-
-                        await database.SaveChangesAsync();
-
-                        break;
-                    }
-                    catch (DbUpdateConcurrencyException ex)
-                    {
-                        if (ex.Entries.Count != 1 || !(ex.Entries[0].Entity is Person))
-                            throw new NotSupportedException("Concurrency conflicts can only be handled for a single entity of type " + nameof(Person), ex);
-
-                        var entry = ex.Entries[0];
-                        var databaseValues = await entry.GetDatabaseValuesAsync();
-                        entry.OriginalValues.SetValues(databaseValues);
-                        entry.CurrentValues.SetValues(databaseValues);
-                    }
-                }
+                    p.MailAddress = $"mustermann{index}@example.com";
+                    p.Version++;
+                });
             }
         }
     }

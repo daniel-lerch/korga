@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace Korga.Server.Database
 {
-    public class DatabaseContext : DbContext
+    public sealed partial class DatabaseContext : DbContext
     {
         private const string currentTimestamp = "CURRENT_TIMESTAMP(6)";
         private readonly IOptions<DatabaseOptions> options;
@@ -131,7 +131,7 @@ namespace Korga.Server.Database
             sendRoleSnapshot.HasOne(rs => rs.SendRole).WithMany().HasForeignKey(rs => rs.SendRoleId);
             ConfigureSnapshotBase(sendRoleSnapshot);
 
-            
+
             // Immutable entity → preserves history
             var message = modelBuilder.Entity<Message>();
             message.HasKey(m => m.Id);

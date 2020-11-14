@@ -113,7 +113,7 @@ Updates an existing person if a value is different.
 }
 ```
 
-Response: 200 OK with `PersonResponse2` or 204 No Content without body
+Response body: `PersonResponse2`
 
 ---
 

@@ -26,10 +26,9 @@ namespace Korga.Server.Tests.Http
         [TestMethod]
         public async Task TestGetPeople()
         {
-            var people = await client.GetFromJsonAsync<PersonResponse[]>("/api/people");
-            Assert.IsNotNull(people);
-            Assert.IsTrue(people!.Length > 0, "No people found. Please make sure to populate the database before testing.");
-            Assert.IsTrue(people!.Any(person => person.GivenName == "Karl-Heinz" && person.FamilyName == "Günther" && person.MailAddress == "gunther@example.com"));
+            var people = await client.GetFromJsonAsync<PersonResponse[]>("/api/people") ?? throw new AssertFailedException();
+            Assert.IsTrue(people.Length > 0, "No people found. Please make sure to populate the database before testing.");
+            Assert.IsTrue(people.Any(person => person.GivenName == "Karl-Heinz" && person.FamilyName == "Günther" && person.MailAddress == "gunther@example.com"));
         }
 
         [TestMethod]
@@ -37,22 +36,45 @@ namespace Korga.Server.Tests.Http
         {
             var request = new PersonRequest("Lara", "Croft", mailAddress: null);
             var response = await client.PostAsJsonAsync("/api/person/new", request);
-            var person = await response.Content.ReadFromJsonAsync<PersonResponse2>();
-            Assert.IsNotNull(person);
-            Assert.AreNotEqual(0, person!.Id);
-            Assert.AreEqual("Lara", person!.GivenName);
-            Assert.AreEqual("Croft", person!.FamilyName);
-            Assert.AreNotEqual(default, person!.CreationTime);
+            var person = await response.Content.ReadFromJsonAsync<PersonResponse2>() ?? throw new AssertFailedException();
+            Assert.AreNotEqual(0, person.Id);
+            Assert.AreEqual("Lara", person.GivenName);
+            Assert.AreEqual("Croft", person.FamilyName);
+            Assert.AreNotEqual(default, person.CreationTime);
         }
 
         [TestMethod]
         public async Task TestUpdatePerson_NoChange()
         {
-            var person = await client.GetFromJsonAsync<PersonResponse2>("/api/person/1");
-            Assert.IsNotNull(person);
-            var request = new PersonRequest(person!.GivenName, person!.FamilyName, person!.MailAddress);
+            var person = await client.GetFromJsonAsync<PersonResponse2>("/api/person/1") ?? throw new AssertFailedException();
+
+            var request = new PersonRequest(person.GivenName, person.FamilyName, person.MailAddress);
             var response = await client.PutAsJsonAsync("/api/person/1", request);
-            Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+
+            var person2 = await response.Content.ReadFromJsonAsync<PersonResponse2>() ?? throw new AssertFailedException();
+            Assert.AreEqual(person.History.Count, person2.History.Count);
+        }
+
+        [TestMethod]
+        public async Task TestUpdatePerson_NonConcurrent()
+        {
+            var person = await client.GetFromJsonAsync<PersonResponse2>("/api/person/5") ?? throw new AssertFailedException();
+
+            string? oldMailAddress = person.MailAddress;
+            var request1 = new PersonRequest(person.GivenName, person.FamilyName, "unit.test@example.com");
+            var response1 = await client.PutAsJsonAsync("/api/person/5", request1);
+            Assert.AreEqual(HttpStatusCode.OK, response1.StatusCode);
+
+            var person2 = await response1.Content.ReadFromJsonAsync<PersonResponse2>() ?? throw new AssertFailedException();
+            Assert.AreEqual(person.History.Count + 1, person2.History.Count);
+
+            var request2 = new PersonRequest(person.GivenName, person.FamilyName, oldMailAddress);
+            var response2 = await client.PutAsJsonAsync("/api/person/5", request2);
+            Assert.AreEqual(HttpStatusCode.OK, response2.StatusCode);
+
+            var person3 = await response2.Content.ReadFromJsonAsync<PersonResponse2>() ?? throw new AssertFailedException();
+            Assert.AreEqual(person2.History.Count + 1, person3.History.Count);
         }
     }
 }

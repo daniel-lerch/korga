@@ -59,13 +59,23 @@ namespace Korga.Server.Controllers
         [HttpPut("~/api/person/{id}")]
         public async Task<IActionResult> UpdatePerson(int id, [FromBody] PersonRequest request)
         {
-            Person? person = await database.People.Where(p => p.Id == id).Include(p => p.Creator).Include(p => p.Deletor).SingleOrDefaultAsync();
+            Person? person = await database.People.AsTracking().Where(p => p.Id == id).Include(p => p.Creator).Include(p => p.Deletor).SingleOrDefaultAsync();
             if (person == null) return StatusCode(404);
 
-            if (!request.Changes(person)) return StatusCode(204);
+            if (request.Changes(person))
+            {
+                await database.UpdatePerson(person, p =>
+                {
+                    p.GivenName = request.GivenName;
+                    p.FamilyName = request.FamilyName;
+                    p.MailAddress = request.MailAddress;
+                    p.Version++;
+                });
+            }
 
-            // TODO: Implement the database update, insert a snapshot and handle concurrency errors
-            throw new NotImplementedException();
+            List<PersonSnapshot> snapshots = await database.PersonSnapshots.Where(ps => ps.PersonId == id).Include(ps => ps.Editor).ToListAsync();
+
+            return new JsonResult(new PersonResponse2(person, snapshots));
         }
     }
 }
