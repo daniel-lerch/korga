@@ -101,7 +101,19 @@ Creates a new person.
 }
 ```
 
-Response body: `PersonResponse2` (see example above)
+Response body: `PersonResponse2`
+
+### `PUT /api/person/{id}`
+Updates an existing person if a value is different.
+```json
+{
+  "givenName": "Max",
+  "familyName": "Mustermann",
+  "mailAddress": "mustermann@example.com"
+}
+```
+
+Response: 200 OK with `PersonResponse2` or 204 No Content without body
 
 ---
 

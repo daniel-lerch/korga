@@ -55,7 +55,7 @@ Person API
 - [x] List
 - [x] Details
 - [x] Create
-- [ ] Modify
+- [x] Modify
 - [ ] Delete
 - [ ] Avatar
 - [ ] Profile image

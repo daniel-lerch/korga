@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
@@ -34,7 +35,7 @@ namespace Korga.Server.Tests.Http
         [TestMethod]
         public async Task TestCreatePerson()
         {
-            var request = new CreatePersonRequest("Lara", "Croft", mailAddress: null);
+            var request = new PersonRequest("Lara", "Croft", mailAddress: null);
             var response = await client.PostAsJsonAsync("/api/person/new", request);
             var person = await response.Content.ReadFromJsonAsync<PersonResponse2>();
             Assert.IsNotNull(person);
@@ -42,6 +43,16 @@ namespace Korga.Server.Tests.Http
             Assert.AreEqual("Lara", person!.GivenName);
             Assert.AreEqual("Croft", person!.FamilyName);
             Assert.AreNotEqual(default, person!.CreationTime);
+        }
+
+        [TestMethod]
+        public async Task TestUpdatePerson_NoChange()
+        {
+            var person = await client.GetFromJsonAsync<PersonResponse2>("/api/person/1");
+            Assert.IsNotNull(person);
+            var request = new PersonRequest(person!.GivenName, person!.FamilyName, person!.MailAddress);
+            var response = await client.PutAsJsonAsync("/api/person/1", request);
+            Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
         }
     }
 }
