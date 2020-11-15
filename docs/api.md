@@ -55,32 +55,32 @@ Response body: `PersonResponse2`
     },
     "roleId": 1,
     "creationTime": "",
-    "creator": {
+    "createdBy": {
       "id": 1,
       "givenName": "Karl-Heinz",
       "familyName": "Günther",
       "mailAddress": "gunther@example.com"               
     },
     "deletionTime": null,
-    "deletor": null
+    "deletedBy": null
   },
   "creationTime": "2020-09-25T16:34:15.6167655+02:00",
-  "creator": {
+  "createdBy": {
     "id": 1,
     "givenName": "Karl-Heinz",
     "familyName": "Günther",
     "mailAddress": "gunther@example.com"
   },
   "deletionTime": null,
-  "deletor": null,
+  "deletedBy": null,
   "history": [
     {
       "version": 1,
       "givenName": "Max",
       "familyName": "Mustermann",
       "mailAddress": null,
-      "editTime": "2020-09-25T18:35:34.6606819+02:00",
-      "editor": {
+      "overrideTime": "2020-09-25T18:35:34.6606819+02:00",
+      "overriddenBy": {
         "id": 1,
         "givenName": "Karl-Heinz",
         "familyName": "Günther",
@@ -158,7 +158,7 @@ Response body: `GroupResponse2`
       "id": 1,
       "version": 1,
       "name": "Teilnehmer",
-      "creator": {
+      "createdBy": {
         "id": 1,
         "givenName": "Karl-Heinz",
         "familyName": "Günther",
@@ -166,14 +166,14 @@ Response body: `GroupResponse2`
       },
       "creationTime": "2020-09-30T10:15:31.0829675+02:00",
       "deletionTime": null,
-      "deletor": null,
+      "deletedBy": null,
       "history": []
     },
     {
       "id": 2,
       "version": 2,
       "name": "Leiter",
-      "creator": {
+      "createdBy": {
         "id": 1,
         "givenName": "Karl-Heinz",
         "familyName": "Günther",
@@ -181,13 +181,13 @@ Response body: `GroupResponse2`
       },
       "creationTime": "2020-09-30T10:15:31.0829675+02:00",
       "deletionTime": null,
-      "deletor": null,
+      "deletedBy": null,
       "history": [
         {
           "version": 1,
           "name": "Leitung",
-          "editTime": "2020-09-30T10:52:45.6063725+02:00",
-          "editor": {
+          "overrideTime": "2020-09-30T10:52:45.6063725+02:00",
+          "overriddenBy": {
             "id": 1,
             "givenName": "Karl-Heinz",
             "familyName": "Günther",
@@ -207,14 +207,14 @@ Response body: `GroupResponse2`
       },
       "roleId": 1,
       "creationTime": "",
-      "creator": {
+      "createdBy": {
         "id": 1,
         "givenName": "Karl-Heinz",
         "familyName": "Günther",
         "mailAddress": "gunther@example.com"               
       },
       "deletionTime": null,
-      "deletor": null
+      "deletedBy": null
     },
     {
       "person": {
@@ -225,32 +225,32 @@ Response body: `GroupResponse2`
       },
       "roleId": 2,
       "creationTime": "",
-      "creator": {
+      "createdBy": {
         "id": 1,
         "givenName": "Karl-Heinz",
         "familyName": "Günther",
         "mailAddress": "gunther@example.com"               
       },
       "deletionTime": null,
-      "deletor": null
+      "deletedBy": null
     }
   ],
   "creationTime": "2020-09-30T10:15:31.0829675+02:00",
-  "creator": {
+  "createdBy": {
     "id": 1,
     "givenName": "Karl-Heinz",
     "familyName": "Günther",
     "mailAddress": "gunther@example.com"               
   },
   "deletionTime": null,
-  "deletor": null,
+  "deletedBy": null,
   "history": [
     {
       "version": 1,
       "name": "Jugend",
       "description": null,
-      "editTime": "2020-09-20T10:25:45.5893077+02:00",
-      "editor": {
+      "overrideTime": "2020-09-20T10:25:45.5893077+02:00",
+      "overriddenBy": {
         "id": 1,
         "givenName": "Karl-Heinz",
         "familyName": "Günther",

@@ -34,10 +34,10 @@ namespace Korga.Server.Controllers
         [HttpGet("~/api/person/{id}")]
         public async Task<IActionResult> GetPerson(int id)
         {
-            Person? person = await database.People.Where(p => p.Id == id).Include(p => p.Creator).Include(p => p.Deletor).SingleOrDefaultAsync();
+            Person? person = await database.People.Where(p => p.Id == id).Include(p => p.CreatedBy).Include(p => p.DeletedBy).SingleOrDefaultAsync();
             if (person == null) return StatusCode(404);
 
-            List<PersonSnapshot> snapshots = await database.PersonSnapshots.Where(ps => ps.PersonId == id).Include(ps => ps.Editor).ToListAsync();
+            List<PersonSnapshot> snapshots = await database.PersonSnapshots.Where(ps => ps.PersonId == id).Include(ps => ps.OverriddenBy).ToListAsync();
 
             return new JsonResult(new PersonResponse2(person, snapshots));
         }
@@ -59,7 +59,7 @@ namespace Korga.Server.Controllers
         [HttpPut("~/api/person/{id}")]
         public async Task<IActionResult> UpdatePerson(int id, [FromBody] PersonRequest request)
         {
-            Person? person = await database.People.AsTracking().Where(p => p.Id == id).Include(p => p.Creator).Include(p => p.Deletor).SingleOrDefaultAsync();
+            Person? person = await database.People.AsTracking().Where(p => p.Id == id).Include(p => p.CreatedBy).Include(p => p.DeletedBy).SingleOrDefaultAsync();
             if (person == null) return StatusCode(404);
 
             if (request.Changes(person))
@@ -73,7 +73,7 @@ namespace Korga.Server.Controllers
                 });
             }
 
-            List<PersonSnapshot> snapshots = await database.PersonSnapshots.Where(ps => ps.PersonId == id).Include(ps => ps.Editor).ToListAsync();
+            List<PersonSnapshot> snapshots = await database.PersonSnapshots.Where(ps => ps.PersonId == id).Include(ps => ps.OverriddenBy).ToListAsync();
 
             return new JsonResult(new PersonResponse2(person, snapshots));
         }

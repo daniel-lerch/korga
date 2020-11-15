@@ -10,9 +10,9 @@ export interface PersonResponse {
 export interface PersonResponse2 extends PersonResponse {
   version: number;
   creationTime: Date;
-  creator: PersonResponse | null;
+  createdBy: PersonResponse | null;
   deletionTime: Date | null;
-  deletor: PersonResponse | null;
+  deletedBy: PersonResponse | null;
   history: PersonSnapshot[];
 }
 
@@ -21,8 +21,8 @@ export interface PersonSnapshot {
   givenName: string;
   familyName: string;
   mailAddress: string | null;
-  editTime: Date;
-  editor: PersonResponse | null;
+  overrideTime: Date;
+  overriddenBy: PersonResponse | null;
 }
 
 export interface CreatePersonRequest {

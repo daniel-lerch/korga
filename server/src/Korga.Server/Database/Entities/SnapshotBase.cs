@@ -6,8 +6,8 @@ namespace Korga.Server.Database.Entities
     {
         public int Version { get; set; }
 
-        public DateTime EditTime { get; set; }
-        public int? EditorId { get; set; }
-        public Person? Editor { get; set; }
+        public DateTime OverrideTime { get; set; }
+        public int? OverriddenById { get; set; }
+        public Person? OverriddenBy { get; set; }
     }
 }

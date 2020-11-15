@@ -157,8 +157,8 @@ namespace Korga.Server.Database
         private static void ConfigureEntityBase<T>(EntityTypeBuilder<T> entity) where T : EntityBase
         {
             entity.Property(x => x.CreationTime).HasDefaultValueSql(currentTimestamp);
-            entity.HasOne(x => x.Creator).WithMany().HasForeignKey(x => x.CreatorId).OnDelete(DeleteBehavior.SetNull);
-            entity.HasOne(x => x.Deletor).WithMany().HasForeignKey(x => x.DeletorId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(x => x.CreatedBy).WithMany().HasForeignKey(x => x.CreatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(x => x.DeletedBy).WithMany().HasForeignKey(x => x.DeletedById).OnDelete(DeleteBehavior.SetNull);
         }
 
         private static void ConfigureMutableEntityBase<T>(EntityTypeBuilder<T> entity) where T : MutableEntityBase
@@ -170,8 +170,8 @@ namespace Korga.Server.Database
         private static void ConfigureSnapshotBase<T>(EntityTypeBuilder<T> entity) where T : SnapshotBase
         {
             entity.Property(x => x.Version).ValueGeneratedNever();
-            entity.Property(x => x.EditTime).HasDefaultValueSql(currentTimestamp);
-            entity.HasOne(x => x.Editor).WithMany().HasForeignKey(x => x.EditorId).OnDelete(DeleteBehavior.SetNull);
+            entity.Property(x => x.OverrideTime).HasDefaultValueSql(currentTimestamp);
+            entity.HasOne(x => x.OverriddenBy).WithMany().HasForeignKey(x => x.OverriddenById).OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

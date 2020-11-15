@@ -43,9 +43,9 @@ namespace Korga.Server.Models.Json
             FamilyName = person.FamilyName;
             MailAddress = person.MailAddress;
             CreationTime = person.CreationTime;
-            Creator = person.Creator == null ? null : new PersonResponse(person.Creator);
+            CreatedBy = person.CreatedBy == null ? null : new PersonResponse(person.CreatedBy);
             DeletionTime = person.DeletionTime == default ? null : (DateTime?)person.DeletionTime;
-            Deletor = person.Deletor == null ? null : new PersonResponse(person.Deletor);
+            DeletedBy = person.DeletedBy == null ? null : new PersonResponse(person.DeletedBy);
             History = new List<Snapshot>(history.Select(ps => new Snapshot(ps)));
         }
 
@@ -55,9 +55,9 @@ namespace Korga.Server.Models.Json
         public string FamilyName { get; set; }
         public string? MailAddress { get; set; }
         public DateTime CreationTime { get; set; }
-        public PersonResponse? Creator { get; set; }
+        public PersonResponse? CreatedBy { get; set; }
         public DateTime? DeletionTime { get; set; }
-        public PersonResponse? Deletor { get; set; }
+        public PersonResponse? DeletedBy { get; set; }
         public IList<Snapshot> History { get;set; }
 
         public class Snapshot
@@ -75,16 +75,16 @@ namespace Korga.Server.Models.Json
                 GivenName = snapshot.GivenName;
                 FamilyName = snapshot.FamilyName;
                 MailAddress = snapshot.MailAddress;
-                EditTime = snapshot.EditTime;
-                Editor = snapshot.Editor == null ? null : new PersonResponse(snapshot.Editor);
+                OverrideTime = snapshot.OverrideTime;
+                OverriddenBy = snapshot.OverriddenBy is null ? null : new PersonResponse(snapshot.OverriddenBy);
             }
 
             public int Version { get; set; }
             public string GivenName { get; set; }
             public string FamilyName { get; set; }
             public string? MailAddress { get; set; }
-            public DateTime EditTime { get; set; }
-            public PersonResponse? Editor { get; set; }
+            public DateTime OverrideTime { get; set; }
+            public PersonResponse? OverriddenBy { get; set; }
         }
     }
 }
