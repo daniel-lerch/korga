@@ -2,6 +2,7 @@
 using Korga.Server.Database.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Korga.Server.Database
@@ -10,6 +11,7 @@ namespace Korga.Server.Database
     {
         private const string currentTimestamp = "CURRENT_TIMESTAMP(6)";
         private readonly IOptions<DatabaseOptions> options;
+        private readonly ILoggerFactory loggerFactory;
 
         public DbSet<Person> People => Set<Person>();
         public DbSet<PersonSnapshot> PersonSnapshots => Set<PersonSnapshot>();
@@ -26,16 +28,18 @@ namespace Korga.Server.Database
         public DbSet<MessageAssignment> MessageAssignments => Set<MessageAssignment>();
         public DbSet<MessageReview> MessageReviews => Set<MessageReview>();
 
-        public DatabaseContext(IOptions<DatabaseOptions> options)
+        public DatabaseContext(IOptions<DatabaseOptions> options, ILoggerFactory loggerFactory)
         {
             this.options = options;
+            this.loggerFactory = loggerFactory;
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
 
-            optionsBuilder.UseMySql(options.Value.ConnectionString);
+            optionsBuilder.UseLoggerFactory(loggerFactory);
+            optionsBuilder.UseMySql(options.Value.ConnectionString, ServerVersion.AutoDetect(options.Value.ConnectionString));
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
