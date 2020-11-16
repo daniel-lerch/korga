@@ -72,9 +72,9 @@ namespace Korga.Server.Models.Json
         public class Membership
         {
             [JsonConstructor]
-            public Membership(string groupRoleName, string groupName)
+            public Membership(string roleName, string groupName)
             {
-                RoleName = groupRoleName;
+                RoleName = roleName;
                 GroupName = groupName;
             }
 

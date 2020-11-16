@@ -32,6 +32,19 @@ namespace Korga.Server.Tests.Http
         }
 
         [TestMethod]
+        public async Task TestGetPerson()
+        {
+            var person = await client.GetFromJsonAsync<PersonResponse2>("/api/person/1") ?? throw new AssertFailedException();
+            Assert.AreNotEqual(default, person.CreationTime);
+            Assert.IsNull(person.CreatedBy);
+            Assert.AreEqual(1, person.Memberships.Count);
+            Assert.IsNotNull(person.Memberships[0].CreatedBy);
+            Assert.AreEqual(person.GivenName, person.Memberships[0].CreatedBy!.GivenName);
+            Assert.AreEqual(person.FamilyName, person.Memberships[0].CreatedBy!.FamilyName);
+            Assert.AreEqual(0, person.History.Count);
+        }
+
+        [TestMethod]
         public async Task TestCreatePerson()
         {
             var request = new PersonRequest("Lara", "Croft", mailAddress: null);
