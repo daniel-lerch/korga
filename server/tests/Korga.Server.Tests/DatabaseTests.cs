@@ -24,26 +24,6 @@ namespace Korga.Server.Tests
         [TestMethod]
         public async Task TestConcurrentSnapshots()
         {
-            int personId;
-
-            using (IServiceScope scope = serviceProvider.CreateScope())
-            {
-                var database = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-
-                Person[] old = await database.People.Where(p => EF.Functions.Like(p.MailAddress, "mustermann%@example.com")).ToArrayAsync();
-                database.People.RemoveRange(old);
-                await database.SaveChangesAsync();
-
-                var person = new Person("Max", "Mustermann")
-                {
-                    MailAddress = "mustermann@example.com"
-                };
-                database.People.Add(person);
-                await database.SaveChangesAsync();
-
-                personId = person.Id;
-            }
-
             await Task.WhenAll(Enumerable.Range(0, 16).Select(i => addSnapshot(i)));
 
             async Task addSnapshot(int index)
@@ -51,7 +31,7 @@ namespace Korga.Server.Tests
                 using IServiceScope scope = serviceProvider.CreateScope();
                 var database = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-                Person person = await database.People.AsTracking().SingleAsync(p => p.Id == personId);
+                Person person = await database.People.AsTracking().SingleAsync(p => p.GivenName == "Max" && p.FamilyName == "Mustermann");
 
                 await database.UpdatePerson(person, p =>
                 {

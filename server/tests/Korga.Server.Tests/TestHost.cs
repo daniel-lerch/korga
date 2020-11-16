@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Generic;
 
 namespace Korga.Server.Tests
@@ -20,6 +22,7 @@ namespace Korga.Server.Tests
 
             var services = new ServiceCollection();
             services.ConfigureKorga(configuration);
+            services.AddSingleton<ILoggerFactory>(new NullLoggerFactory());
             services.AddSingleton<LdapService>();
             services.AddDbContext<DatabaseContext>();
             return services;
