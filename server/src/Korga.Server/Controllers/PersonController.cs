@@ -37,9 +37,10 @@ namespace Korga.Server.Controllers
             Person? person = await database.People.Where(p => p.Id == id).Include(p => p.CreatedBy).Include(p => p.DeletedBy).SingleOrDefaultAsync();
             if (person == null) return StatusCode(404);
 
-            List<PersonSnapshot> snapshots = await database.PersonSnapshots.Where(ps => ps.PersonId == id).Include(ps => ps.OverriddenBy).ToListAsync();
+            var memberships = await GetMemberships(id);
+            var snapshots = await GetSnapshots(id);
 
-            return new JsonResult(new PersonResponse2(person, snapshots));
+            return new JsonResult(new PersonResponse2(person, memberships, snapshots));
         }
 
         [HttpPost("~/api/person/new")]
@@ -53,7 +54,7 @@ namespace Korga.Server.Controllers
             database.People.Add(person);
             await database.SaveChangesAsync();
 
-            return new JsonResult(new PersonResponse2(person, Array.Empty<PersonSnapshot>()));
+            return new JsonResult(new PersonResponse2(person, Array.Empty<PersonResponse2.Membership>(), Array.Empty<PersonSnapshot>()));
         }
 
         [HttpPut("~/api/person/{id}")]
@@ -73,9 +74,26 @@ namespace Korga.Server.Controllers
                 });
             }
 
-            List<PersonSnapshot> snapshots = await database.PersonSnapshots.Where(ps => ps.PersonId == id).Include(ps => ps.OverriddenBy).ToListAsync();
+            var memberships = await GetMemberships(id);
+            var snapshots = await GetSnapshots(id);
 
-            return new JsonResult(new PersonResponse2(person, snapshots));
+            return new JsonResult(new PersonResponse2(person, memberships, snapshots));
+        }
+
+        private Task<List<PersonResponse2.Membership>> GetMemberships(int personId)
+        {
+            return
+                (from g in database.Groups
+                 join r in database.GroupRoles on g.Id equals r.GroupId
+                 join m in database.GroupMembers on r.Id equals m.GroupRoleId
+                 where m.PersonId == personId
+                 select new PersonResponse2.Membership(m, r.Name, g.Id, g.Name))
+                 .ToListAsync();
+        }
+
+        private Task<List<PersonSnapshot>> GetSnapshots(int personId)
+        {
+            return database.PersonSnapshots.Where(ps => ps.PersonId == personId).Include(ps => ps.OverriddenBy).ToListAsync();
         }
     }
 }

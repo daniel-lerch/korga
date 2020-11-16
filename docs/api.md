@@ -36,34 +36,24 @@ Response body: `PersonResponse2`
   "givenName": "Max",
   "familyName": "Mustermann",
   "mailAddress": "mustermann@example.com",
-  "memberships": {
-    "group": {
-      "id": 1,
-      "name": "Jugend",
-      "description": "Gruppe für Jugendliche ab 14 Jahren",
-      "roles": [
-        {
-          "id": 1,
-          "name": "Teilnehmer"
-        },
-        {
-          "id": 2,
-          "name": "Leiter"
-        }
-      ],
-      "memberCount": 2
-    },
-    "roleId": 1,
-    "creationTime": "",
-    "createdBy": {
-      "id": 1,
-      "givenName": "Karl-Heinz",
-      "familyName": "Günther",
-      "mailAddress": "gunther@example.com"               
-    },
-    "deletionTime": null,
-    "deletedBy": null
-  },
+  "memberships": [
+    {
+      "id": 3,
+      "roleId": 1,
+      "roleName": "Leiter",
+      "groupId": 1,
+      "groupName": "Jugend",
+      "creationTime": "2020-11-16T17:20:16.8506212+01:00",
+      "createdBy": {
+        "id": 1,
+        "givenName": "Karl-Heinz",
+        "familyName": "Günther",
+        "mailAddress": "gunther@example.com"               
+      },
+      "deletionTime": null,
+      "deletedBy": null
+    }
+  ],
   "creationTime": "2020-09-25T16:34:15.6167655+02:00",
   "createdBy": {
     "id": 1,
