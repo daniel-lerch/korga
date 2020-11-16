@@ -4,25 +4,26 @@
     <form @submit="submit">
       <div class="form-group">
         <label for="givenName">Given name</label>
-        <input type="text" v-model="person.givenName" id="givenName" class="form-control" required>
+        <input type="text" v-model="givenName" id="givenName" class="form-control" required>
       </div>
       <div class="form-group">
         <label for="familyName">Family name</label>
-        <input type="text" v-model="person.familyName" id="familyName" class="form-control" required>
+        <input type="text" v-model="familyName" id="familyName" class="form-control" required>
       </div>
       <div class="form-group">
         <label for="mailAddress">Mail address</label>
-        <input type="email" v-model="person.mailAddress" id="mailAddress" class="form-control">
+        <input type="email" v-model="mailAddress" id="mailAddress" class="form-control">
       </div>
-      <button type="submit" v-if="!exists" class="btn btn-primary">Create</button>
+      <a @click="cancel" class="btn btn-secondary">Back</a>
+      <button type="submit" class="btn btn-primary" :disabled="disabled">Save</button>
     </form>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from 'vue'
+import { computed, defineComponent, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { PersonResponse, getPerson, createPerson } from '../services/person'
+import { PersonResponse2, getPerson, createPerson } from '../services/person'
 import Loading from '@/components/Loading.vue'
 
 export default defineComponent({
@@ -37,62 +38,88 @@ export default defineComponent({
   },
   setup (props) {
     const router = useRouter()
-    const person = ref<PersonResponse | null>(null)
     const state = ref({ loaded: false, error: null })
-    const exists = ref(props.id !== 'new')
+    const person = ref<PersonResponse2 | null>(null)
+
+    const givenName = ref('')
+    const familyName = ref('')
+    const mailAddress = ref('')
+
+    let exists = props.id !== 'new'
+
+    function onResponse (response: PersonResponse2) {
+      state.value.loaded = true
+      document.title = response.givenName + ' ' + response.familyName + ' - Korga'
+      givenName.value = response.givenName
+      familyName.value = response.familyName
+      mailAddress.value = response.mailAddress ?? ''
+      person.value = response
+
+      if (!exists) {
+        router.replace({ name: 'Person', params: { id: response.id.toString() } })
+        exists = true
+      }
+    }
 
     onMounted(() => {
-      if (exists.value) {
+      if (exists) {
         document.title = 'Loading - Korga'
         getPerson(parseInt(props.id)).then(
-          response => {
-            person.value = response
-            state.value.loaded = true
-            document.title = response.givenName + ' ' + response.familyName + ' - Korga'
-          },
+          onResponse,
           error => {
             state.value.error = error
             document.title = 'Error - Korga'
           })
       } else {
         document.title = 'Create person - Korga'
-        person.value = {
-          id: 0,
-          givenName: '',
-          familyName: '',
-          mailAddress: null
-        }
         state.value.loaded = true
       }
     })
 
-    const submit = function (e: Event) {
-      if (person.value === null) {
-        throw new Error('You cannot submit a form without a data object')
+    const disabled = computed(() => {
+      if (givenName.value === '' || familyName.value === '' ||
+          (person.value !== null &&
+          givenName.value === person.value.givenName &&
+          familyName.value === person.value.familyName &&
+          mailAddress.value === (person.value.mailAddress ?? ''))) {
+        return true
+      } else {
+        return false
       }
-      if (exists.value) {
+    })
+
+    const submit = function (e: Event) {
+      if (exists) {
         // TODO implement update
       } else {
         state.value.loaded = false
         createPerson({
-          givenName: person.value.givenName,
-          familyName: person.value.familyName,
-          mailAddress: person.value.mailAddress
-        }).then(response => {
-          person.value = response
-          state.value.loaded = true
-          document.title = response.givenName + ' ' + response.familyName + ' - Korga'
-          router.replace({ name: 'Person', params: { id: response.id.toString() } })
-        })
+          givenName: givenName.value,
+          familyName: familyName.value,
+          mailAddress: mailAddress.value === '' ? null : mailAddress.value
+        }).then(
+          onResponse,
+          error => {
+            state.value.error = error
+            document.title = 'Error - Korga'
+          })
       }
       e.preventDefault()
     }
 
+    const cancel = function (e: Event) {
+      router.back()
+      e.preventDefault()
+    }
+
     return {
-      person,
       state,
-      exists,
-      submit
+      givenName,
+      familyName,
+      mailAddress,
+      disabled,
+      submit,
+      cancel
     }
   }
 })
