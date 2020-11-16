@@ -1,4 +1,4 @@
-import { get, post } from './client'
+import { get, post, put } from './client'
 
 export interface PersonResponse {
   id: number;
@@ -25,7 +25,7 @@ export interface PersonSnapshot {
   overriddenBy: PersonResponse | null;
 }
 
-export interface CreatePersonRequest {
+export interface PersonRequest {
   givenName: string;
   familyName: string;
   mailAddress: string | null;
@@ -39,6 +39,10 @@ export function getPerson (id: number): Promise<PersonResponse2> {
   return get('/api/person/' + id)
 }
 
-export function createPerson (person: CreatePersonRequest): Promise<PersonResponse2> {
+export function createPerson (person: PersonRequest): Promise<PersonResponse2> {
   return post<PersonResponse2>('/api/person/new', person)
+}
+
+export function updatePerson (id: number, person: PersonRequest): Promise<PersonResponse2> {
+  return put<PersonResponse2>('/api/person/' + id, person)
 }

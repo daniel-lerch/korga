@@ -23,7 +23,7 @@
 <script lang="ts">
 import { computed, defineComponent, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { PersonResponse2, getPerson, createPerson } from '../services/person'
+import { PersonRequest, PersonResponse2, getPerson, createPerson, updatePerson } from '../services/person'
 import Loading from '@/components/Loading.vue'
 
 export default defineComponent({
@@ -38,14 +38,12 @@ export default defineComponent({
   },
   setup (props) {
     const router = useRouter()
-    const state = ref({ loaded: false, error: null })
+    const state = ref({ loaded: false, error: null as Error | null })
     const person = ref<PersonResponse2 | null>(null)
 
     const givenName = ref('')
     const familyName = ref('')
     const mailAddress = ref('')
-
-    let exists = props.id !== 'new'
 
     function onResponse (response: PersonResponse2) {
       state.value.loaded = true
@@ -55,21 +53,20 @@ export default defineComponent({
       mailAddress.value = response.mailAddress ?? ''
       person.value = response
 
-      if (!exists) {
+      if (person.value === null) {
         router.replace({ name: 'Person', params: { id: response.id.toString() } })
-        exists = true
       }
     }
 
+    function onError (error: Error) {
+      state.value.error = error
+      document.title = 'Error - Korga'
+    }
+
     onMounted(() => {
-      if (exists) {
+      if (props.id !== 'new') {
         document.title = 'Loading - Korga'
-        getPerson(parseInt(props.id)).then(
-          onResponse,
-          error => {
-            state.value.error = error
-            document.title = 'Error - Korga'
-          })
+        getPerson(parseInt(props.id)).then(onResponse, onError)
       } else {
         document.title = 'Create person - Korga'
         state.value.loaded = true
@@ -89,20 +86,17 @@ export default defineComponent({
     })
 
     const submit = function (e: Event) {
-      if (exists) {
-        // TODO implement update
+      const request: PersonRequest = {
+        givenName: givenName.value,
+        familyName: familyName.value,
+        mailAddress: mailAddress.value === '' ? null : mailAddress.value
+      }
+      state.value.loaded = false
+      const id = person.value?.id ?? -1
+      if (id === -1) {
+        createPerson(request).then(onResponse, onError)
       } else {
-        state.value.loaded = false
-        createPerson({
-          givenName: givenName.value,
-          familyName: familyName.value,
-          mailAddress: mailAddress.value === '' ? null : mailAddress.value
-        }).then(
-          onResponse,
-          error => {
-            state.value.error = error
-            document.title = 'Error - Korga'
-          })
+        updatePerson(id, request).then(onResponse, onError)
       }
       e.preventDefault()
     }
