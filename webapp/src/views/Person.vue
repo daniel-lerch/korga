@@ -1,20 +1,23 @@
 <template>
   <Loading v-if="state.loaded === false" :state="state" />
-  <div v-else class="page-loaded-container">
+  <div v-else class="container page-loaded-container pt-3">
+    <h2>{{ title }}</h2>
     <form @submit="submit">
-      <div class="form-group">
-        <label for="givenName">Given name</label>
-        <input type="text" v-model="givenName" id="givenName" class="form-control" required>
-      </div>
-      <div class="form-group">
-        <label for="familyName">Family name</label>
-        <input type="text" v-model="familyName" id="familyName" class="form-control" required>
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label for="givenName">Given name</label>
+          <input type="text" v-model="givenName" id="givenName" class="form-control" required>
+        </div>
+        <div class="form-group col-md-6">
+          <label for="familyName">Family name</label>
+          <input type="text" v-model="familyName" id="familyName" class="form-control" required>
+        </div>
       </div>
       <div class="form-group">
         <label for="mailAddress">Mail address</label>
         <input type="email" v-model="mailAddress" id="mailAddress" class="form-control">
       </div>
-      <a @click="cancel" class="btn btn-secondary">Back</a>
+      <a @click="cancel" class="btn btn-secondary mr-2">Back</a>
       <button type="submit" class="btn btn-primary" :disabled="disabled">Save</button>
     </form>
   </div>
@@ -48,14 +51,15 @@ export default defineComponent({
     function onResponse (response: PersonResponse2) {
       state.value.loaded = true
       document.title = response.givenName + ' ' + response.familyName + ' - Korga'
-      givenName.value = response.givenName
-      familyName.value = response.familyName
-      mailAddress.value = response.mailAddress ?? ''
-      person.value = response
 
       if (person.value === null) {
         router.replace({ name: 'Person', params: { id: response.id.toString() } })
       }
+
+      givenName.value = response.givenName
+      familyName.value = response.familyName
+      mailAddress.value = response.mailAddress ?? ''
+      person.value = response
     }
 
     function onError (error: Error) {
@@ -70,6 +74,14 @@ export default defineComponent({
       } else {
         document.title = 'Create person - Korga'
         state.value.loaded = true
+      }
+    })
+
+    const title = computed(() => {
+      if (person.value === null) {
+        return 'Create a person'
+      } else {
+        return person.value.givenName + ' ' + person.value.familyName
       }
     })
 
@@ -111,6 +123,7 @@ export default defineComponent({
       givenName,
       familyName,
       mailAddress,
+      title,
       disabled,
       submit,
       cancel
