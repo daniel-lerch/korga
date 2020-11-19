@@ -20,13 +20,26 @@
       <a @click="cancel" class="btn btn-secondary mr-2">Back</a>
       <button type="submit" class="btn btn-primary" :disabled="disabled">Save</button>
     </form>
+    <div v-if="person !== null">
+      <hr>
+      <p v-if="person.memberships.length === 0">No group memberships so far</p>
+      <h5 v-if="person.memberships.length > 0">Group memberships</h5>
+      <ul v-if="person.memberships.length > 0" class="list-group">
+        <li v-for="group in memberships.values()" :key="group[0].groupId" class="list-group-item">
+          {{ group[0].groupName }}
+          <span v-for="membership in group" :key="membership.id" class="badge badge-primary badge-pill">
+            {{ membership.roleName }}
+          </span>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import { computed, defineComponent, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { PersonRequest, PersonResponse2, getPerson, createPerson, updatePerson } from '../services/person'
+import { PersonRequest, PersonResponse2, getPerson, createPerson, updatePerson, PersonMembership } from '../services/person'
 import Loading from '@/components/Loading.vue'
 
 export default defineComponent({
@@ -97,6 +110,22 @@ export default defineComponent({
       }
     })
 
+    const memberships = computed(() => {
+      if (person.value !== null) {
+        return person.value.memberships.reduce(function (result, element) {
+          const group = result.get(element.groupId)
+          if (group !== undefined) {
+            group.push(element)
+          } else {
+            result.set(element.groupId, [element])
+          }
+          return result
+        }, new Map<number, PersonMembership[]>())
+      } else {
+        return null
+      }
+    })
+
     const submit = function (e: Event) {
       const request: PersonRequest = {
         givenName: givenName.value,
@@ -120,11 +149,13 @@ export default defineComponent({
 
     return {
       state,
+      person,
       givenName,
       familyName,
       mailAddress,
       title,
       disabled,
+      memberships,
       submit,
       cancel
     }

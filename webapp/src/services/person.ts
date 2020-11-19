@@ -9,11 +9,24 @@ export interface PersonResponse {
 
 export interface PersonResponse2 extends PersonResponse {
   version: number;
+  memberships: PersonMembership[];
   creationTime: Date;
   createdBy: PersonResponse | null;
   deletionTime: Date | null;
   deletedBy: PersonResponse | null;
   history: PersonSnapshot[];
+}
+
+export interface PersonMembership {
+  id: number;
+  roleId: number;
+  roleName: string;
+  groupId: number;
+  groupName: string;
+  creationTime: Date;
+  createdBy: PersonResponse | null;
+  deletionTime: Date | null;
+  deletedBy: PersonResponse | null;
 }
 
 export interface PersonSnapshot {
