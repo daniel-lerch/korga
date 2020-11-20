@@ -56,7 +56,7 @@ Person API
 - [x] Details
 - [x] Create
 - [x] Modify
-- [ ] Delete
+- [x] Delete
 - [ ] Avatar
 - [ ] Profile image
 - [ ] LDAP person integration

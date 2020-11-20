@@ -105,6 +105,11 @@ Updates an existing person if a value is different.
 
 Response body: `PersonResponse2`
 
+### `DELETE /api/person/{id}`
+Marks an exisiting person as deleted. The actual data will be deleted according to retention policies.
+
+Response body: `PersonRequest2`
+
 ---
 
 ## Group

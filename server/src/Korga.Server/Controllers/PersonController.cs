@@ -63,21 +63,46 @@ namespace Korga.Server.Controllers
             Person? person = await database.People.AsTracking().Where(p => p.Id == id).Include(p => p.CreatedBy).Include(p => p.DeletedBy).SingleOrDefaultAsync();
             if (person == null) return StatusCode(404);
 
+            bool success = true;
+
             if (request.Changes(person))
             {
-                await database.UpdatePerson(person, p =>
+                success = await database.UpdatePerson(person, p =>
                 {
                     p.GivenName = request.GivenName;
                     p.FamilyName = request.FamilyName;
                     p.MailAddress = request.MailAddress;
-                    p.Version++;
                 });
             }
 
             var memberships = await GetMemberships(id);
             var snapshots = await GetSnapshots(id);
 
-            return new JsonResult(new PersonResponse2(person, memberships, snapshots));
+            var result = new JsonResult(new PersonResponse2(person, memberships, snapshots));
+
+            if (success)
+                return result;
+            else
+                return StatusCode(409, result);
+        }
+
+        [HttpDelete("~/api/person/{id}")]
+        public async Task<IActionResult> DeletePerson(int id)
+        {
+            Person? person = await database.People.AsTracking().SingleOrDefaultAsync(p => p.Id == id);
+            if (person == null) return StatusCode(404);
+
+            bool deleted = await database.DeleteMutableEntity(person, deletedById: null);
+
+            var memberships = await GetMemberships(id);
+            var snapshots = await GetSnapshots(id);
+
+            var result = new JsonResult(new PersonResponse2(person, memberships, snapshots));
+
+            if (deleted)
+                return result;
+            else
+                return StatusCode(409, result);
         }
 
         private Task<List<PersonResponse2.Membership>> GetMemberships(int personId)

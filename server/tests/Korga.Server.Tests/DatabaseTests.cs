@@ -36,7 +36,6 @@ namespace Korga.Server.Tests
                 await database.UpdatePerson(person, p =>
                 {
                     p.MailAddress = $"mustermann{index}@example.com";
-                    p.Version++;
                 });
             }
         }
