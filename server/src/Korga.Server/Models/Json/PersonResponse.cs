@@ -18,8 +18,8 @@ namespace Korga.Server.Models.Json
         public PersonResponse(int id, string givenName, string familyName, string? mailAddress)
         {
             Id = id;
-            GivenName = givenName;
-            FamilyName = familyName;
+            GivenName = givenName ?? throw new ArgumentNullException(nameof(givenName));
+            FamilyName = familyName ?? throw new ArgumentNullException(nameof(familyName));
             MailAddress = mailAddress;
         }
 
@@ -36,10 +36,10 @@ namespace Korga.Server.Models.Json
         [JsonConstructor]
         public PersonResponse2(string givenName, string familyName, IList<Membership> memberships, IList<Snapshot> history)
         {
-            GivenName = givenName;
-            FamilyName = familyName;
-            Memberships = memberships;
-            History = history;
+            GivenName = givenName ?? throw new ArgumentNullException(nameof(givenName));
+            FamilyName = familyName ?? throw new ArgumentNullException(nameof(familyName));
+            Memberships = memberships ?? throw new ArgumentNullException(nameof(memberships));
+            History = history ?? throw new ArgumentNullException(nameof(history));
         }
 
         public PersonResponse2(Person person, IList<Membership> memberships, IEnumerable<PersonSnapshot> history)
@@ -49,7 +49,7 @@ namespace Korga.Server.Models.Json
             GivenName = person.GivenName;
             FamilyName = person.FamilyName;
             MailAddress = person.MailAddress;
-            Memberships = memberships;
+            Memberships = memberships ?? throw new ArgumentNullException(nameof(memberships));
             CreationTime = person.CreationTime;
             CreatedBy = PersonResponse.From(person.CreatedBy);
             DeletionTime = person.DeletionTime.NullIfDefault();
@@ -74,17 +74,17 @@ namespace Korga.Server.Models.Json
             [JsonConstructor]
             public Membership(string roleName, string groupName)
             {
-                RoleName = roleName;
-                GroupName = groupName;
+                RoleName = roleName ?? throw new ArgumentNullException(nameof(roleName));
+                GroupName = groupName ?? throw new ArgumentNullException(nameof(groupName));
             }
 
             public Membership(GroupMember member, string roleName, int groupId, string groupName)
             {
                 Id = member.Id;
                 RoleId = member.GroupRoleId;
-                RoleName = roleName;
+                RoleName = roleName ?? throw new ArgumentNullException(nameof(roleName));
                 GroupId = groupId;
-                GroupName = groupName;
+                GroupName = groupName ?? throw new ArgumentNullException(nameof(groupName));
                 CreationTime = member.CreationTime;
                 CreatedBy = PersonResponse.From(member.CreatedBy);
                 DeletionTime = member.DeletionTime.NullIfDefault();
@@ -106,8 +106,8 @@ namespace Korga.Server.Models.Json
             [JsonConstructor]
             public Snapshot(string givenName, string familyName)
             {
-                GivenName = givenName;
-                FamilyName = familyName;
+                GivenName = givenName ?? throw new ArgumentNullException(nameof(givenName));
+                FamilyName = familyName ?? throw new ArgumentNullException(nameof(familyName));
             }
 
             public Snapshot(PersonSnapshot snapshot)

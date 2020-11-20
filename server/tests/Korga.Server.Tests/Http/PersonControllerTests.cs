@@ -1,6 +1,11 @@
-﻿using Korga.Server.Models.Json;
+﻿using Korga.Server.Database;
+using Korga.Server.Database.Entities;
+using Korga.Server.Models.Json;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -13,22 +18,53 @@ namespace Korga.Server.Tests.Http
     public class PersonControllerTests
     {
         // These variables are set by the test host
+        private IServiceProvider serviceProvider = null!;
+        private IServiceScope scope = null!;
+        private DatabaseContext database = null!;
         private TestServer server = null!;
         private HttpClient client = null!;
+
+        public TestContext TestContext { get; set; } = null!;
 
         [TestInitialize]
         public void Initialize()
         {
+            serviceProvider = TestHost.CreateServiceCollection().BuildServiceProvider();
+            scope = serviceProvider.CreateScope();
+            database = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
             server = TestHost.CreateTestServer();
             client = server.CreateClient();
+        }
+
+        [TestCleanup]
+        public async Task Cleanup()
+        {
+            this.scope.Dispose();
+            server.Dispose();
+            client.Dispose();
+
+            var scope = serviceProvider.CreateScope();
+            var database = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+
+            database.RemoveRange(await database.People.AsTracking()
+                .Where(p => p.MailAddress == $"{TestContext.TestName.ToLowerInvariant()}@unittest.example.com")
+                .ToArrayAsync());
+            await database.SaveChangesAsync();
+
+            scope.Dispose();
         }
 
         [TestMethod]
         public async Task TestGetPeople()
         {
+            string address = $"{nameof(TestGetPeople).ToLowerInvariant()}@unittest.example.com";
+
+            database.People.Add(new Person("Max", "Mustermann") { MailAddress = address });
+            await database.SaveChangesAsync();
+
             var people = await client.GetFromJsonAsync<PersonResponse[]>("/api/people") ?? throw new AssertFailedException();
             Assert.IsTrue(people.Length > 0, "No people found. Please make sure to populate the database before testing.");
-            Assert.IsTrue(people.Any(person => person.GivenName == "Karl-Heinz" && person.FamilyName == "Günther" && person.MailAddress == "gunther@example.com"));
+            Assert.IsTrue(people.Any(person => person.GivenName == "Max" && person.FamilyName == "Mustermann" && person.MailAddress == address));
         }
 
         [TestMethod]
@@ -47,12 +83,15 @@ namespace Korga.Server.Tests.Http
         [TestMethod]
         public async Task TestCreatePerson()
         {
-            var request = new PersonRequest("Lara", "Croft", mailAddress: null);
+            string address = $"{nameof(TestCreatePerson).ToLowerInvariant()}@unittest.example.com";
+
+            var request = new PersonRequest("Max", "Mustermann", mailAddress: address);
             var response = await client.PostAsJsonAsync("/api/person/new", request);
             var person = await response.Content.ReadFromJsonAsync<PersonResponse2>() ?? throw new AssertFailedException();
             Assert.AreNotEqual(0, person.Id);
-            Assert.AreEqual("Lara", person.GivenName);
-            Assert.AreEqual("Croft", person.FamilyName);
+            Assert.AreEqual("Max", person.GivenName);
+            Assert.AreEqual("Mustermann", person.FamilyName);
+            Assert.AreEqual(address, person.MailAddress);
             Assert.AreNotEqual(default, person.CreationTime);
         }
 
@@ -72,22 +111,40 @@ namespace Korga.Server.Tests.Http
         [TestMethod]
         public async Task TestUpdatePerson_NonConcurrent()
         {
-            var person = await client.GetFromJsonAsync<PersonResponse2>("/api/person/5") ?? throw new AssertFailedException();
+            string address = $"{nameof(TestUpdatePerson_NonConcurrent).ToLowerInvariant()}@unittest.example.com";
 
-            string? oldMailAddress = person.MailAddress;
-            var request1 = new PersonRequest(person.GivenName, person.FamilyName, "unit.test@example.com");
-            var response1 = await client.PutAsJsonAsync("/api/person/5", request1);
-            Assert.AreEqual(HttpStatusCode.OK, response1.StatusCode);
+            var person = new Person("Max", "Mustermann") { MailAddress = address };
+            database.People.Add(person);
+            await database.SaveChangesAsync();
 
-            var person2 = await response1.Content.ReadFromJsonAsync<PersonResponse2>() ?? throw new AssertFailedException();
-            Assert.AreEqual(person.History.Count + 1, person2.History.Count);
+            var request = new PersonRequest("Maximilian", "Mustermann", address);
+            var response = await client.PutAsJsonAsync($"/api/person/{person.Id}", request);
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
 
-            var request2 = new PersonRequest(person.GivenName, person.FamilyName, oldMailAddress);
-            var response2 = await client.PutAsJsonAsync("/api/person/5", request2);
-            Assert.AreEqual(HttpStatusCode.OK, response2.StatusCode);
+            var person2 = await response.Content.ReadFromJsonAsync<PersonResponse2>() ?? throw new AssertFailedException();
+            Assert.AreEqual(1, person2.History.Count);
+        }
 
-            var person3 = await response2.Content.ReadFromJsonAsync<PersonResponse2>() ?? throw new AssertFailedException();
-            Assert.AreEqual(person2.History.Count + 1, person3.History.Count);
+        [TestMethod]
+        public async Task TestUpdatePerson_Deleted()
+        {
+            string address = $"{nameof(TestUpdatePerson_Deleted).ToLowerInvariant()}@unittest.example.com";
+
+            var person = new Person("Max", "Mustermann")
+            {
+                MailAddress = address,
+                CreationTime = DateTime.UtcNow.AddSeconds(-1),
+                DeletionTime = DateTime.UtcNow
+            };
+            database.People.Add(person);
+            await database.SaveChangesAsync();
+
+            var request = new PersonRequest("Maximilian", "Mustermann", address);
+            var response = await client.PutAsJsonAsync($"/api/person/{person.Id}", request);
+            Assert.AreEqual(HttpStatusCode.Conflict, response.StatusCode);
+
+            var person2 = await response.Content.ReadFromJsonAsync<PersonResponse2>() ?? throw new AssertFailedException();
+            Assert.AreEqual(0, person2.History.Count);
         }
     }
 }
