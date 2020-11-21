@@ -1,26 +1,31 @@
 <template>
   <Loading v-if="state.loaded === false" :state="state" />
-  <div v-else class="container page-loaded-container pt-3">
+  <div v-else class="container page-loaded-container pt-3" :class="{ deleted: deleted }">
     <h2>{{ title }}</h2>
+    <div v-if="person !== null" class="row">
+      <div class="col-md"><small>{{ creation }}</small></div>
+      <div class="col-md text-md-right"><small>{{ deletion }}</small></div>
+    </div>
+    <hr v-if="person !== null">
     <form @submit="submit">
       <div class="form-row">
         <div class="form-group col-md-6">
           <label for="givenName">Given name</label>
-          <input type="text" v-model="givenName" id="givenName" class="form-control" required>
+          <input type="text" v-model="givenName" id="givenName" class="form-control" :disabled="deleted" required>
         </div>
         <div class="form-group col-md-6">
           <label for="familyName">Family name</label>
-          <input type="text" v-model="familyName" id="familyName" class="form-control" required>
+          <input type="text" v-model="familyName" id="familyName" class="form-control" :disabled="deleted" required>
         </div>
       </div>
       <div class="form-group">
         <label for="mailAddress">Mail address</label>
-        <input type="email" v-model="mailAddress" id="mailAddress" class="form-control">
+        <input type="email" v-model="mailAddress" id="mailAddress" class="form-control" :disabled="deleted">
       </div>
       <a @click="cancel" class="btn btn-secondary mr-2">Back</a>
       <button type="submit" class="btn btn-primary" :disabled="disabled">Save</button>
     </form>
-    <div v-if="person !== null">
+    <div v-if="person !== null" :class="{ 'text-muted': deleted }">
       <hr>
       <p v-if="person.memberships.length === 0">No group memberships so far</p>
       <h5 v-if="person.memberships.length > 0">Group memberships</h5>
@@ -39,7 +44,7 @@
 <script lang="ts">
 import { computed, defineComponent, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { PersonRequest, PersonResponse2, getPerson, createPerson, updatePerson, PersonMembership } from '../services/person'
+import { PersonRequest, PersonResponse2, getPerson, createPerson, updatePerson, PersonMembership, PersonResponse } from '../services/person'
 import Loading from '@/components/Loading.vue'
 
 export default defineComponent({
@@ -98,17 +103,32 @@ export default defineComponent({
       }
     })
 
+    const deleted = computed(() => {
+      return person.value !== null && person.value.deletionTime !== null
+    })
+
     const disabled = computed(() => {
-      if (givenName.value === '' || familyName.value === '' ||
+      return (givenName.value === '' || familyName.value === '' ||
           (person.value !== null &&
           givenName.value === person.value.givenName &&
           familyName.value === person.value.familyName &&
-          mailAddress.value === (person.value.mailAddress ?? ''))) {
-        return true
-      } else {
-        return false
-      }
+          mailAddress.value === (person.value.mailAddress ?? '')))
     })
+
+    function createTimeString (prepend: string, actionTime: Date | null | undefined, author: PersonResponse | null | undefined) {
+      if (actionTime != null) {
+        let msg = prepend + actionTime.toLocaleDateString()
+        if (author != null) {
+          msg += ' by ' + author.givenName + ' ' + author.familyName
+        }
+        return msg
+      } else {
+        return null
+      }
+    }
+
+    const creation = computed(() => createTimeString('Created on ', person.value?.creationTime, person.value?.createdBy))
+    const deletion = computed(() => createTimeString('Deleted on ', person.value?.deletionTime, person.value?.deletedBy))
 
     const memberships = computed(() => {
       if (person.value !== null) {
@@ -137,6 +157,7 @@ export default defineComponent({
       if (id === -1) {
         createPerson(request).then(onResponse, onError)
       } else {
+        // TODO: Show a toast message in case of 409 Conflict
         updatePerson(id, request).then(onResponse, onError)
       }
       e.preventDefault()
@@ -154,7 +175,10 @@ export default defineComponent({
       familyName,
       mailAddress,
       title,
+      deleted,
       disabled,
+      creation,
+      deletion,
       memberships,
       submit,
       cancel
@@ -162,3 +186,13 @@ export default defineComponent({
   }
 })
 </script>
+
+<style scoped>
+.deleted h2 {
+  color: #50575e!important;
+  text-decoration: line-through solid #6c757d;
+}
+.deleted label {
+  color: #6c757d!important;
+}
+</style>

@@ -1,4 +1,4 @@
-import { get, post, put } from './client'
+import { get, send } from './client'
 
 export interface PersonResponse {
   id: number;
@@ -8,6 +8,7 @@ export interface PersonResponse {
 }
 
 export interface PersonResponse2 extends PersonResponse {
+  conflict: boolean;
   version: number;
   memberships: PersonMembership[];
   creationTime: Date;
@@ -52,10 +53,15 @@ export function getPerson (id: number): Promise<PersonResponse2> {
   return get('/api/person/' + id)
 }
 
+// TODO: createPerson does not have to handle 409 Conflict
 export function createPerson (person: PersonRequest): Promise<PersonResponse2> {
-  return post<PersonResponse2>('/api/person/new', person)
+  return send<PersonResponse2>('POST', '/api/person/new', person)
 }
 
 export function updatePerson (id: number, person: PersonRequest): Promise<PersonResponse2> {
-  return put<PersonResponse2>('/api/person/' + id, person)
+  return send<PersonResponse2>('PUT', '/api/person/' + id, person)
+}
+
+export function deletePerson (id: number): Promise<PersonResponse2> {
+  return send<PersonResponse2>('DELETE', '/api/person/' + id)
 }
