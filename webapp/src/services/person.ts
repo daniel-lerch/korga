@@ -5,11 +5,16 @@ export interface PersonResponse {
   givenName: string;
   familyName: string;
   mailAddress: string | null;
+  deleted: boolean;
 }
 
-export interface PersonResponse2 extends PersonResponse {
+export interface PersonResponse2 {
+  id: number;
   conflict: boolean;
   version: number;
+  givenName: string;
+  familyName: string;
+  mailAddress: string | null;
   memberships: PersonMembership[];
   creationTime: Date;
   createdBy: PersonResponse | null;

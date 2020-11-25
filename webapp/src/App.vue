@@ -57,7 +57,7 @@ header .navbar {
 }
 
 a.subdued {
-  color: #212529;
+  color: inherit;
 }
 
 .page-load-container {

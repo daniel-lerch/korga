@@ -1,5 +1,5 @@
 <template>
-  <div class="row">
+  <div class="row" :class="{ deleted: person.deleted }">
     <div class="col">
       <router-link :to="link" class="subdued">{{ person.givenName }}</router-link>
     </div>
@@ -37,6 +37,11 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.deleted, .deleted a {
+  color: #6c757d!important;
+  text-decoration: line-through solid #6c757d;
+}
+
 .col {
   overflow: hidden;
   white-space: nowrap;
