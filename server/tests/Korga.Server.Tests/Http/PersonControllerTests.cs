@@ -60,11 +60,18 @@ namespace Korga.Server.Tests.Http
             string address = $"{nameof(TestGetPeople).ToLowerInvariant()}@unittest.example.com";
 
             database.People.Add(new Person("Max", "Mustermann") { MailAddress = address });
+            database.People.Add(new Person("Paul", "Ehrlich")
+            {
+                MailAddress = address,
+                CreationTime = DateTime.UtcNow.AddSeconds(-10),
+                DeletionTime = DateTime.UtcNow.AddSeconds(-5)
+            });
             await database.SaveChangesAsync();
 
             var people = await client.GetFromJsonAsync<PersonResponse[]>("/api/people") ?? throw new AssertFailedException();
-            Assert.IsTrue(people.Length > 0, "No people found. Please make sure to populate the database before testing.");
-            Assert.IsTrue(people.Any(person => person.GivenName == "Max" && person.FamilyName == "Mustermann" && person.MailAddress == address));
+            Assert.IsTrue(people.Length >= 2, "No people found. Please make sure to populate the database before testing.");
+            Assert.IsTrue(people.Any(p => p.GivenName == "Max" && p.FamilyName == "Mustermann" && p.MailAddress == address && !p.Deleted));
+            Assert.IsTrue(people.Any(p => p.GivenName == "Paul" && p.FamilyName == "Ehrlich" && p.MailAddress == address && p.Deleted));
         }
 
         [TestMethod]

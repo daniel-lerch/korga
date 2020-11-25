@@ -25,7 +25,7 @@ namespace Korga.Server.Controllers
         {
             var people = await database.People
                 .OrderBy(p => p.FamilyName).ThenBy(p => p.GivenName)
-                .Select(p => new PersonResponse(p.Id, p.GivenName, p.FamilyName, p.MailAddress))
+                .Select(p => new PersonResponse(p.Id, p.GivenName, p.FamilyName, p.MailAddress, p.DeletionTime == default))
                 .Skip(offset).Take(count).ToListAsync();
 
             return new JsonResult(people);

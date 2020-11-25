@@ -15,20 +15,22 @@ namespace Korga.Server.Models.Json
         }
 
         [JsonConstructor]
-        public PersonResponse(int id, string givenName, string familyName, string? mailAddress)
+        public PersonResponse(int id, string givenName, string familyName, string? mailAddress, bool deleted)
         {
             Id = id;
             GivenName = givenName ?? throw new ArgumentNullException(nameof(givenName));
             FamilyName = familyName ?? throw new ArgumentNullException(nameof(familyName));
             MailAddress = mailAddress;
+            Deleted = deleted;
         }
 
-        public PersonResponse(Person person) : this(person.Id, person.GivenName, person.FamilyName, person.MailAddress) { }
+        public PersonResponse(Person person) : this(person.Id, person.GivenName, person.FamilyName, person.MailAddress, person.DeletionTime != default) { }
 
         public int Id { get; set; }
         public string GivenName { get; set; }
         public string FamilyName { get; set; }
         public string? MailAddress { get; set; }
+        public bool Deleted { get; set; }
     }
 
     public class PersonResponse2

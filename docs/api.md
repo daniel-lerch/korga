@@ -1,26 +1,33 @@
 # Documentation of the Korga HTTP API
 This API is intended for internal use and might change without notice at any time.
 
+JSON response objects may abbreviated in this document like
+```json
+{ "@type": "PersonResponse" }
+```
+
 ## Person
 ### `GET /api/people`
 Returns a list of people. Query parameters:
 - `offset` Start index of results
 - `count` Limit number of results to this value
 
-Response body: `PersonResponse`
+Response body: `PersonResponse[]`
 ```json
 [
   {
     "id": 1,
     "givenName": "Karl-Heinz",
     "familyName": "Günther",
-    "mailAddress": "gunther@example.com"               
+    "mailAddress": "gunther@example.com",
+    "deleted": false
   },
   {
     "id": 2,
     "givenName": "Max",
     "familyName": "Mustermann",
-    "mailAddress": "max.mustermann@example.com"
+    "mailAddress": "max.mustermann@example.com",
+    "deleted": false
   }
 ]
 ```
@@ -44,23 +51,13 @@ Response body: `PersonResponse2`
       "groupId": 1,
       "groupName": "Jugend",
       "creationTime": "2020-11-16T17:20:16.8506212+01:00",
-      "createdBy": {
-        "id": 1,
-        "givenName": "Karl-Heinz",
-        "familyName": "Günther",
-        "mailAddress": "gunther@example.com"               
-      },
+      "createdBy": { "@type": "PersonResponse" },
       "deletionTime": null,
       "deletedBy": null
     }
   ],
   "creationTime": "2020-09-25T16:34:15.6167655+02:00",
-  "createdBy": {
-    "id": 1,
-    "givenName": "Karl-Heinz",
-    "familyName": "Günther",
-    "mailAddress": "gunther@example.com"
-  },
+  "createdBy": { "@type": "PersonResponse" },
   "deletionTime": null,
   "deletedBy": null,
   "history": [
@@ -70,12 +67,7 @@ Response body: `PersonResponse2`
       "familyName": "Mustermann",
       "mailAddress": null,
       "overrideTime": "2020-09-25T18:35:34.6606819+02:00",
-      "overriddenBy": {
-        "id": 1,
-        "givenName": "Karl-Heinz",
-        "familyName": "Günther",
-        "mailAddress": "gunther@example.com"               
-      }
+      "overriddenBy": { "@type": "PersonResponse" },
     }
   ]
 }
@@ -153,12 +145,7 @@ Response body: `GroupResponse2`
       "id": 1,
       "version": 1,
       "name": "Teilnehmer",
-      "createdBy": {
-        "id": 1,
-        "givenName": "Karl-Heinz",
-        "familyName": "Günther",
-        "mailAddress": "gunther@example.com"               
-      },
+      "createdBy": { "@type": "PersonResponse" },
       "creationTime": "2020-09-30T10:15:31.0829675+02:00",
       "deletionTime": null,
       "deletedBy": null,
@@ -168,12 +155,7 @@ Response body: `GroupResponse2`
       "id": 2,
       "version": 2,
       "name": "Leiter",
-      "createdBy": {
-        "id": 1,
-        "givenName": "Karl-Heinz",
-        "familyName": "Günther",
-        "mailAddress": "gunther@example.com"               
-      },
+      "createdBy": { "@type": "PersonResponse" },
       "creationTime": "2020-09-30T10:15:31.0829675+02:00",
       "deletionTime": null,
       "deletedBy": null,
@@ -182,12 +164,7 @@ Response body: `GroupResponse2`
           "version": 1,
           "name": "Leitung",
           "overrideTime": "2020-09-30T10:52:45.6063725+02:00",
-          "overriddenBy": {
-            "id": 1,
-            "givenName": "Karl-Heinz",
-            "familyName": "Günther",
-            "mailAddress": "gunther@example.com"               
-          }
+          "overriddenBy": { "@type": "PersonResponse" }
         }
       ]
     }
@@ -198,16 +175,12 @@ Response body: `GroupResponse2`
         "id": 2,
         "givenName": "Max",
         "familyName": "Mustermann",
-        "mailAddress": "mustermann@example.com"
+        "mailAddress": "mustermann@example.com",
+        "deleted": false
       },
       "roleId": 1,
       "creationTime": "",
-      "createdBy": {
-        "id": 1,
-        "givenName": "Karl-Heinz",
-        "familyName": "Günther",
-        "mailAddress": "gunther@example.com"               
-      },
+      "createdBy": { "@type": "PersonResponse" },
       "deletionTime": null,
       "deletedBy": null
     },
@@ -216,27 +189,18 @@ Response body: `GroupResponse2`
         "id": 1,
         "givenName": "Karl-Heinz",
         "familyName": "Günther",
-        "mailAddress": "gunther@example.com"               
+        "mailAddress": "gunther@example.com",
+        "deleted": false
       },
       "roleId": 2,
       "creationTime": "",
-      "createdBy": {
-        "id": 1,
-        "givenName": "Karl-Heinz",
-        "familyName": "Günther",
-        "mailAddress": "gunther@example.com"               
-      },
+      "createdBy": { "@type": "PersonResponse" },
       "deletionTime": null,
       "deletedBy": null
     }
   ],
   "creationTime": "2020-09-30T10:15:31.0829675+02:00",
-  "createdBy": {
-    "id": 1,
-    "givenName": "Karl-Heinz",
-    "familyName": "Günther",
-    "mailAddress": "gunther@example.com"               
-  },
+  "createdBy": { "@type": "PersonResponse" },
   "deletionTime": null,
   "deletedBy": null,
   "history": [
@@ -245,12 +209,7 @@ Response body: `GroupResponse2`
       "name": "Jugend",
       "description": null,
       "overrideTime": "2020-09-20T10:25:45.5893077+02:00",
-      "overriddenBy": {
-        "id": 1,
-        "givenName": "Karl-Heinz",
-        "familyName": "Günther",
-        "mailAddress": "gunther@example.com"               
-      }
+      "overriddenBy": { "@type": "PersonResponse" }
     }
   ]
 }
