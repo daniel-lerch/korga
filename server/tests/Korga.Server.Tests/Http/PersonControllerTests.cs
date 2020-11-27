@@ -1,9 +1,6 @@
-﻿using Korga.Server.Database;
-using Korga.Server.Database.Entities;
+﻿using Korga.Server.Database.Entities;
 using Korga.Server.Models.Json;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Linq;
@@ -15,49 +12,34 @@ using System.Threading.Tasks;
 namespace Korga.Server.Tests.Http
 {
     [TestClass]
-    public class PersonControllerTests
+    public class PersonControllerTests : DatabaseTest
     {
         // These variables are set by the test host
-        private IServiceProvider serviceProvider = null!;
-        private IServiceScope scope = null!;
-        private DatabaseContext database = null!;
         private TestServer server = null!;
         private HttpClient client = null!;
 
-        public TestContext TestContext { get; set; } = null!;
-
         [TestInitialize]
-        public void Initialize()
+        public override void Initialize()
         {
-            serviceProvider = TestHost.CreateServiceCollection().BuildServiceProvider();
-            scope = serviceProvider.CreateScope();
-            database = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+            base.Initialize();
+
             server = TestHost.CreateTestServer();
             client = server.CreateClient();
         }
 
         [TestCleanup]
-        public async Task Cleanup()
+        public override async Task Cleanup()
         {
-            this.scope.Dispose();
             server.Dispose();
             client.Dispose();
 
-            var scope = serviceProvider.CreateScope();
-            var database = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-
-            database.RemoveRange(await database.People.AsTracking()
-                .Where(p => p.MailAddress == $"{TestContext.TestName.ToLowerInvariant()}@unittest.example.com")
-                .ToArrayAsync());
-            await database.SaveChangesAsync();
-
-            scope.Dispose();
+            await base.Cleanup();
         }
 
         [TestMethod]
         public async Task TestGetPeople()
         {
-            string address = $"{nameof(TestGetPeople).ToLowerInvariant()}@unittest.example.com";
+            string address = GenerateMailAddress();
 
             database.People.Add(new Person("Max", "Mustermann") { MailAddress = address });
             database.People.Add(new Person("Paul", "Ehrlich")
@@ -90,7 +72,7 @@ namespace Korga.Server.Tests.Http
         [TestMethod]
         public async Task TestCreatePerson()
         {
-            string address = $"{nameof(TestCreatePerson).ToLowerInvariant()}@unittest.example.com";
+            string address = GenerateMailAddress();
 
             var request = new PersonRequest("Max", "Mustermann", mailAddress: address);
             var response = await client.PostAsJsonAsync("/api/person/new", request);
@@ -118,7 +100,7 @@ namespace Korga.Server.Tests.Http
         [TestMethod]
         public async Task TestUpdatePerson_NonConcurrent()
         {
-            string address = $"{nameof(TestUpdatePerson_NonConcurrent).ToLowerInvariant()}@unittest.example.com";
+            string address = GenerateMailAddress();
 
             var person = new Person("Max", "Mustermann") { MailAddress = address };
             database.People.Add(person);
@@ -135,7 +117,7 @@ namespace Korga.Server.Tests.Http
         [TestMethod]
         public async Task TestUpdatePerson_Deleted()
         {
-            string address = $"{nameof(TestUpdatePerson_Deleted).ToLowerInvariant()}@unittest.example.com";
+            string address = GenerateMailAddress();
 
             var person = new Person("Max", "Mustermann")
             {

@@ -23,7 +23,7 @@ namespace Korga.Server.Database
             return true;
         }
 
-        public async Task<bool> DeleteMutableEntity<TEntity>(TEntity entity, int? deletedById) where TEntity : MutableEntityBase
+        public async Task<bool> DeleteEntity<TEntity>(TEntity entity, int? deletedById) where TEntity : EntityBase
         {
             while (true)
             {
@@ -35,7 +35,6 @@ namespace Korga.Server.Database
 
                     entity.DeletionTime = DateTime.UtcNow;
                     entity.DeletedById = deletedById;
-                    entity.Version++;
                     await SaveChangesAsync();
                     return true;
                 }

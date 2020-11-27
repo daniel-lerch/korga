@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.DirectoryServices.Protocols;
 
 namespace Korga.Server.Tests
 {
@@ -25,8 +26,15 @@ namespace Korga.Server.Tests
             var options = serviceProvider.GetRequiredService<IOptions<LdapOptions>>();
             var ldapService = serviceProvider.GetRequiredService<LdapService>();
             int count = ldapService.GetMembers();
-            ldapService.AddPerson($"uid=maxmust,{options.Value.BaseDn}", "Max", "Mustermann");
-            Assert.AreEqual(count + 1, ldapService.GetMembers());
+            try
+            {
+                ldapService.AddPerson($"uid=maxmust,{options.Value.BaseDn}", "Max", "Mustermann");
+                Assert.AreEqual(count + 1, ldapService.GetMembers());
+            }
+            catch (DirectoryOperationException ex) when (ex.Response.ResultCode == ResultCode.EntryAlreadyExists)
+            {
+                Assert.IsTrue(count > 0);
+            }
         }
     }
 }

@@ -70,9 +70,9 @@ namespace Korga.Server.Commands
             await database.SaveChangesAsync();
 
             // Members of multiple groups/roles
-            var max = new Person("Max", "Mustermann") { MailAddress = "mustermann@example.com", CreatedById = admin.Id };
+            var michael = new Person("Michael", "Müller") { MailAddress = "mueller@example.com", CreatedById = admin.Id };
             var linda = new Person("Linda", "Koch") { MailAddress = "lindakoch@example.com", CreatedById = admin.Id };
-            database.People.AddRange(max, linda);
+            database.People.AddRange(michael, linda);
 
             // Official members
             List<Person> members = new()
@@ -84,7 +84,7 @@ namespace Korga.Server.Commands
                 new("Katharina", "Schäfer") { MailAddress = "k.schaefer@example.com", CreatedById = admin.Id }
             };
             database.People.AddRange(members);
-            members.AddRange(new[] { admin, max, linda});
+            members.AddRange(new[] { admin, michael, linda});
 
             // Youth members
             List<Person> youths = new()
@@ -97,7 +97,7 @@ namespace Korga.Server.Commands
                 new("Lukas", "Meyer") { CreatedById = admin.Id }
             };
             database.People.AddRange(youths);
-            youths.AddRange(new[] { max, linda });
+            youths.AddRange(new[] { michael, linda });
 
             var memberGroup = new Group("Mitglieder") { Description = "Mitglieder der Gemeinde", CreatedById = admin.Id };
             var youthGroup = new Group("Jugend") { Description = "Gruppe für Jugendliche ab 14 Jahren", CreatedById = admin.Id };
@@ -113,7 +113,7 @@ namespace Korga.Server.Commands
             database.GroupMembers.AddRange(
                 members.Select(m => new GroupMember { PersonId = m.Id, GroupRoleId = memberMember.Id, CreatedById = admin.Id }));
 
-            database.GroupMembers.Add(new GroupMember { PersonId = max.Id, GroupRoleId = youthLeader.Id, CreatedById = admin.Id });
+            database.GroupMembers.Add(new GroupMember { PersonId = michael.Id, GroupRoleId = youthLeader.Id, CreatedById = admin.Id });
             database.GroupMembers.AddRange(
                 youths.Select(y => new GroupMember { PersonId = y.Id, GroupRoleId = youthMember.Id, CreatedById = admin.Id }));
 

@@ -161,6 +161,7 @@ namespace Korga.Server.Database
         private static void ConfigureEntityBase<T>(EntityTypeBuilder<T> entity) where T : EntityBase
         {
             entity.Property(x => x.CreationTime).HasDefaultValueSql(currentTimestamp);
+            entity.Property(x => x.DeletionTime).IsConcurrencyToken();
             entity.HasOne(x => x.CreatedBy).WithMany().HasForeignKey(x => x.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(x => x.DeletedBy).WithMany().HasForeignKey(x => x.DeletedById).OnDelete(DeleteBehavior.SetNull);
         }
