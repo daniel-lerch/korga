@@ -91,7 +91,13 @@ namespace Korga.Server.Controllers
             Person? person = await database.People.AsTracking().SingleOrDefaultAsync(p => p.Id == id);
             if (person == null) return StatusCode(404);
 
-            bool success = await database.DeleteMutableEntity(person, deletedById: null);
+            bool success = await database.DeleteEntity(person, deletedById: null);
+
+            foreach (GroupMember member in await database.GroupMembers
+                .Where(m => m.PersonId == id && m.DeletionTime == default).ToArrayAsync())
+            {
+                await database.DeleteEntity(member, null);
+            }
 
             var memberships = await GetMemberships(id);
             var snapshots = await GetSnapshots(id);

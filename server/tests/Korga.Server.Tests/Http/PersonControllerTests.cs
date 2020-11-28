@@ -135,5 +135,44 @@ namespace Korga.Server.Tests.Http
             var person2 = await response.Content.ReadFromJsonAsync<PersonResponse2>() ?? throw new AssertFailedException();
             Assert.AreEqual(0, person2.History.Count);
         }
+
+        [TestMethod]
+        public async Task TestDeletePerson_NonConcurrent()
+        {
+            GroupRole role = new("Mustermänner") { Group = new("Mustergruppe") { Description = GenerateMailAddress() } };
+            Person person = new("Max", "Mustermann") { MailAddress = GenerateMailAddress() };
+            GroupMember member = new() { Person = person, GroupRole = role };
+            database.GroupMembers.Add(member);
+            await database.SaveChangesAsync();
+
+            var response = await client.DeleteAsync($"/api/person/{person.Id}");
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+
+            var person2 = await response.Content.ReadFromJsonAsync<PersonResponse2>() ?? throw new AssertFailedException();
+            Assert.AreNotEqual(null, person2.DeletionTime);
+            Assert.AreEqual(1, person2.Memberships.Count);
+            Assert.AreEqual(role.Id, person2.Memberships[0].RoleId);
+            Assert.AreNotEqual(null, person2.Memberships[0].DeletionTime);
+        }
+
+        [TestMethod]
+        public async Task TestDeletePerson_Deleted()
+        {
+            Person person = new("Max", "Mustermann")
+            {
+                MailAddress = GenerateMailAddress(),
+                CreationTime = DateTime.UtcNow.AddSeconds(-1),
+                DeletionTime = DateTime.UtcNow
+            };
+            database.People.Add(person);
+            await database.SaveChangesAsync();
+
+            var response = await client.DeleteAsync($"/api/person/{person.Id}");
+            Assert.AreEqual(HttpStatusCode.Conflict, response.StatusCode);
+
+            var person2 = await response.Content.ReadFromJsonAsync<PersonResponse2>() ?? throw new AssertFailedException();
+            Assert.AreNotEqual(null, person2.DeletionTime);
+            Assert.AreEqual(person.DeletionTime.Millisecond, person2.DeletionTime!.Value.Millisecond);
+        }
     }
 }

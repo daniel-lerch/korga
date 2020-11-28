@@ -36,6 +36,9 @@ namespace Korga.Server.Tests
             database.RemoveRange(await database.People
                 .Where(p => EF.Functions.Like(p.MailAddress, $"{TestContext.TestName.ToLowerInvariant()}%@unittest.example.com"))
                 .ToArrayAsync());
+            database.RemoveRange(await database.Groups
+                .Where(g => EF.Functions.Like(g.Description, $"{TestContext.TestName.ToLowerInvariant()}%@unittest.example.com"))
+                .ToArrayAsync());
             await database.SaveChangesAsync();
 
             cleanupScope.Dispose();
