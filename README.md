@@ -49,6 +49,10 @@ The following instructions are written for Windows but generally also apply to L
 During development the frontend running on the Vue CLI development server will use _http://localhost:50805_ as API endpoint.
 That means the backend can be running in Visual Studio with Debugger attached.
 
+If you just want to work on the frontend you can also use a public test server by creating a file `webapp/.env.development.local`
+to override the defaults with `VUE_APP_API_URL=https://lerchen.net/korga`.
+Then you don't have to setup a database server, LDAP server and the ASP.NET Core backend.
+
 ## Roadmap
 
 Person API
