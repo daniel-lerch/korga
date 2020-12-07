@@ -1,11 +1,13 @@
 <template>
-  <nav class="navbar navbar-light bg-light">
-    <form @submit.prevent class="row">
+  <nav class="navbar navbar-light bg-light px-2">
+    <form @submit.prevent class="row mx-0">
       <div class="col px-2">
         <input type="search" v-model="searchQuery" class="form-control" placeholder="Search">
       </div>
       <div class="col-auto px-2">
-        <router-link :to="{ name: 'Person', params: { id: 'new' }}" class="btn btn-outline-primary">Create a person</router-link>
+        <router-link :to="{ name: 'Person', params: { id: 'new' }}" class="btn btn-outline-primary">
+          <FontAwesomeIcon icon="user-plus"></FontAwesomeIcon>
+        </router-link>
       </div>
     </form>
   </nav>
@@ -17,12 +19,14 @@
 
 <script lang="ts">
 import { computed, defineComponent, onMounted, ref } from 'vue'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { PersonResponse, getPeople } from '../services/person'
 import Loading from '@/components/Loading.vue'
 import PersonRow from '@/components/PersonRow.vue'
 
 export default defineComponent({
   components: {
+    FontAwesomeIcon,
     Loading,
     PersonRow
   },

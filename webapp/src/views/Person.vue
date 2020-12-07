@@ -1,7 +1,16 @@
 <template>
   <Loading v-if="state.loaded === false" :state="state" />
   <div v-else class="container page-loaded-container pt-3" :class="{ deleted: deleted }">
-    <h2>{{ title }}</h2>
+    <div class="row">
+      <div class="col">
+        <h2>{{ title }}</h2>
+      </div>
+      <div class="col-auto align-self-center d-none">
+        <button type="button" class="btn btn-outline-danger">
+          <FontAwesomeIcon icon="trash"></FontAwesomeIcon>
+        </button>
+      </div>
+    </div>
     <div v-if="person !== null" class="row">
       <div class="col-md"><small>{{ creation }}</small></div>
       <div class="col-md text-md-right"><small>{{ deletion }}</small></div>
@@ -44,11 +53,13 @@
 <script lang="ts">
 import { computed, defineComponent, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { PersonRequest, PersonResponse2, getPerson, createPerson, updatePerson, PersonMembership, PersonResponse } from '../services/person'
 import Loading from '@/components/Loading.vue'
 
 export default defineComponent({
   components: {
+    FontAwesomeIcon,
     Loading
   },
   props: {
