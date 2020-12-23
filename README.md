@@ -18,6 +18,24 @@ It is rather the link between several open source applications, while it itself 
 | Chat | Synapse (Matrix),<br>Rocket.Chat,<br>Nextcloud Talk |
 | Website | WordPress |
 
+### Competitors
+
+There are many interesting church management applications out there. These ones are known to the author of this project and might be interesting for you, too.
+
+| Name | License | On-Prem | SaaS |
+|---|---|---|---|
+| Korga | AGPL-3.0 | ✔ | ❌ |
+| [OpenKool](https://github.com/daniel-lerch/openkool) | GPL-2.0 | ✔ | ❌ |
+| [kOOL](https://churchtool.org) | GPL-2.0 | ✔ | ✔<sup>1</sup> |
+| [ChurchCRM](http://www.churchcrm.io) | MIT | ✔ | ❌ |
+| [Rock](https://www.rockrms.com) | free software<sup>2</sup> | ✔ | ❌<sup>3</sup> |
+| [Church Tools](https://www.church.tools) | proprietary | ✔ | ✔ |
+| [Planning Center](https://www.planningcenter.com) | proprietary | ❌ | ✔ |
+
+<sup>1</sup> Only for non-EU customers.  
+<sup>2</sup> [Rock Community License](https://www.rockrms.com/license) similar to GPL.  
+<sup>3</sup> In private beta as of December 2020.
+
 ## Installation
 
 The only officially supported distribution are Docker containers. As there have not been releases so far you have to build the container locally:
@@ -79,7 +97,6 @@ Documentation
 - ...
 
 Server
-- [x] Project creation
 - [x] Basic database model
 - [x] Changelog for important entities
 - [ ] LDAP integration
@@ -91,9 +108,10 @@ Server
 - ...
 
 Client
-- [x] Project creation
-- [ ] People view
+- [x] People view
 - [ ] Group view
+- [ ] Advanced filters
+- [ ] Design concept
 - [ ] Login
 - [ ] PWA support
 - ...
