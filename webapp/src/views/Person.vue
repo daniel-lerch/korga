@@ -5,10 +5,20 @@
       <div class="col">
         <h2>{{ title }}</h2>
       </div>
-      <div class="col-auto align-self-center d-none">
-        <button type="button" class="btn btn-outline-danger">
+      <div v-if="person !== null && deleted === false" class="col-auto align-self-center">
+
+        <button type="button" class="btn btn-outline-danger" @click="showModal = true">
           <FontAwesomeIcon icon="trash"></FontAwesomeIcon>
         </button>
+
+        <Modal
+          v-if="showModal"
+          @close="showModal = false"
+          @continue="archive"
+          :title="'Archive ' + person.givenName + '?'"
+          :body="person.givenName + ' ' + person.familyName + ' is about to be archived. This operation cannot be undone!'">
+        </Modal>
+
       </div>
     </div>
     <div v-if="person !== null" class="row">
@@ -16,7 +26,7 @@
       <div class="col-md text-md-right"><small>{{ deletion }}</small></div>
     </div>
     <hr v-if="person !== null">
-    <form @submit="submit">
+    <form @submit.prevent="submit">
       <div class="form-row">
         <div class="form-group col-md-6">
           <label for="givenName">Given name</label>
@@ -31,7 +41,7 @@
         <label for="mailAddress">Mail address</label>
         <input type="email" v-model="mailAddress" id="mailAddress" class="form-control" :disabled="deleted">
       </div>
-      <a @click="cancel" class="btn btn-secondary mr-2">Back</a>
+      <a @click.prevent="cancel" class="btn btn-secondary mr-2">Back</a>
       <button type="submit" class="btn btn-primary" :disabled="disabled">Save</button>
     </form>
     <div v-if="person !== null" :class="{ 'text-muted': deleted }">
@@ -54,13 +64,15 @@
 import { computed, defineComponent, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { PersonRequest, PersonResponse2, getPerson, createPerson, updatePerson, PersonMembership, PersonResponse } from '../services/person'
+import { PersonRequest, PersonResponse2, getPerson, createPerson, updatePerson, PersonMembership, PersonResponse, deletePerson } from '../services/person'
 import Loading from '@/components/Loading.vue'
+import Modal from '@/components/Modal.vue'
 
 export default defineComponent({
   components: {
     FontAwesomeIcon,
-    Loading
+    Loading,
+    Modal
   },
   props: {
     id: {
@@ -72,6 +84,7 @@ export default defineComponent({
     const router = useRouter()
     const state = ref({ loaded: false, error: null as Error | null })
     const person = ref<PersonResponse2 | null>(null)
+    const showModal = ref(false)
 
     const givenName = ref('')
     const familyName = ref('')
@@ -157,7 +170,7 @@ export default defineComponent({
       }
     })
 
-    const submit = function (e: Event) {
+    const submit = function () {
       const request: PersonRequest = {
         givenName: givenName.value,
         familyName: familyName.value,
@@ -171,17 +184,26 @@ export default defineComponent({
         // TODO: Show a toast message in case of 409 Conflict
         updatePerson(id, request).then(onResponse, onError)
       }
-      e.preventDefault()
     }
 
-    const cancel = function (e: Event) {
+    const archive = function () {
+      const id = person.value?.id ?? -1
+      if (id === -1) {
+        console.warn('It should not be possible to archive a person if it is already archived.')
+      } else {
+        state.value.loaded = false
+        deletePerson(id).then(onResponse, onError)
+      }
+    }
+
+    const cancel = function () {
       router.back()
-      e.preventDefault()
     }
 
     return {
       state,
       person,
+      showModal,
       givenName,
       familyName,
       mailAddress,
@@ -192,6 +214,7 @@ export default defineComponent({
       deletion,
       memberships,
       submit,
+      archive,
       cancel
     }
   }
