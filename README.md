@@ -1,10 +1,8 @@
 # Korga
 
-![Ubuntu build and tests](https://github.com/daniel-lerch/korga/workflows/Ubuntu%20build%20and%20tests/badge.svg)
+> ⚠ This project as a standalone church management system has been discontinued.
 
-> ⚠ This project is work in progress and far away from being usable. For more information see _roadmap_ below.
-
-## What is Korga planned to be?
+## What was Korga planned to be?
 
 Korga stands for the german term _**K**irchen **Orga**nisation_ (church organization).
 Unlike all other church management systems known to the author, Korga is not designed to be an all-in-one solution for churches.
@@ -35,6 +33,17 @@ There are many interesting church management applications out there. These ones 
 <sup>1</sup> Only for non-EU customers.  
 <sup>2</sup> [Rock Community License](https://www.rockrms.com/license) similar to GPL.  
 <sup>3</sup> In private beta as of December 2020.
+
+## Screenshots
+
+![Screenshot of Korga's people view](docs/assets/screenshot_people.png)
+Korga's people view
+
+![Screenshot of editing a person in Korga](docs/assets/screenshot_person_edit.png)
+Editing a person in Korga
+
+![Screenshot of Korga's groups view](docs/assets/screenshot_groups.png)
+Korga's groups view
 
 ## Installation
 
