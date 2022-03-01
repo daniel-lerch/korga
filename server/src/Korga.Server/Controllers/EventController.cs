@@ -32,8 +32,65 @@ namespace Korga.Server.Controllers
             // Grouping operation is performed client-sided
             return new JsonResult(events
                 .GroupBy(x => x.Event)
-                .Select(x => new EventResponse(x.Key, x.Select(y => new EventResponse.Program(y.Program, y.Count)).ToList()))
+                .Select(x => new EventResponse(x.Key, x
+                    .Select(y => new EventResponse.Program(y.Program, y.Count))
+                    .ToList()))
                 .ToList());
+        }
+
+        [HttpGet("~/api/event/{id}")]
+        public async Task<IActionResult> GetEvent(long id)
+        {
+            Event? @event = await database.Events.SingleOrDefaultAsync(x => x.Id == id);
+            if (@event is null) return StatusCode(404);
+
+            // EF cannot translate simple groups joins either so use a LEFT JOIN
+            var programs = await
+                (from p in database.EventPrograms
+                 where p.EventId == id
+                 join pa in database.EventParticipants on p.Id equals pa.ProgramId into grouping
+                 from pa in grouping.DefaultIfEmpty()
+                 select new { Program = p, Participant = pa })
+                .ToListAsync();
+
+            // Grouping operation is performed client-sided respecting null values for programs without participants
+            return new JsonResult(new EventResponse2(@event, programs
+                .GroupBy(x => x.Program)
+                .Select(x => new EventResponse2.Program(x.Key, x
+                    .Where(y => y.Participant is not null)
+                    .Select(y => new EventResponse2.Participant(y.Participant))
+                    .ToList()))
+                .ToList()));
+        }
+
+        [HttpPost("~/api/events/register")]
+        public async Task<IActionResult> Register([FromBody] EventRegistrationRequest request)
+        {
+            if (!ModelState.IsValid) return StatusCode(400);
+
+            var p = await database.EventPrograms
+                .Where(x => x.Id == request.ProgramId)
+                .Select(x => new { Program = x, Count = x.Participants!.Count() })
+                .SingleOrDefaultAsync();
+            if (p is null) return StatusCode(404);
+            if (p.Count >= p.Program.Limit) return StatusCode(409);
+
+            var participant = new EventParticipant(request.GivenName, request.FamilyName) { ProgramId = request.ProgramId };
+            database.EventParticipants.Add(participant);
+            await database.SaveChangesAsync();
+
+            return StatusCode(204);
+        }
+        
+        [HttpDelete("~/api/events/participant/{id}")]
+        public async Task<IActionResult> DeleteRegistration(long id)
+        {
+            EventParticipant? participant = await database.EventParticipants.SingleOrDefaultAsync(x => x.Id == id);
+            if (participant is null) return StatusCode(404);
+
+            database.EventParticipants.Remove(participant);
+            await database.SaveChangesAsync();
+            return StatusCode(204);
         }
     }
 }
