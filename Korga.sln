@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30413.136
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32210.238
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Korga.Server", "server\src\Korga.Server\Korga.Server.csproj", "{E1C5CDEB-C3D5-4BE1-B823-5FD650AB1D08}"
 EndProject
@@ -9,12 +9,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "server-src", "server-src", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{28945597-DB66-4C1C-A2DB-C5ACB5ED4DD4}"
 	ProjectSection(SolutionItems) = preProject
+		Dockerfile = Dockerfile
 		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "server-tests", "server-tests", "{86DB2784-54F6-43CC-8F86-94E059B7DE59}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Korga.Server.Tests", "server\tests\Korga.Server.Tests\Korga.Server.Tests.csproj", "{2A484A88-F6BD-4B36-92C8-0675ADDD8CDB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Korga.Server.Tests", "server\tests\Korga.Server.Tests\Korga.Server.Tests.csproj", "{2A484A88-F6BD-4B36-92C8-0675ADDD8CDB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
