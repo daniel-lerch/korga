@@ -1,6 +1,7 @@
 ﻿using Korga.Server.Database;
 using Korga.Server.Database.Entities;
 using Korga.Server.Models.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -20,6 +21,7 @@ namespace Korga.Server.Controllers
         }
 
         [HttpGet("~/api/events")]
+        [ProducesResponseType(typeof(EventResponse[]), StatusCodes.Status200OK)]
         public async Task<IActionResult> ListEvents()
         {
             // EF Core cannot translate complex group joins in SQL
@@ -39,10 +41,12 @@ namespace Korga.Server.Controllers
         }
 
         [HttpGet("~/api/event/{id}")]
+        [ProducesResponseType(typeof(EventResponse2), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetEvent(long id)
         {
             Event? @event = await database.Events.SingleOrDefaultAsync(x => x.Id == id);
-            if (@event is null) return StatusCode(404);
+            if (@event is null) return StatusCode(StatusCodes.Status404NotFound);
 
             // EF cannot translate simple groups joins either so use a LEFT JOIN
             var programs = await
@@ -64,33 +68,39 @@ namespace Korga.Server.Controllers
         }
 
         [HttpPost("~/api/events/register")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Register([FromBody] EventRegistrationRequest request)
         {
-            if (!ModelState.IsValid) return StatusCode(400);
+            if (!ModelState.IsValid) return StatusCode(StatusCodes.Status400BadRequest);
 
             var p = await database.EventPrograms
                 .Where(x => x.Id == request.ProgramId)
                 .Select(x => new { Program = x, Count = x.Participants!.Count() })
                 .SingleOrDefaultAsync();
-            if (p is null) return StatusCode(404);
-            if (p.Count >= p.Program.Limit) return StatusCode(409);
+            if (p is null) return StatusCode(StatusCodes.Status404NotFound);
+            if (p.Count >= p.Program.Limit) return StatusCode(StatusCodes.Status409Conflict);
 
             var participant = new EventParticipant(request.GivenName, request.FamilyName) { ProgramId = request.ProgramId };
             database.EventParticipants.Add(participant);
             await database.SaveChangesAsync();
 
-            return StatusCode(204);
+            return StatusCode(StatusCodes.Status204NoContent);
         }
         
         [HttpDelete("~/api/events/participant/{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteRegistration(long id)
         {
             EventParticipant? participant = await database.EventParticipants.SingleOrDefaultAsync(x => x.Id == id);
-            if (participant is null) return StatusCode(404);
+            if (participant is null) return StatusCode(StatusCodes.Status404NotFound);
 
             database.EventParticipants.Remove(participant);
             await database.SaveChangesAsync();
-            return StatusCode(204);
+            return StatusCode(StatusCodes.Status204NoContent);
         }
     }
 }
