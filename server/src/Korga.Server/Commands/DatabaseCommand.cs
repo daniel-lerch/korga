@@ -1,8 +1,6 @@
 ﻿using Korga.Server.Database;
 using Korga.Server.Database.Entities;
 using McMaster.Extensions.CommandLineUtils;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 #pragma warning disable CA1822 // Mark members as static
@@ -64,59 +62,20 @@ namespace Korga.Server.Commands
 
         private static async Task PopulateDatabase(DatabaseContext database)
         {
-            // Admin
-            var admin = new Person("Karl-Heinz", "Günther") { MailAddress = "gunther@example.com" };
-            database.People.Add(admin);
+            // Create two services as events
+            var service10 = new Event("Gottesdienst am 06.03. um 10 Uhr");
+            var service12 = new Event("Gottesdienst am 06.03. um 12 Uhr");
+            database.Events.AddRange(service10, service12);
             await database.SaveChangesAsync();
 
-            // Members of multiple groups/roles
-            var michael = new Person("Michael", "Müller") { MailAddress = "mueller@example.com", CreatedById = admin.Id };
-            var linda = new Person("Linda", "Koch") { MailAddress = "lindakoch@example.com", CreatedById = admin.Id };
-            database.People.AddRange(michael, linda);
-
-            // Official members
-            List<Person> members = new()
-            {
-                new("Susanne", "Günther") { MailAddress = "susanne.gunther@example.com", CreatedById = admin.Id },
-                new("David", "Neumann") { MailAddress = "neumann@example.com", CreatedById = admin.Id },
-                new("Eva", "Neumann") { MailAddress = "neumann@example.com", CreatedById = admin.Id },
-                new("Johannes", "Schäfer") { MailAddress = "j.schaefer@example.com", CreatedById = admin.Id },
-                new("Katharina", "Schäfer") { MailAddress = "k.schaefer@example.com", CreatedById = admin.Id }
-            };
-            database.People.AddRange(members);
-            members.AddRange(new[] { admin, michael, linda});
-
-            // Youth members
-            List<Person> youths = new()
-            {
-                new("Elias", "Müller") { CreatedById = admin.Id },
-                new("Leonie", "Neumann") { CreatedById = admin.Id },
-                new("Jonas", "Neumann") { CreatedById = admin.Id },
-                new("Sarah", "Schulz") { CreatedById = admin.Id },
-                new("Anna", "Schäfer") { CreatedById = admin.Id },
-                new("Lukas", "Meyer") { CreatedById = admin.Id }
-            };
-            database.People.AddRange(youths);
-            youths.AddRange(new[] { michael, linda });
-
-            var memberGroup = new Group("Mitglieder") { Description = "Mitglieder der Gemeinde", CreatedById = admin.Id };
-            var youthGroup = new Group("Jugend") { Description = "Gruppe für Jugendliche ab 14 Jahren", CreatedById = admin.Id };
-            database.Groups.AddRange(memberGroup, youthGroup);
-            await database.SaveChangesAsync();
-
-            var memberMember = new GroupRole("Mitglied") { GroupId = memberGroup.Id, CreatedById = admin.Id };
-            var youthMember = new GroupRole("Teilnehmer") { GroupId = youthGroup.Id, CreatedById = admin.Id };
-            var youthLeader = new GroupRole("Leiter") { GroupId = youthGroup.Id, CreatedById = admin.Id };
-            database.GroupRoles.AddRange(memberMember, youthMember, youthLeader);
-            await database.SaveChangesAsync();
-
-            database.GroupMembers.AddRange(
-                members.Select(m => new GroupMember { PersonId = m.Id, GroupRoleId = memberMember.Id, CreatedById = admin.Id }));
-
-            database.GroupMembers.Add(new GroupMember { PersonId = michael.Id, GroupRoleId = youthLeader.Id, CreatedById = admin.Id });
-            database.GroupMembers.AddRange(
-                youths.Select(y => new GroupMember { PersonId = y.Id, GroupRoleId = youthMember.Id, CreatedById = admin.Id }));
-
+            // Create children's ministry as programs
+            var program10_0 = new EventProgram("Gottesdienst (Erwachsene)") { EventId = service10.Id, Limit = 65 };
+            var program10_1 = new EventProgram("Kükennest (0-3 Jahre)") { EventId = service10.Id, Limit = 5 };
+            var program10_2 = new EventProgram("Kindergartenkinder") { EventId = service10.Id, Limit = 12 };
+            var program10_3 = new EventProgram("Grundschulkinder") { EventId = service10.Id, Limit = 12 };
+            var program10_4 = new EventProgram("Weiterführende Schule") { EventId = service10.Id, Limit = 12 };
+            var program12_0 = new EventProgram("Gottesdienst (Erwachsene)") { EventId = service12.Id, Limit = 65 };
+            database.EventPrograms.AddRange(program10_0, program10_1, program10_2, program10_3, program10_4, program12_0);
             await database.SaveChangesAsync();
         }
     }
