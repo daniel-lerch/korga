@@ -1,9 +1,5 @@
-import { createApp } from 'vue'
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { faTrash, faUserPlus } from '@fortawesome/free-solid-svg-icons'
-import App from './App.vue'
-import router from './router'
-import store from './store'
+import { createApp } from "vue";
+import App from "./App.vue";
+import router from "./router";
 
-library.add(faTrash, faUserPlus)
-createApp(App).use(store).use(router).mount('#app')
+createApp(App).use(router).mount("#app");

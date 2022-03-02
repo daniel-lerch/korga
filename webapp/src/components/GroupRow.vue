@@ -7,15 +7,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue'
-import { GroupResponse } from '../services/group'
+import { defineComponent, PropType } from "vue";
+import { GroupResponse } from "../services/group";
 
 export default defineComponent({
   props: {
     group: {
       type: Object as PropType<GroupResponse>,
-      required: true
-    }
-  }
-})
+      required: true,
+    },
+  },
+});
 </script>

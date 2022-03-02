@@ -1,4 +1,4 @@
-import { get } from './client'
+import { get } from "./client";
 
 export interface GroupResponse {
   id: number;
@@ -11,6 +11,6 @@ export interface GroupResponse {
   memberCount: number;
 }
 
-export function getGroups (): Promise<GroupResponse[]> {
-  return get('/api/groups')
+export function getGroups(): Promise<GroupResponse[]> {
+  return get("/api/groups");
 }
