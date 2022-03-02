@@ -31,12 +31,7 @@
     <router-view v-bind="$attrs" />
   </main>
   <footer class="bg-light">
-    <div>
-      Copyright &copy; 2020 Daniel Lerch and
-      <a href="https://github.com/daniel-lerch/korga/graphs/contributors"
-        >others</a
-      >
-    </div>
+    <div>Copyright &copy; 2022 Daniel Lerch and Benjamin Stieler</div>
   </footer>
 </template>
 
