@@ -18,6 +18,12 @@
         <router-link
           :to="{ name: `Register`, params: { id: event.id } }"
           class="btn btn-primary"
+          :class="{
+            disabled:
+              event.programs.length < 1 ||
+              (event.programs.length == 1 &&
+                event.programs[0].count >= event.programs[0].limit),
+          }"
           >Anmelden</router-link
         >
       </div>
@@ -52,6 +58,8 @@ h1 {
   margin-top: 12px;
 }
 .disabled {
-  color: lightgray;
+  /* color: lightgray; */
+  opacity: 0.5;
+  pointer-events: none;
 }
 </style>

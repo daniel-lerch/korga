@@ -46,7 +46,9 @@
         </label>
       </div>
     </div>
-    <button type="submit" class="btn btn-primary">Anmelden</button>
+    <button type="submit" class="btn btn-primary" :disabled="full">
+      Anmelden
+    </button>
     <div class="alert alert-danger alert-dismissible" role="alert" v-if="error">
       Es ist ein Fehler aufgetreten
       <!-- <button
@@ -82,6 +84,7 @@ export default defineComponent({
     const familyName = ref("");
     const programId = ref(0);
     const error = ref(false);
+    const full = ref(false);
     onMounted(async () => {
       event.value = await getEvent(props.id);
       if (
@@ -90,6 +93,12 @@ export default defineComponent({
           event.value.programs[0].limit
       ) {
         programId.value = event.value.programs[0].id;
+      }
+      if (
+        event.value.programs[0].participants.length >=
+        event.value.programs[0].limit
+      ) {
+        full.value = true;
       }
     });
 
@@ -123,6 +132,7 @@ export default defineComponent({
       familyName,
       programId,
       error,
+      full,
       register,
     };
   },
