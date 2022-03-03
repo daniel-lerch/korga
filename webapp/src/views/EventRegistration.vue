@@ -123,7 +123,7 @@ export default defineComponent({
         if (res) {
           error.value = "";
           event.value = await getEvent(props.id);
-          router.push({ name: "List", params: { id: event.value.id } });
+          router.push({ name: "Event", params: { id: event.value.id } });
         } else {
           error.value = "Es ist ein Fehler aufgetreten";
           getEventData();

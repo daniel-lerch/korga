@@ -3,9 +3,12 @@
     <h1>Events</h1>
     <div v-for="event in events" :key="event.id" class="card mb-3">
       <div class="card-body">
-        <h2 @click="$router.push(`/event/${event.id}`)" class="card-title">
+        <router-link
+          class="h2 card-title subdued"
+          :to="{ name: 'Event', params: { id: event.id } }"
+        >
           {{ event.name }}
-        </h2>
+        </router-link>
         <ul>
           <li
             v-for="program in event.programs"
@@ -16,7 +19,7 @@
           </li>
         </ul>
         <router-link
-          :to="{ name: `Register`, params: { id: event.id } }"
+          :to="{ name: 'Register', params: { id: event.id } }"
           class="btn btn-primary"
           :class="{
             disabled:
@@ -50,12 +53,12 @@ export default defineComponent({
 </script>
 
 <style scoped>
-h2:hover {
-  text-decoration: underline;
-  cursor: pointer;
-}
 h1 {
   margin-top: 12px;
+}
+.h2 {
+  display: block;
+  margin-bottom: 8px;
 }
 .disabled {
   /* color: lightgray; */

@@ -41,7 +41,7 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: "/event/:id",
-    name: "List",
+    name: "Event",
     component: () =>
       import(/* webpackChunkName: "event" */ "../views/EventDetails.vue"),
     props: true,

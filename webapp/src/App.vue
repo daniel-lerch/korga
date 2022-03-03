@@ -69,6 +69,11 @@ header .navbar {
 
 a.subdued {
   color: inherit;
+  text-decoration-line: none;
+}
+
+a.subdued:hover {
+  text-decoration-line: underline;
 }
 
 .page-load-container {
