@@ -23,7 +23,7 @@
             <th scope="row">
               <button
                 type="button"
-                class="btn btn-primary"
+                class="btn btn-outline-danger"
                 @click="
                   removeParticipant(
                     participant.id,
@@ -70,7 +70,11 @@ export default defineComponent({
         return;
 
       try {
-        await deletePerson(id);
+        const res = await deletePerson(id);
+        console.log(res);
+        if (res == false) {
+          console.log("o");
+        }
       } catch (err) {
         console.log("err");
       }
@@ -91,5 +95,11 @@ export default defineComponent({
 <style scoped>
 .btnAn {
   margin-top: 8px;
+}
+.table > :not(:first-child) {
+  border-top: 0;
+}
+h3 {
+  margin-top: 42px;
 }
 </style>

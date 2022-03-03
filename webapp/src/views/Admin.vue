@@ -12,7 +12,7 @@
   </div>
   <div v-for="program in event?.programs" :key="program.id">
     <h3>{{ program.name }}</h3>
-    <table class="table">
+    <table class="table table-striped">
       <thead>
         <tr>
           <th scope="col">Vorname</th>
@@ -27,8 +27,14 @@
           <td>
             <button
               type="button"
-              class="btn btn-primary"
-              @click="removeParticipant(participant.id)"
+              class="btn btn-outline-danger"
+              @click="
+                removeParticipant(
+                  participant.id,
+                  participant.givenName,
+                  participant.familyName
+                )
+              "
             >
               Delete
             </button>
@@ -65,7 +71,13 @@ export default defineComponent({
       curId.value = id;
     };
 
-    const removeParticipant = async function (id: string) {
+    const removeParticipant = async function (
+      id: string,
+      givenName: string,
+      familyName: string
+    ) {
+      if (!confirm(`Wollen sie wirklich ${givenName} ${familyName} abmelden?`))
+        return;
       try {
         await deletePerson(id);
       } catch (err) {
@@ -86,4 +98,8 @@ export default defineComponent({
 });
 </script>
 
-<style></style>
+<style scoped>
+.table > :not(:first-child) {
+  border-top: 0;
+}
+</style>

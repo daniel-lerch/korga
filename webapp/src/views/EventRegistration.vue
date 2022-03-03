@@ -82,7 +82,6 @@ export default defineComponent({
     const register = async function () {
       if (givenName.value == "") return;
       if (familyName.value == "") return;
-      console.log("register");
       const request: EventResponse3 = {
         programId: programId.value,
         givenName: givenName.value,
@@ -91,7 +90,7 @@ export default defineComponent({
       };
       try {
         const res = await registerForEvent(request);
-        // console.log(res);
+        console.log(res);
       } catch (err) {
         console.log(err);
       } finally {

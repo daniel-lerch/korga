@@ -24,13 +24,13 @@ const routes: Array<RouteRecordRaw> = [
     path: "/events",
     name: "Events",
     component: () =>
-      import(/* webpackChunkName: "events" */ "../views/Events.vue"),
+      import(/* webpackChunkName: "events" */ "../views/EventList.vue"),
   },
   {
     path: "/event/:id/register",
     name: "Register",
     component: () =>
-      import(/* webpackChunkName: "event" */ "../views/Event.vue"),
+      import(/* webpackChunkName: "event" */ "../views/EventRegistration.vue"),
     props: true,
   },
   {
@@ -43,7 +43,7 @@ const routes: Array<RouteRecordRaw> = [
     path: "/event/:id",
     name: "List",
     component: () =>
-      import(/* webpackChunkName: "event" */ "../views/List.vue"),
+      import(/* webpackChunkName: "event" */ "../views/EventDetails.vue"),
     props: true,
   },
 ];
