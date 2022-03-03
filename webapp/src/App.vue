@@ -1,7 +1,7 @@
 <template>
   <header>
     <nav class="navbar navbar-expand-md navbar-dark">
-      <router-link to="/people" class="navbar-brand">Korga</router-link>
+      <router-link to="/events" class="navbar-brand">Korga</router-link>
       <button
         class="navbar-toggler"
         type="button"

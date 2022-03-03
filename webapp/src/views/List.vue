@@ -1,4 +1,7 @@
 <template>
+  <button @click="$router.go(-1)" type="button" class="btn btn-primary">
+    Weitere Person anmelden
+  </button>
   <h1>Teilnehmer: {{ event?.name }}</h1>
   <div v-for="program in event?.programs" :key="program.id">
     <h3>{{ program.name }}</h3>
@@ -23,13 +26,7 @@
 
 <script lang="ts">
 import { defineComponent, onMounted, ref } from "vue";
-import {
-  EventResponse,
-  EventResponse2,
-  getEvents,
-  getEvent,
-} from "@/services/event";
-import { deletePerson } from "@/services/event";
+import { EventResponse2, getEvent } from "@/services/event";
 
 export default defineComponent({
   props: {
@@ -46,14 +43,8 @@ export default defineComponent({
       event.value = await getEvent(props.id);
     });
 
-    const getEventData = async function (id: number) {
-      event.value = await getEvent(id.toString());
-      curId.value = id;
-    };
-
     return {
       event,
-      getEventData,
       curId,
       props,
     };

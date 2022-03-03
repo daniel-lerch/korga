@@ -74,6 +74,9 @@ export default defineComponent({
     const programId = ref(0);
     onMounted(async () => {
       event.value = await getEvent(props.id);
+      if (event.value.programs.length == 1) {
+        programId.value = event.value.programs[0].id;
+      }
     });
 
     const register = async function () {
