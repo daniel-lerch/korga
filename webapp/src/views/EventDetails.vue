@@ -59,10 +59,18 @@ export default defineComponent({
   setup(props) {
     const event = ref<EventResponse2 | null>(null);
     const curId = ref(-1);
-    const freeSeats = ref(true);
+
+    // Use computed value to avoid duplicate data which might be outdated.
+    const freeSeats = computed(() => {
+      if (event.value === null) return true;
+      for (const program of event.value.programs) {
+        if (program.participants.length < program.limit) return true;
+      }
+      return false;
+    });
 
     onMounted(async () => {
-      getEventData();
+      event.value = await getEvent(props.id);
     });
 
     const removeParticipant = async function (
@@ -84,19 +92,6 @@ export default defineComponent({
       }
 
       event.value = await getEvent(props.id);
-    };
-
-    const getEventData = async function () {
-      event.value = await getEvent(props.id);
-      if (
-        event.value?.programs.length == 1 &&
-        event.value?.programs[0].participants.length >=
-          event.value?.programs[0].limit
-      ) {
-        freeSeats.value = false;
-      } else {
-        freeSeats.value = true;
-      }
     };
 
     return {

@@ -1,4 +1,4 @@
-import client, { get, send } from "./client";
+import client, { get } from "./client";
 
 export interface EventResponse {
   id: number;
@@ -27,11 +27,10 @@ export interface EventResponse2 {
   }[];
 }
 
-export interface EventResponse3 {
+export interface EventRegistrationRequest {
   programId: number;
   givenName: string;
   familyName: string;
-  conflict: boolean;
 }
 
 export function getEvents(): Promise<EventResponse[]> {
@@ -42,7 +41,9 @@ export function getEvent(id: string): Promise<EventResponse2> {
   return get("/api/event/" + id);
 }
 
-export async function registerForEvent(data: EventResponse3): Promise<boolean> {
+export async function registerForEvent(
+  data: EventRegistrationRequest
+): Promise<boolean> {
   const response = await client.post("/api/events/register", data);
   return response.status === 204;
 }

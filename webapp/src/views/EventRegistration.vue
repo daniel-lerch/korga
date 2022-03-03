@@ -49,7 +49,14 @@
     <button type="submit" class="btn btn-primary" :disabled="full">
       Anmelden
     </button>
-    <div class="alert alert-danger alert-dismissible" role="alert" v-if="error">
+    <div class="alert alert-danger" role="alert" v-if="full">
+      Alle Plätze sind bereits belegt.
+    </div>
+    <div
+      class="alert alert-danger alert-dismissible"
+      role="alert"
+      v-else-if="error"
+    >
       {{ error }}
     </div>
   </form>
@@ -59,11 +66,11 @@
 import router from "@/router";
 import {
   EventResponse2,
-  EventResponse3,
+  EventRegistrationRequest,
   getEvent,
   registerForEvent,
 } from "@/services/event";
-import { defineComponent, onMounted, ref } from "vue";
+import { defineComponent, onMounted, ref, computed } from "vue";
 
 export default defineComponent({
   props: {
@@ -78,7 +85,16 @@ export default defineComponent({
     const familyName = ref("");
     const programId = ref(0);
     const error = ref("");
-    const full = ref(false);
+
+    // Use computed value to avoid duplicate data which might be outdated.
+    const full = computed(() => {
+      if (event.value === null) return false;
+      for (const program of event.value.programs) {
+        if (program.participants.length < program.limit) return false;
+      }
+      return true;
+    });
+
     onMounted(async () => {
       event.value = await getEvent(props.id);
       if (
@@ -88,34 +104,19 @@ export default defineComponent({
       ) {
         programId.value = event.value.programs[0].id;
       }
-      if (
-        event.value.programs[0].participants.length >=
-        event.value.programs[0].limit
-      ) {
-        full.value = true;
-        error.value = "Alle Plätze sind schon belegt";
-      }
     });
 
     const getEventData = async function () {
       event.value = await getEvent(props.id);
-      if (
-        event.value.programs[0].participants.length >=
-        event.value.programs[0].limit
-      ) {
-        full.value = true;
-        error.value = "Alle Plätze sind schon belegt";
-      }
     };
 
     const register = async function () {
       if (givenName.value == "") return;
       if (familyName.value == "") return;
-      const request: EventResponse3 = {
+      const request: EventRegistrationRequest = {
         programId: programId.value,
         givenName: givenName.value,
         familyName: familyName.value,
-        conflict: false,
       };
       try {
         const res = await registerForEvent(request);
