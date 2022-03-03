@@ -1,3 +1,5 @@
+import axios from "axios";
+
 const baseUrl =
   process.env.VUE_APP_API_URL ?? window.resourceBasePath.slice(0, -1);
 
@@ -43,3 +45,7 @@ export async function send<T extends { conflict: boolean }>(
   responseBody.conflict = response.status === 409;
   return responseBody;
 }
+
+export default axios.create({
+  baseURL: process.env.VUE_APP_API_URL ?? window.resourceBasePath.slice(0, -1),
+});

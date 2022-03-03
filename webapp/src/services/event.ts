@@ -1,4 +1,4 @@
-import { get, send } from "./client";
+import client, { get, send } from "./client";
 
 export interface EventResponse {
   id: number;
@@ -34,10 +34,6 @@ export interface EventResponse3 {
   conflict: boolean;
 }
 
-export interface EventResponse4 {
-  conflict: boolean;
-}
-
 export function getEvents(): Promise<EventResponse[]> {
   return get("/api/events");
 }
@@ -52,6 +48,7 @@ export function registerForEvent(
   return send<EventResponse3>("POST", "/api/events/register", data);
 }
 
-export function deletePerson(id: string): Promise<EventResponse4> {
-  return send("DELETE", "/api/events/participant/" + id);
+export async function deletePerson(id: string): Promise<boolean> {
+  const response = await client.delete("api/events/participant/" + id);
+  return response.status === 204;
 }
