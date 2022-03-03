@@ -14,13 +14,13 @@
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav">
           <li class="nav-item">
-            <router-link :to="{ name: 'People' }" class="nav-link"
-              >People</router-link
+            <router-link :to="{ name: 'Events' }" class="nav-link"
+              >Events</router-link
             >
           </li>
           <li class="nav-item">
-            <router-link :to="{ name: 'Groups' }" class="nav-link"
-              >Groups</router-link
+            <router-link :to="{ name: 'Admin' }" class="nav-link"
+              >Admin</router-link
             >
           </li>
         </ul>

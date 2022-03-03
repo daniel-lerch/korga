@@ -33,6 +33,19 @@ const routes: Array<RouteRecordRaw> = [
       import(/* webpackChunkName: "event" */ "../views/Event.vue"),
     props: true,
   },
+  {
+    path: "/admin",
+    name: "Admin",
+    component: () =>
+      import(/* webpackChunkName: "event" */ "../views/Admin.vue"),
+  },
+  {
+    path: "/list/:id",
+    name: "List",
+    component: () =>
+      import(/* webpackChunkName: "event" */ "../views/List.vue"),
+    props: true,
+  },
 ];
 
 const router = createRouter({
