@@ -115,4 +115,11 @@ form {
   max-width: 400px;
   margin: 5px;
 }
+
+input {
+  max-width: 400px;
+}
+.btn {
+  margin-top: 12px;
+}
 </style>

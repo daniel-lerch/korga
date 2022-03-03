@@ -48,6 +48,9 @@ h2:hover {
   text-decoration: underline;
   cursor: pointer;
 }
+h1 {
+  margin-top: 12px;
+}
 .disabled {
   color: lightgray;
 }
