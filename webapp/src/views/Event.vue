@@ -26,16 +26,15 @@ export default defineComponent({
   props: {
     id: {
       type: String,
+      required: true,
     },
   },
   setup(props) {
     const event = ref<EventResponse2 | null>(null);
     const givenName = ref("");
     const familyName = ref("");
-    console.log(props.id);
     onMounted(async () => {
-      event.value = await getEvent("1"); // props.id
-      // console.log(props.id)
+      event.value = await getEvent(props.id);
     });
 
     return { event, givenName, familyName };

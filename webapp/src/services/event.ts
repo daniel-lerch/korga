@@ -32,5 +32,5 @@ export function getEvents(): Promise<EventResponse[]> {
 }
 
 export function getEvent(id: string): Promise<EventResponse2> {
-  return get("/api/event" + id);
+  return get("/api/event/" + id);
 }

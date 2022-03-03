@@ -30,7 +30,8 @@ const routes: Array<RouteRecordRaw> = [
     path: "/event/:id",
     name: "Event",
     component: () =>
-      import(/* webpackChunkName: "events" */ "../views/Event.vue"),
+      import(/* webpackChunkName: "event" */ "../views/Event.vue"),
+    props: true,
   },
 ];
 
