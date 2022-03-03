@@ -3,6 +3,9 @@
     <router-link
       :to="{ path: `/event/${id}/register` }"
       class="btn btn-primary mb-3 btnAn"
+      :class="{
+        disabled: !freeSeats,
+      }"
       >Person anmelden</router-link
     >
     <h1>Teilnehmer: {{ event?.name }}</h1>
@@ -43,7 +46,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from "vue";
+import { computed, defineComponent, onMounted, ref } from "vue";
 import { deletePerson, EventResponse2, getEvent } from "@/services/event";
 
 export default defineComponent({
@@ -56,9 +59,10 @@ export default defineComponent({
   setup(props) {
     const event = ref<EventResponse2 | null>(null);
     const curId = ref(-1);
+    const freeSeats = ref(true);
 
     onMounted(async () => {
-      event.value = await getEvent(props.id);
+      getEventData();
     });
 
     const removeParticipant = async function (
@@ -82,10 +86,24 @@ export default defineComponent({
       event.value = await getEvent(props.id);
     };
 
+    const getEventData = async function () {
+      event.value = await getEvent(props.id);
+      if (
+        event.value?.programs.length == 1 &&
+        event.value?.programs[0].participants.length >=
+          event.value?.programs[0].limit
+      ) {
+        freeSeats.value = false;
+      } else {
+        freeSeats.value = true;
+      }
+    };
+
     return {
       event,
       curId,
       props,
+      freeSeats,
       removeParticipant,
     };
   },

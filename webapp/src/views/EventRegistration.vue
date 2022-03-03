@@ -50,13 +50,7 @@
       Anmelden
     </button>
     <div class="alert alert-danger alert-dismissible" role="alert" v-if="error">
-      Es ist ein Fehler aufgetreten
-      <!-- <button
-        type="button"
-        class="btn-close"
-        data-bs-dismiss="alert"
-        aria-label="Close"
-      ></button> -->
+      {{ error }}
     </div>
   </form>
 </template>
@@ -83,7 +77,7 @@ export default defineComponent({
     const givenName = ref("");
     const familyName = ref("");
     const programId = ref(0);
-    const error = ref(false);
+    const error = ref("");
     const full = ref(false);
     onMounted(async () => {
       event.value = await getEvent(props.id);
@@ -99,8 +93,20 @@ export default defineComponent({
         event.value.programs[0].limit
       ) {
         full.value = true;
+        error.value = "Alle Plätze sind schon belegt";
       }
     });
+
+    const getEventData = async function () {
+      event.value = await getEvent(props.id);
+      if (
+        event.value.programs[0].participants.length >=
+        event.value.programs[0].limit
+      ) {
+        full.value = true;
+        error.value = "Alle Plätze sind schon belegt";
+      }
+    };
 
     const register = async function () {
       if (givenName.value == "") return;
@@ -114,15 +120,17 @@ export default defineComponent({
       try {
         const res = await registerForEvent(request);
         if (res) {
-          error.value = false;
+          error.value = "";
           event.value = await getEvent(props.id);
           router.push({ name: "List", params: { id: event.value.id } });
         } else {
-          error.value = true;
+          error.value = "Es ist ein Fehler aufgetreten";
+          getEventData();
         }
       } catch (err) {
         console.log(err);
-        error.value = true;
+        error.value = "Es ist ein Fehler aufgetreten";
+        getEventData();
       }
     };
 
