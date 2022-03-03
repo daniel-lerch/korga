@@ -84,7 +84,11 @@ export default defineComponent({
     const error = ref(false);
     onMounted(async () => {
       event.value = await getEvent(props.id);
-      if (event.value.programs.length == 1) {
+      if (
+        event.value.programs.length == 1 &&
+        event.value.programs[0].participants.length <
+          event.value.programs[0].limit
+      ) {
         programId.value = event.value.programs[0].id;
       }
     });
