@@ -8,14 +8,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue'
+import { defineComponent, PropType } from "vue";
 
 export default defineComponent({
   props: {
     state: {
       type: Object as PropType<{ error: Error | null }>,
-      required: true
-    }
-  }
-})
+      required: true,
+    },
+  },
+});
 </script>

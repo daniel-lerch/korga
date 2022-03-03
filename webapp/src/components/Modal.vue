@@ -6,7 +6,12 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="archiveModalLabel">{{ title }}</h5>
-          <button type="button" class="close" @click="$emit('close')" aria-label="Close">
+          <button
+            type="button"
+            class="close"
+            @click="$emit('close')"
+            aria-label="Close"
+          >
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
@@ -15,8 +20,20 @@
         </div>
         <div class="modal-footer">
           <slot name="footer">
-            <button type="button" class="btn btn-secondary" @click="$emit('close')">Cancel</button>
-            <button type="button" class="btn btn-danger" @click="$emit('continue')">Continue</button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              @click="$emit('close')"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              @click="$emit('continue')"
+            >
+              Continue
+            </button>
           </slot>
         </div>
       </div>
@@ -25,11 +42,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent } from "vue";
 export default defineComponent({
   props: {
     title: String,
-    body: String
-  }
-})
+    body: String,
+  },
+});
 </script>

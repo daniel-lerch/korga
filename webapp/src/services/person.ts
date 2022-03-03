@@ -1,4 +1,4 @@
-import { get, send } from './client'
+import { get, send } from "./client";
 
 export interface PersonResponse {
   id: number;
@@ -50,23 +50,26 @@ export interface PersonRequest {
   mailAddress: string | null;
 }
 
-export function getPeople (): Promise<PersonResponse[]> {
-  return get('/api/people')
+export function getPeople(): Promise<PersonResponse[]> {
+  return get("/api/people");
 }
 
-export function getPerson (id: number): Promise<PersonResponse2> {
-  return get('/api/person/' + id)
+export function getPerson(id: number): Promise<PersonResponse2> {
+  return get("/api/person/" + id);
 }
 
 // TODO: createPerson does not have to handle 409 Conflict
-export function createPerson (person: PersonRequest): Promise<PersonResponse2> {
-  return send<PersonResponse2>('POST', '/api/person/new', person)
+export function createPerson(person: PersonRequest): Promise<PersonResponse2> {
+  return send<PersonResponse2>("POST", "/api/person/new", person);
 }
 
-export function updatePerson (id: number, person: PersonRequest): Promise<PersonResponse2> {
-  return send<PersonResponse2>('PUT', '/api/person/' + id, person)
+export function updatePerson(
+  id: number,
+  person: PersonRequest
+): Promise<PersonResponse2> {
+  return send<PersonResponse2>("PUT", "/api/person/" + id, person);
 }
 
-export function deletePerson (id: number): Promise<PersonResponse2> {
-  return send<PersonResponse2>('DELETE', '/api/person/' + id)
+export function deletePerson(id: number): Promise<PersonResponse2> {
+  return send<PersonResponse2>("DELETE", "/api/person/" + id);
 }
