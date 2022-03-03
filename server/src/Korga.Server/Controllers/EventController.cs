@@ -4,6 +4,7 @@ using Korga.Server.Models.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,10 +15,12 @@ namespace Korga.Server.Controllers
     public class EventController : ControllerBase
     {
         private readonly DatabaseContext database;
+        private readonly ILogger<EventController> logger;
 
-        public EventController(DatabaseContext database)
+        public EventController(DatabaseContext database, ILogger<EventController> logger)
         {
             this.database = database;
+            this.logger = logger;
         }
 
         [HttpGet("~/api/events")]
@@ -36,7 +39,9 @@ namespace Korga.Server.Controllers
                 .GroupBy(x => x.Event)
                 .Select(x => new EventResponse(x.Key, x
                     .Select(y => new EventResponse.Program(y.Program, y.Count))
+                    .OrderBy(y => y.Id)
                     .ToList()))
+                .OrderBy(x=> x.Id)
                 .ToList());
         }
 
@@ -63,7 +68,9 @@ namespace Korga.Server.Controllers
                 .Select(x => new EventResponse2.Program(x.Key, x
                     .Where(y => y.Participant is not null)
                     .Select(y => new EventResponse2.Participant(y.Participant))
+                    .OrderByDescending(y => y.Id)
                     .ToList()))
+                .OrderBy(x => x.Id)
                 .ToList()));
         }
 
@@ -100,6 +107,9 @@ namespace Korga.Server.Controllers
 
             database.EventParticipants.Remove(participant);
             await database.SaveChangesAsync();
+
+            logger.LogInformation("Deleted participant {givenName} {familyName} from program {programId}", participant.GivenName, participant.FamilyName, participant.ProgramId);
+
             return StatusCode(StatusCodes.Status204NoContent);
         }
     }

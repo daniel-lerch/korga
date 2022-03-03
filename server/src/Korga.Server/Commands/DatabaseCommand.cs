@@ -69,12 +69,12 @@ namespace Korga.Server.Commands
             await database.SaveChangesAsync();
 
             // Create children's ministry as programs
-            var program10_0 = new EventProgram("Gottesdienst (Erwachsene)") { EventId = service10.Id, Limit = 65 };
+            var program10_0 = new EventProgram("Gottesdienst") { EventId = service10.Id, Limit = 65 };
             var program10_1 = new EventProgram("Kükennest (0-3 Jahre)") { EventId = service10.Id, Limit = 5 };
             var program10_2 = new EventProgram("Kindergartenkinder") { EventId = service10.Id, Limit = 12 };
             var program10_3 = new EventProgram("Grundschulkinder") { EventId = service10.Id, Limit = 12 };
             var program10_4 = new EventProgram("Weiterführende Schule") { EventId = service10.Id, Limit = 12 };
-            var program12_0 = new EventProgram("Gottesdienst (Erwachsene)") { EventId = service12.Id, Limit = 65 };
+            var program12_0 = new EventProgram("Gottesdienst") { EventId = service12.Id, Limit = 65 };
             database.EventPrograms.AddRange(program10_0, program10_1, program10_2, program10_3, program10_4, program12_0);
             await database.SaveChangesAsync();
         }
