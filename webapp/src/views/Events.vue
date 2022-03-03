@@ -1,15 +1,27 @@
 <template>
-  <h1>Events</h1>
-  <div v-for="event in events" :key="event.id">
-    <h2>{{ event.name }}</h2>
-    <div v-for="program in event.programs" :key="program.id">
-      <h5>{{ program.name }}</h5>
+  <div class="container">
+    <h1>Events</h1>
+    <div v-for="event in events" :key="event.id" class="card mb-3">
+      <div class="card-body">
+        <h2 @click="$router.push(`/event/${event.id}`)" class="card-title">
+          {{ event.name }}
+        </h2>
+        <ul>
+          <li
+            v-for="program in event.programs"
+            :key="program.id"
+            :class="{ disabled: program.count >= program.limit }"
+          >
+            {{ program.name }} {{ program.count }}/{{ program.limit }}
+          </li>
+        </ul>
+        <router-link
+          :to="{ name: `Register`, params: { id: event.id } }"
+          class="btn btn-primary"
+          >Anmelden</router-link
+        >
+      </div>
     </div>
-    <router-link
-      :to="{ name: 'Event', params: { id: event.id } }"
-      class="btn btn-primary"
-      >Anmelden</router-link
-    >
   </div>
 </template>
 
@@ -31,4 +43,12 @@ export default defineComponent({
 });
 </script>
 
-<style></style>
+<style scoped>
+h2:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+.disabled {
+  color: lightgray;
+}
+</style>

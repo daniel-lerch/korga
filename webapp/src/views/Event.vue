@@ -1,5 +1,5 @@
 <template>
-  <form @submit.prevent="register">
+  <form @submit.prevent="register" class="container">
     <h1>{{ event?.name }}</h1>
     <div class="mb-3">
       <label for="givenName" class="form-label">Vorname</label>
@@ -33,12 +33,13 @@
           class="form-check-input"
           type="radio"
           name="exampleRadios"
+          :id="`radio${program.id}`"
           :value="program.id"
           v-model="programId"
           :disabled="program.participants.length >= program.limit"
           required
         />
-        <label class="form-check-label" for="exampleRadios1">
+        <label class="form-check-label" :for="`radio${program.id}`">
           {{ program.name }} {{ program.participants.length }}/{{
             program.limit
           }}
@@ -47,7 +48,6 @@
     </div>
     <button type="submit" class="btn btn-primary">Anmelden</button>
   </form>
-  <div></div>
 </template>
 
 <script lang="ts">

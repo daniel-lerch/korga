@@ -15,7 +15,6 @@
     <table class="table">
       <thead>
         <tr>
-          <th scope="col">#</th>
           <th scope="col">Vorname</th>
           <th scope="col">Nachname</th>
           <th scope="col">Delete</th>
@@ -23,7 +22,6 @@
       </thead>
       <tbody>
         <tr v-for="participant in program.participants" :key="participant.id">
-          <th scope="row">1</th>
           <td>{{ participant.givenName }}</td>
           <td>{{ participant.familyName }}</td>
           <td>
