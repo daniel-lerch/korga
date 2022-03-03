@@ -42,10 +42,9 @@ export function getEvent(id: string): Promise<EventResponse2> {
   return get("/api/event/" + id);
 }
 
-export function registerForEvent(
-  data: EventResponse3
-): Promise<EventResponse3> {
-  return send<EventResponse3>("POST", "/api/events/register", data);
+export async function registerForEvent(data: EventResponse3): Promise<boolean> {
+  const response = await client.post("/api/events/register", data);
+  return response.status === 204;
 }
 
 export async function deletePerson(id: string): Promise<boolean> {

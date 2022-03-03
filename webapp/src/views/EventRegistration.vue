@@ -47,6 +47,15 @@
       </div>
     </div>
     <button type="submit" class="btn btn-primary">Anmelden</button>
+    <div class="alert alert-danger alert-dismissible" role="alert" v-if="error">
+      Es ist ein Fehler aufgetreten
+      <!-- <button
+        type="button"
+        class="btn-close"
+        data-bs-dismiss="alert"
+        aria-label="Close"
+      ></button> -->
+    </div>
   </form>
 </template>
 
@@ -72,6 +81,7 @@ export default defineComponent({
     const givenName = ref("");
     const familyName = ref("");
     const programId = ref(0);
+    const error = ref(false);
     onMounted(async () => {
       event.value = await getEvent(props.id);
       if (event.value.programs.length == 1) {
@@ -90,12 +100,16 @@ export default defineComponent({
       };
       try {
         const res = await registerForEvent(request);
-        console.log(res);
+        if (res) {
+          error.value = false;
+          event.value = await getEvent(props.id);
+          router.push({ name: "List", params: { id: event.value.id } });
+        } else {
+          error.value = true;
+        }
       } catch (err) {
         console.log(err);
-      } finally {
-        event.value = await getEvent(props.id);
-        router.push({ name: "List", params: { id: event.value.id } });
+        error.value = true;
       }
     };
 
@@ -104,6 +118,7 @@ export default defineComponent({
       givenName,
       familyName,
       programId,
+      error,
       register,
     };
   },
@@ -121,5 +136,6 @@ input {
 }
 .btn {
   margin-top: 12px;
+  margin-bottom: 12px;
 }
 </style>
