@@ -49,6 +49,6 @@ export async function registerForEvent(
 }
 
 export async function deletePerson(id: string): Promise<boolean> {
-  const response = await client.delete("api/events/participant/" + id);
+  const response = await client.delete("/api/events/participant/" + id);
   return response.status === 204;
 }
