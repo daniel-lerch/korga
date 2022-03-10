@@ -1,6 +1,8 @@
 ﻿using Korga.Server.Database;
 using Korga.Server.Database.Entities;
+using Korga.Server.Models;
 using McMaster.Extensions.CommandLineUtils;
+using System;
 using System.Threading.Tasks;
 
 #pragma warning disable CA1822 // Mark members as static
@@ -62,19 +64,72 @@ namespace Korga.Server.Commands
 
         private static async Task PopulateDatabase(DatabaseContext database)
         {
+            var nextSunday = DateTime.Today.AddDays(7 - (int)DateTime.Today.DayOfWeek);
+            DateTime time(int hour, int minute) => nextSunday.AddHours(hour - 1).AddMinutes(minute);
+
             // Create two services as events
-            var service10 = new Event("Gottesdienst am 06.03. um 10 Uhr");
-            var service12 = new Event("Gottesdienst am 06.03. um 12 Uhr");
+            var service10 = new Event("Gottesdienst")
+            {
+                Start = time(10, 0),
+                End = time(11, 30),
+                RegistrationPeriod = RegistrationPeriod.OpenWithFirst
+            };
+            var service12 = new Event("Gottesdienst")
+            {
+                Start = time(12, 0),
+                End = time(13, 30)
+            };
             database.Events.AddRange(service10, service12);
             await database.SaveChangesAsync();
 
             // Create children's ministry as programs
-            var program10_0 = new EventProgram("Gottesdienst") { EventId = service10.Id, Limit = 65 };
-            var program10_1 = new EventProgram("Kükennest (0-3 Jahre)") { EventId = service10.Id, Limit = 5 };
-            var program10_2 = new EventProgram("Kindergartenkinder") { EventId = service10.Id, Limit = 12 };
-            var program10_3 = new EventProgram("Grundschulkinder") { EventId = service10.Id, Limit = 12 };
-            var program10_4 = new EventProgram("Weiterführende Schule") { EventId = service10.Id, Limit = 12 };
-            var program12_0 = new EventProgram("Gottesdienst") { EventId = service12.Id, Limit = 65 };
+            var earlyOpen = nextSunday.AddDays(-6).AddHours(-1);
+            var lateOpen = nextSunday.AddDays(-5).AddHours(20 - 1);
+
+            var program10_0 = new EventProgram("Gottesdienst")
+            {
+                EventId = service10.Id,
+                RegistrationStart = lateOpen,
+                RegistrationDeadline = service10.Start,
+                Limit = 65
+            };
+            var program10_1 = new EventProgram("Kükennest (0-3 Jahre)")
+            {
+                EventId = service10.Id,
+                RegistrationStart = earlyOpen,
+                RegistrationDeadline = service10.Start,
+                Limit = 5
+            };
+            var program10_2 = new EventProgram("Kindergartenkinder")
+            {
+                EventId = service10.Id,
+                RegistrationStart = earlyOpen,
+                RegistrationDeadline = service10.Start,
+                Limit = 12
+            };
+            var program10_3 = new EventProgram("Grundschulkinder")
+            {
+                EventId = service10.Id,
+                RegistrationStart = earlyOpen,
+                RegistrationDeadline = service10.Start,
+                Limit = 12
+            };
+            var program10_4 = new EventProgram("Weiterführende Schule")
+            {
+                EventId = service10.Id,
+                RegistrationStart = earlyOpen,
+                RegistrationDeadline = service10.Start,
+                Limit = 12
+            };
+
+            var program12_0 = new EventProgram("Gottesdienst")
+            {
+                EventId = service12.Id,
+                RegistrationStart = earlyOpen,
+                RegistrationDeadline = service12.Start,
+                Limit = 65
+            };
+
             database.EventPrograms.AddRange(program10_0, program10_1, program10_2, program10_3, program10_4, program12_0);
             await database.SaveChangesAsync();
         }

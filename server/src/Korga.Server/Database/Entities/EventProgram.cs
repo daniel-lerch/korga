@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Korga.Server.Database.Entities;
 
@@ -15,6 +16,8 @@ public class EventProgram
     public Event? Event { get; set; }
 
     public string Name { get; set; }
+    public DateTime RegistrationStart { get; set; }
+    public DateTime RegistrationDeadline { get; set; }
     public int Limit { get; set; }
 
     public IEnumerable<EventParticipant>? Participants { get; set; }

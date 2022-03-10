@@ -12,6 +12,8 @@ public class EventParticipant
 
     public long ProgramId { get; set; }
     public EventProgram? Program { get; set; }
+    public long RegistrationId { get; set; }
+    public EventRegistration? Registration { get; set; }
 
     public string GivenName { get; set; }
     public string FamilyName { get; set; }

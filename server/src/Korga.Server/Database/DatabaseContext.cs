@@ -1,7 +1,6 @@
 ﻿using Korga.Server.Configuration;
 using Korga.Server.Database.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -9,7 +8,6 @@ namespace Korga.Server.Database
 {
     public sealed partial class DatabaseContext : DbContext
     {
-        private const string currentTimestamp = "CURRENT_TIMESTAMP(6)";
         private readonly IOptions<DatabaseOptions> options;
         private readonly ILoggerFactory loggerFactory;
 
@@ -37,14 +35,23 @@ namespace Korga.Server.Database
 
             var @event = modelBuilder.Entity<Event>();
             @event.HasKey(e => e.Id);
+            @event.Property(e => e.Start).HasPrecision(0);
+            @event.Property(e => e.End).HasPrecision(0);
+            @event.Property(e => e.RegistrationPeriod).HasConversion<byte>();
 
             var program = modelBuilder.Entity<EventProgram>();
             program.HasKey(p => p.Id);
             program.HasOne(p => p.Event).WithMany().HasForeignKey(p => p.EventId);
+            program.Property(p => p.RegistrationStart).HasPrecision(0);
+            program.Property(p => p.RegistrationDeadline).HasPrecision(0);
+
+            var registration = modelBuilder.Entity<EventRegistration>();
+            registration.HasKey(r => r.Id);
 
             var participant = modelBuilder.Entity<EventParticipant>();
             participant.HasKey(p => p.Id);
             participant.HasOne(p => p.Program).WithMany(p => p.Participants).HasForeignKey(p => p.ProgramId);
+            participant.HasOne(p => p.Registration).WithMany().HasForeignKey(p => p.RegistrationId);
         }
     }
 }
