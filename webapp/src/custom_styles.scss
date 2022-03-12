@@ -1,0 +1,29 @@
+// Custom Bootstrap variable overrides go first
+
+// Colors
+$primary: #223859;
+$secondary: #1e3858;
+$body-bg: #F7F7F7;
+$body-color: #444;
+
+@import 'bootstrap/scss/bootstrap.scss';
+
+.btn {
+  padding: 0.5em 1em;
+}
+
+.card-body{
+  padding: 1.5em;
+}
+h1,h2,h3{
+  color: #111 !important;
+}
+
+h1{
+  margin-bottom: 1em;
+  font-size: calc(1.4rem + 1.5vw);
+}
+h2{
+  margin-bottom: 1em;
+}
+

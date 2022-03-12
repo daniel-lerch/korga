@@ -1,6 +1,6 @@
 <template>
   <header>
-    <nav class="navbar navbar-expand-md navbar-dark">
+    <nav class="navbar navbar-expand-md navbar-dark bg-primary">
       <div class="container-fluid">
         <router-link to="/events" class="navbar-brand">Korga</router-link>
         <button
@@ -52,10 +52,6 @@ main.content {
 footer {
   min-height: 40px;
   padding: 8px 16px;
-}
-
-header .navbar {
-  background-color: #7a00aa;
 }
 
 /* Apply Bootstrap active link design to active router-link */

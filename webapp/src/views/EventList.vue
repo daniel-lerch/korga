@@ -20,14 +20,15 @@
         </ul>
         <router-link
           :to="{ name: 'Register', params: { id: event.id } }"
-          class="btn btn-primary"
+          class="btn btn-outline-primary mt-3 w-100"
           :class="{
             disabled:
               event.programs.length < 1 ||
               (event.programs.length == 1 &&
                 event.programs[0].count >= event.programs[0].limit),
           }"
-          >Anmelden</router-link
+        >
+          Anmelden</router-link
         >
       </div>
     </div>
@@ -58,11 +59,14 @@ h1 {
 }
 .h2 {
   display: block;
-  margin-bottom: 8px;
 }
 .disabled {
   /* color: lightgray; */
   opacity: 0.5;
   pointer-events: none;
+}
+
+.container {
+  max-width: 800px;
 }
 </style>

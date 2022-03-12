@@ -1,65 +1,76 @@
 <template>
-  <form @submit.prevent="register" class="container">
-    <h1>{{ event?.name }}</h1>
-    <div class="mb-3">
-      <label for="givenName" class="form-label">Vorname</label>
-      <input
-        type="text"
-        v-model="givenName"
-        id="givenName"
-        class="form-control"
-        placeholder="Max"
-        required
-      />
-    </div>
-    <div class="mb-3">
-      <label for="givenName" class="form-label">Nachname</label>
-      <input
-        type="text"
-        v-model="familyName"
-        id="familyName"
-        class="form-control"
-        placeholder="Mustermann"
-        required
-      />
-    </div>
-    <div>
-      <div
-        class="form-check"
-        v-for="program in event?.programs"
-        :key="program.id"
-      >
-        <input
-          class="form-check-input"
-          type="radio"
-          name="exampleRadios"
-          :id="`radio${program.id}`"
-          :value="program.id"
-          v-model="programId"
-          :disabled="program.participants.length >= program.limit"
-          required
-        />
-        <label class="form-check-label" :for="`radio${program.id}`">
-          {{ program.name }} {{ program.participants.length }}/{{
-            program.limit
-          }}
-        </label>
+  <div class="container">
+    <h1>Anmeldung</h1>
+    <div class="card">
+      <div class="card-body">
+        <form @submit.prevent="register" class="mw-100">
+          <h2>{{ event?.name }}</h2>
+          <div class="mb-3">
+            <label for="givenName" class="form-label">Vorname</label>
+            <input
+              type="text"
+              v-model="givenName"
+              id="givenName"
+              class="form-control"
+              placeholder="Max"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="givenName" class="form-label">Nachname</label>
+            <input
+              type="text"
+              v-model="familyName"
+              id="familyName"
+              class="form-control"
+              placeholder="Mustermann"
+              required
+            />
+          </div>
+          <div>
+            <div
+              class="form-check"
+              v-for="program in event?.programs"
+              :key="program.id"
+            >
+              <input
+                class="form-check-input"
+                type="radio"
+                name="exampleRadios"
+                :id="`radio${program.id}`"
+                :value="program.id"
+                v-model="programId"
+                :disabled="program.participants.length >= program.limit"
+                required
+              />
+              <label class="form-check-label" :for="`radio${program.id}`">
+                {{ program.name }} {{ program.participants.length }}/{{
+                  program.limit
+                }}
+              </label>
+            </div>
+          </div>
+          <button
+            type="submit"
+            class="btn btn-outline-primary mt-3 w-100"
+            :disabled="full"
+          >
+            Anmelden
+          </button>
+          <div class="alert alert-danger" role="alert" v-if="full">
+            Alle Plätze sind bereits belegt.
+          </div>
+          <div
+            class="alert alert-danger alert-dismissible"
+            role="alert"
+            v-else-if="error"
+          >
+            {{ error }}
+          </div>
+        </form>
       </div>
     </div>
-    <button type="submit" class="btn btn-primary" :disabled="full">
-      Anmelden
-    </button>
-    <div class="alert alert-danger" role="alert" v-if="full">
-      Alle Plätze sind bereits belegt.
-    </div>
-    <div
-      class="alert alert-danger alert-dismissible"
-      role="alert"
-      v-else-if="error"
-    >
-      {{ error }}
-    </div>
-  </form>
+  </div>
 </template>
 
 <script lang="ts">
@@ -149,16 +160,27 @@ export default defineComponent({
 </script>
 
 <style scoped>
-form {
-  max-width: 400px;
-  margin: 5px;
-}
-
 input {
   max-width: 400px;
 }
 .btn {
   margin-top: 12px;
   margin-bottom: 12px;
+}
+
+h1 {
+  margin-top: 12px;
+}
+.h2 {
+  display: block;
+}
+.disabled {
+  /* color: lightgray; */
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.container {
+  max-width: 800px;
 }
 </style>
