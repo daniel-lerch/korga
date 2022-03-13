@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <h1>Anmeldung</h1>
-    <div class="card">
+    <div class="card shadow">
       <div class="card-body">
         <form @submit.prevent="register" class="mw-100">
           <h2>{{ event?.name }}</h2>
@@ -52,7 +52,7 @@
           </div>
           <button
             type="submit"
-            class="btn btn-outline-primary mt-3 w-100"
+            class="btn btn-secondary mt-3 w-100"
             :disabled="full"
           >
             Anmelden

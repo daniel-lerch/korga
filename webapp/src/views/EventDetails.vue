@@ -1,18 +1,24 @@
 <template>
   <div class="container">
-    <router-link
-      :to="{ path: `/event/${id}/register` }"
-      class="btn btn-outline-primary my-4 btnAn w-100"
-      :class="{
-        disabled: !freeSeats,
-      }"
-      >Person anmelden</router-link
-    >
+    <div class="bg-white my-4">
+      <router-link
+        :to="{ path: `/event/${id}/register` }"
+        class="btn btn-secondary w-100 shadow"
+        :class="{
+          disabled: !freeSeats,
+        }"
+        >Person anmelden</router-link
+      >
+    </div>
     <h1>Teilnehmer: {{ event?.name }}</h1>
-    <div v-for="program in event?.programs" :key="program.id" class="card my-4">
+    <div
+      v-for="program in event?.programs"
+      :key="program.id"
+      class="card my-4 shadow"
+    >
       <div class="card-body">
         <h3 class="card-title">{{ program.name }}</h3>
-        <table class="card-body w-100">
+        <table class="w-100">
           <thead>
             <tr>
               <th class="w-50" scope="col">Vorname</th>
@@ -111,9 +117,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.btnAn {
-  margin-top: 8px;
-}
 .table > :not(:first-child) {
   border-top: 0;
 }

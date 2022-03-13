@@ -2,12 +2,15 @@
 
 // Colors
 $primary: #223859;
-$secondary: #1e3858;
+$secondary: #A4ABBD;
 $body-bg: #F7F7F7;
 $body-color: #444;
 
 @import 'bootstrap/scss/bootstrap.scss';
 
+.shadow {
+  box-shadow: 0 3px 6px rgba(0,0,0,0.03), 0 3px 6px rgba(0,0,0,0.05) !important;
+}
 .btn {
   padding: 0.5em 1em;
 }
@@ -26,4 +29,17 @@ h1{
 h2{
   margin-bottom: 1em;
 }
+
+.btn-secondary {
+  border-width: 2px;
+  font-weight: 600;
+  font-size: 1.1em;
+  text-transform: uppercase;
+  color: white;
+}
+.btn-secondary:hover,
+.btn-secondary:focus {
+  color: white;
+}
+
 

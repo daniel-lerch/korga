@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <h1>Events</h1>
-    <div v-for="event in events" :key="event.id" class="card mb-3">
+    <div v-for="event in events" :key="event.id" class="card mb-3 shadow">
       <div class="card-body">
         <router-link
           class="h2 card-title subdued"
@@ -20,7 +20,7 @@
         </ul>
         <router-link
           :to="{ name: 'Register', params: { id: event.id } }"
-          class="btn btn-outline-primary mt-3 w-100"
+          class="btn btn-secondary mt-3 w-100"
           :class="{
             disabled:
               event.programs.length < 1 ||
