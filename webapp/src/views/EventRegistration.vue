@@ -46,8 +46,16 @@
         </label>
       </div>
     </div>
+    <div
+      class="alert alert-warning alert-dismissible"
+      role="alert"
+      v-if="checkAlreadyRegisterd"
+      style="margin-top: 15px"
+    >
+      Diese Person ist bereits schon zu diesem Event angemeldet
+    </div>
     <button type="submit" class="btn btn-primary" :disabled="full">
-      Anmelden
+      {{ checkAlreadyRegisterd ? "Trotzdem Anmelden" : "Anmelden" }}
     </button>
     <div class="alert alert-danger" role="alert" v-if="full">
       Alle Plätze sind bereits belegt.
@@ -110,6 +118,22 @@ export default defineComponent({
       event.value = await getEvent(props.id);
     };
 
+    const checkAlreadyRegisterd = computed(() => {
+      if (event.value === null) return;
+      let alreadyRegisterd = false;
+      event.value.programs.forEach((ele) => {
+        ele.participants.forEach((element) => {
+          if (
+            element.givenName.toLowerCase() == givenName.value.toLowerCase() &&
+            element.familyName.toLowerCase() == familyName.value.toLowerCase()
+          ) {
+            alreadyRegisterd = true;
+          }
+        });
+      });
+      return alreadyRegisterd;
+    });
+
     const register = async function () {
       if (givenName.value == "") return;
       if (familyName.value == "") return;
@@ -118,18 +142,13 @@ export default defineComponent({
         givenName: givenName.value,
         familyName: familyName.value,
       };
-      try {
-        const res = await registerForEvent(request);
-        if (res) {
-          error.value = "";
-          event.value = await getEvent(props.id);
-          router.push({ name: "Event", params: { id: event.value.id } });
-        } else {
-          error.value = "Es ist ein Fehler aufgetreten";
-          getEventData();
-        }
-      } catch (err) {
-        console.log(err);
+
+      const res = await registerForEvent(request);
+      if (res) {
+        error.value = "";
+        event.value = await getEvent(props.id);
+        router.push({ name: "Event", params: { id: event.value.id } });
+      } else {
         error.value = "Es ist ein Fehler aufgetreten";
         getEventData();
       }
@@ -143,6 +162,7 @@ export default defineComponent({
       error,
       full,
       register,
+      checkAlreadyRegisterd,
     };
   },
 });

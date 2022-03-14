@@ -81,16 +81,7 @@ export default defineComponent({
       if (!confirm(`Wollen sie wirklich ${givenName} ${familyName} abmelden?`))
         return;
 
-      try {
-        const res = await deletePerson(id);
-        console.log(res);
-        if (res == false) {
-          console.log("o");
-        }
-      } catch (err) {
-        console.log("err");
-      }
-
+      const res = await deletePerson(id);
       event.value = await getEvent(props.id);
     };
 
