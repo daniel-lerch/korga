@@ -10,7 +10,6 @@
         class="form-control"
         placeholder="Max"
         required
-        @input="checkAlreadyRegisterd()"
       />
     </div>
     <div class="mb-3">
@@ -22,7 +21,6 @@
         class="form-control"
         placeholder="Mustermann"
         required
-        @input="checkAlreadyRegisterd()"
       />
     </div>
     <div>
@@ -51,13 +49,13 @@
     <div
       class="alert alert-warning alert-dismissible"
       role="alert"
-      v-if="warning"
+      v-if="checkAlreadyRegisterd"
       style="margin-top: 15px"
     >
-      {{ warning }}
+      Diese Person ist bereits schon zu diesem Event angemeldet
     </div>
     <button type="submit" class="btn btn-primary" :disabled="full">
-      {{ registerButtonText }}
+      {{ checkAlreadyRegisterd ? "Trotzdem Anmelden" : "Anmelden" }}
     </button>
     <div class="alert alert-danger" role="alert" v-if="full">
       Alle Plätze sind bereits belegt.
@@ -95,8 +93,6 @@ export default defineComponent({
     const familyName = ref("");
     const programId = ref(0);
     const error = ref("");
-    const warning = ref("");
-    const registerButtonText = ref("Anmelden");
 
     // Use computed value to avoid duplicate data which might be outdated.
     const full = computed(() => {
@@ -122,7 +118,7 @@ export default defineComponent({
       event.value = await getEvent(props.id);
     };
 
-    const checkAlreadyRegisterd = function () {
+    const checkAlreadyRegisterd = computed(() => {
       if (event.value === null) return;
       let alreadyRegisterd = false;
       event.value.programs.forEach((ele) => {
@@ -135,14 +131,8 @@ export default defineComponent({
           }
         });
       });
-      if (alreadyRegisterd) {
-        warning.value = "Diese Person ist schon Registriert";
-        registerButtonText.value = "Trotzdem Anmelden";
-      } else {
-        warning.value = "";
-        registerButtonText.value = "Anmelden";
-      }
-    };
+      return alreadyRegisterd;
+    });
 
     const register = async function () {
       if (givenName.value == "") return;
@@ -152,18 +142,13 @@ export default defineComponent({
         givenName: givenName.value,
         familyName: familyName.value,
       };
-      try {
-        const res = await registerForEvent(request);
-        if (res) {
-          error.value = "";
-          event.value = await getEvent(props.id);
-          router.push({ name: "Event", params: { id: event.value.id } });
-        } else {
-          error.value = "Es ist ein Fehler aufgetreten";
-          getEventData();
-        }
-      } catch (err) {
-        console.log(err);
+
+      const res = await registerForEvent(request);
+      if (res) {
+        error.value = "";
+        event.value = await getEvent(props.id);
+        router.push({ name: "Event", params: { id: event.value.id } });
+      } else {
         error.value = "Es ist ein Fehler aufgetreten";
         getEventData();
       }
@@ -175,9 +160,7 @@ export default defineComponent({
       familyName,
       programId,
       error,
-      warning,
       full,
-      registerButtonText,
       register,
       checkAlreadyRegisterd,
     };
