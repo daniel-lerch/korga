@@ -10,6 +10,7 @@
         class="form-control"
         placeholder="Max"
         required
+        @input="checkAlreadyRegisterd()"
       />
     </div>
     <div class="mb-3">
@@ -21,6 +22,7 @@
         class="form-control"
         placeholder="Mustermann"
         required
+        @input="checkAlreadyRegisterd()"
       />
     </div>
     <div>
@@ -46,8 +48,16 @@
         </label>
       </div>
     </div>
+    <div
+      class="alert alert-warning alert-dismissible"
+      role="alert"
+      v-if="warning"
+      style="margin-top: 15px"
+    >
+      {{ warning }}
+    </div>
     <button type="submit" class="btn btn-primary" :disabled="full">
-      Anmelden
+      {{ registerButtonText }}
     </button>
     <div class="alert alert-danger" role="alert" v-if="full">
       Alle Plätze sind bereits belegt.
@@ -85,6 +95,8 @@ export default defineComponent({
     const familyName = ref("");
     const programId = ref(0);
     const error = ref("");
+    const warning = ref("");
+    const registerButtonText = ref("Anmelden");
 
     // Use computed value to avoid duplicate data which might be outdated.
     const full = computed(() => {
@@ -108,6 +120,28 @@ export default defineComponent({
 
     const getEventData = async function () {
       event.value = await getEvent(props.id);
+    };
+
+    const checkAlreadyRegisterd = function () {
+      if (event.value === null) return;
+      let alreadyRegisterd = false;
+      event.value.programs.forEach((ele) => {
+        ele.participants.forEach((element) => {
+          if (
+            element.givenName.toLowerCase() == givenName.value.toLowerCase() &&
+            element.familyName.toLowerCase() == familyName.value.toLowerCase()
+          ) {
+            alreadyRegisterd = true;
+          }
+        });
+      });
+      if (alreadyRegisterd) {
+        warning.value = "Diese Person ist schon Registriert";
+        registerButtonText.value = "Trotzdem Anmelden";
+      } else {
+        warning.value = "";
+        registerButtonText.value = "Anmelden";
+      }
     };
 
     const register = async function () {
@@ -141,8 +175,11 @@ export default defineComponent({
       familyName,
       programId,
       error,
+      warning,
       full,
+      registerButtonText,
       register,
+      checkAlreadyRegisterd,
     };
   },
 });
