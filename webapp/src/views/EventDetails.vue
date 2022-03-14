@@ -3,7 +3,7 @@
     <div class="bg-white my-4">
       <router-link
         :to="{ path: `/event/${id}/register` }"
-        class="btn btn-secondary w-100 shadow"
+        class="btn btn-success btn-emphasize w-100 shadow"
         :class="{
           disabled: !freeSeats,
         }"

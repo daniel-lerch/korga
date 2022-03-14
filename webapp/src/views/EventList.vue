@@ -20,7 +20,7 @@
         </ul>
         <router-link
           :to="{ name: 'Register', params: { id: event.id } }"
-          class="btn btn-secondary mt-3 w-100"
+          class="btn btn-success btn-emphasize mt-3 w-100"
           :class="{
             disabled:
               event.programs.length < 1 ||

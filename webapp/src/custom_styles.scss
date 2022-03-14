@@ -3,6 +3,8 @@
 // Colors
 $primary: #223859;
 $secondary: #A4ABBD;
+$success: #2d734f;
+$danger: #954537;
 $body-bg: #F7F7F7;
 $body-color: #444;
 
@@ -30,16 +32,10 @@ h2{
   margin-bottom: 1em;
 }
 
-.btn-secondary {
+.btn-emphasize {
   border-width: 2px;
   font-weight: 600;
   font-size: 1.1em;
   text-transform: uppercase;
   color: white;
 }
-.btn-secondary:hover,
-.btn-secondary:focus {
-  color: white;
-}
-
-
