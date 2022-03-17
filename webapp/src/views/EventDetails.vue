@@ -1,46 +1,57 @@
 <template>
   <div class="container">
-    <router-link
-      :to="{ path: `/event/${id}/register` }"
-      class="btn btn-primary mb-3 btnAn"
-      :class="{
-        disabled: !freeSeats,
-      }"
-      >Person anmelden</router-link
-    >
+    <div class="bg-white my-4">
+      <router-link
+        :to="{ path: `/event/${id}/register` }"
+        class="btn btn-success btn-emphasize w-100 shadow"
+        :class="{
+          disabled: !freeSeats,
+        }"
+        >Person anmelden</router-link
+      >
+    </div>
     <h1>Teilnehmer: {{ event?.name }}</h1>
-    <div v-for="program in event?.programs" :key="program.id">
-      <h3>{{ program.name }}</h3>
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th scope="col">Vorname</th>
-            <th scope="col">Nachname</th>
-            <th scope="col">Abmelden</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="participant in program.participants" :key="participant.id">
-            <td>{{ participant.givenName }}</td>
-            <td>{{ participant.familyName }}</td>
-            <th scope="row">
-              <button
-                type="button"
-                class="btn btn-outline-danger"
-                @click="
-                  removeParticipant(
-                    participant.id,
-                    participant.givenName,
-                    participant.familyName
-                  )
-                "
-              >
-                Abmelden
-              </button>
-            </th>
-          </tr>
-        </tbody>
-      </table>
+    <div
+      v-for="program in event?.programs"
+      :key="program.id"
+      class="card my-4 shadow"
+    >
+      <div class="card-body">
+        <h3 class="card-title">{{ program.name }}</h3>
+        <table class="w-100">
+          <thead>
+            <tr>
+              <th class="w-50" scope="col">Vorname</th>
+              <th class="w-50" scope="col">Nachname</th>
+              <th scope="col">Abmelden</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="participant in program.participants"
+              :key="participant.id"
+            >
+              <td>{{ participant.givenName }}</td>
+              <td>{{ participant.familyName }}</td>
+              <th scope="row">
+                <button
+                  type="button"
+                  class="btn btn-outline-danger"
+                  @click="
+                    removeParticipant(
+                      participant.id,
+                      participant.givenName,
+                      participant.familyName
+                    )
+                  "
+                >
+                  Abmelden
+                </button>
+              </th>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
@@ -97,13 +108,14 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.btnAn {
-  margin-top: 8px;
-}
 .table > :not(:first-child) {
   border-top: 0;
 }
-h3 {
-  margin-top: 42px;
+.container {
+  max-width: 800px;
+}
+table {
+  border-collapse: separate;
+  border-spacing: 0 0.3em;
 }
 </style>
