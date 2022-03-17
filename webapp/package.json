@@ -16,6 +16,7 @@
     "webpack-require-from": "^1.8.6"
   },
   "devDependencies": {
+    "@types/bootstrap": "^5.1.9",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "@vue/cli-plugin-babel": "~5.0.0",
