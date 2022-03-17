@@ -53,17 +53,21 @@
           <div
             class="alert alert-warning alert-dismissible"
             role="alert"
-            v-if="checkAlreadyRegisterd"
+            v-if="alreadyRegistered"
             style="margin-top: 15px"
           >
-            Diese Person ist bereits schon zu diesem Event angemeldet
+            Diese Person ist bereits zu diesem Event angemeldet
           </div>
           <button
             type="submit"
-            class="btn btn-secondary mt-3 w-100"
+            class="btn btn-emphasize mt-3 w-100"
+            :class="{
+              'btn-success': !alreadyRegistered,
+              'btn-danger': alreadyRegistered,
+            }"
             :disabled="full"
           >
-            {{ checkAlreadyRegisterd ? "Trotzdem Anmelden" : "Anmelden" }}
+            {{ alreadyRegistered ? "Trotzdem Anmelden" : "Anmelden" }}
           </button>
           <div class="alert alert-danger" role="alert" v-if="full">
             Alle Plätze sind bereits belegt.
@@ -125,24 +129,21 @@ export default defineComponent({
       }
     });
 
-    const getEventData = async function () {
-      event.value = await getEvent(props.id);
-    };
-
-    const checkAlreadyRegisterd = computed(() => {
-      if (event.value === null) return;
-      let alreadyRegisterd = false;
-      event.value.programs.forEach((ele) => {
-        ele.participants.forEach((element) => {
+    const alreadyRegistered = computed(() => {
+      if (event.value === null) return false;
+      for (const program of event.value.programs) {
+        for (const participant of program.participants) {
           if (
-            element.givenName.toLowerCase() == givenName.value.toLowerCase() &&
-            element.familyName.toLowerCase() == familyName.value.toLowerCase()
+            participant.givenName.trim().toLowerCase() ==
+              givenName.value.trim().toLowerCase() &&
+            participant.familyName.trim().toLowerCase() ==
+              familyName.value.trim().toLowerCase()
           ) {
-            alreadyRegisterd = true;
+            return true;
           }
-        });
-      });
-      return alreadyRegisterd;
+        }
+      }
+      return false;
     });
 
     const register = async function () {
@@ -150,8 +151,8 @@ export default defineComponent({
       if (familyName.value == "") return;
       const request: EventRegistrationRequest = {
         programId: programId.value,
-        givenName: givenName.value,
-        familyName: familyName.value,
+        givenName: givenName.value.trim(),
+        familyName: familyName.value.trim(),
       };
 
       const res = await registerForEvent(request);
@@ -161,7 +162,7 @@ export default defineComponent({
         router.push({ name: "Event", params: { id: event.value.id } });
       } else {
         error.value = "Es ist ein Fehler aufgetreten";
-        getEventData();
+        event.value = await getEvent(props.id);
       }
     };
 
@@ -173,7 +174,7 @@ export default defineComponent({
       error,
       full,
       register,
-      checkAlreadyRegisterd,
+      alreadyRegistered,
     };
   },
 });
