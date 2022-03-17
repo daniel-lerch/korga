@@ -22,10 +22,7 @@
           :to="{ name: 'Register', params: { id: event.id } }"
           class="btn btn-success btn-emphasize mt-3 w-100"
           :class="{
-            disabled:
-              event.programs.length < 1 ||
-              (event.programs.length == 1 &&
-                event.programs[0].count >= event.programs[0].limit),
+            disabled: full(event),
           }"
         >
           Anmelden</router-link
@@ -48,7 +45,15 @@ export default defineComponent({
       // console.log(events.value)
     });
 
-    return { events };
+    const full = function (event: EventResponse) {
+      if (event === null) return false;
+      for (const program of event.programs) {
+        if (program.count < program.limit) return false;
+      }
+      return true;
+    };
+
+    return { events, full };
   },
 });
 </script>
