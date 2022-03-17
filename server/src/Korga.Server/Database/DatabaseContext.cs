@@ -14,6 +14,7 @@ namespace Korga.Server.Database
         public DbSet<Event> Events => Set<Event>();
         public DbSet<EventProgram> EventPrograms => Set<EventProgram>();
         public DbSet<EventParticipant> EventParticipants => Set<EventParticipant>();
+        public DbSet<EventRegistration> EventRegistrations => Set<EventRegistration>();
 
         public DatabaseContext(IOptions<DatabaseOptions> options, ILoggerFactory loggerFactory)
         {
@@ -47,11 +48,13 @@ namespace Korga.Server.Database
 
             var registration = modelBuilder.Entity<EventRegistration>();
             registration.HasKey(r => r.Id);
+            registration.HasAlternateKey(r => r.Token);
+            registration.Property(r => r.Token).HasConversion<string>();
 
             var participant = modelBuilder.Entity<EventParticipant>();
             participant.HasKey(p => p.Id);
             participant.HasOne(p => p.Program).WithMany(p => p.Participants).HasForeignKey(p => p.ProgramId);
-            participant.HasOne(p => p.Registration).WithMany().HasForeignKey(p => p.RegistrationId);
+            participant.HasOne(p => p.Registration).WithMany(r => r.Participants).HasForeignKey(p => p.RegistrationId);
         }
     }
 }

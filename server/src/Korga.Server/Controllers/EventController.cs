@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -41,7 +42,7 @@ namespace Korga.Server.Controllers
                     .Select(y => new EventResponse.Program(y.Program, y.Count))
                     .OrderBy(y => y.Id)
                     .ToList()))
-                .OrderBy(x=> x.Id)
+                .OrderBy(x => x.Id)
                 .ToList());
         }
 
@@ -74,29 +75,38 @@ namespace Korga.Server.Controllers
                 .ToList()));
         }
 
-        [HttpPost("~/api/events/register")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [HttpPost("~/api/event/{id}/register")]
+        [ProducesResponseType(typeof(EventRegistrationResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(void), StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> Register([FromBody] EventRegistrationRequest request)
+        public async Task<IActionResult> Register(long id, [FromBody] EventRegistrationRequest[] request)
         {
             if (!ModelState.IsValid) return StatusCode(StatusCodes.Status400BadRequest);
 
-            var p = await database.EventPrograms
-                .Where(x => x.Id == request.ProgramId)
-                .Select(x => new { Program = x, Count = x.Participants!.Count() })
-                .SingleOrDefaultAsync();
-            if (p is null) return StatusCode(StatusCodes.Status404NotFound);
-            if (p.Count >= p.Program.Limit) return StatusCode(StatusCodes.Status409Conflict);
+            // Validate event programs and limits
+            foreach (var person in request)
+            {
+                var program = await database.EventPrograms
+                    .Where(p => p.EventId == id && p.Id == person.ProgramId)
+                    .Select(p => new { Program = p, Count = p.Participants.Count() })
+                    .SingleOrDefaultAsync();
+                if (program is null) return StatusCode(StatusCodes.Status404NotFound);
+                if (program.Count >= program.Program.Limit) return StatusCode(StatusCodes.Status409Conflict);
+            }
 
-            var participant = new EventParticipant(request.GivenName, request.FamilyName) { ProgramId = request.ProgramId };
-            database.EventParticipants.Add(participant);
+            // Perform actual registration
+            var registration = new EventRegistration
+            {
+                Token = Guid.NewGuid(),
+                Participants = request.Select(p => new EventParticipant(p.GivenName, p.FamilyName) { ProgramId = p.ProgramId }).ToArray()
+            };
+            database.EventRegistrations.Add(registration);
             await database.SaveChangesAsync();
 
-            return StatusCode(StatusCodes.Status204NoContent);
+            return new JsonResult(new EventRegistrationResponse { Id = registration.Id, Token = registration.Token });
         }
-        
+
         [HttpDelete("~/api/events/participant/{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
