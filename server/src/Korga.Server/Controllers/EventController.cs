@@ -85,14 +85,14 @@ namespace Korga.Server.Controllers
             if (!ModelState.IsValid) return StatusCode(StatusCodes.Status400BadRequest);
 
             // Validate event programs and limits
-            foreach (var person in request)
+            foreach (var requestGroup in request.GroupBy(r => r.ProgramId).Select(g => new { ProgramId = g.Key, Count = g.Count() }))
             {
                 var program = await database.EventPrograms
-                    .Where(p => p.EventId == id && p.Id == person.ProgramId)
+                    .Where(p => p.EventId == id && p.Id == requestGroup.ProgramId)
                     .Select(p => new { Program = p, Count = p.Participants.Count() })
                     .SingleOrDefaultAsync();
                 if (program is null) return StatusCode(StatusCodes.Status404NotFound);
-                if (program.Count >= program.Program.Limit) return StatusCode(StatusCodes.Status409Conflict);
+                if (program.Count + requestGroup.Count > program.Program.Limit) return StatusCode(StatusCodes.Status409Conflict);
             }
 
             // Perform actual registration
