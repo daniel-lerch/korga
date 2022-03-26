@@ -98,6 +98,7 @@ namespace Korga.Server.Controllers
             // Perform actual registration
             var registration = new EventRegistration
             {
+                EventId = id,
                 Token = Guid.NewGuid(),
                 Participants = request.Select(p => new EventParticipant(p.GivenName, p.FamilyName) { ProgramId = p.ProgramId }).ToArray()
             };

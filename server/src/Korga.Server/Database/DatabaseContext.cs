@@ -48,6 +48,7 @@ namespace Korga.Server.Database
 
             var registration = modelBuilder.Entity<EventRegistration>();
             registration.HasKey(r => r.Id);
+            registration.HasOne(r => r.Event).WithMany().HasForeignKey(r => r.EventId);
             registration.HasAlternateKey(r => r.Token);
             registration.Property(r => r.Token).HasConversion<string>();
 
