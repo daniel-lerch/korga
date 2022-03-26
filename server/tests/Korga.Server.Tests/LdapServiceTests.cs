@@ -2,25 +2,22 @@
 using Korga.Server.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.DirectoryServices.Protocols;
+using Xunit;
 
 namespace Korga.Server.Tests
 {
-    [TestClass]
     public class LdapServiceTests
     {
-        // This variable is set by the test host
-        private IServiceProvider serviceProvider = null!;
+        private readonly IServiceProvider serviceProvider;
 
-        [TestInitialize]
-        public void Initizalize()
+        public LdapServiceTests()
         {
             serviceProvider = TestHost.CreateServiceCollection().BuildServiceProvider();
         }
 
-        [TestMethod]
+        [Fact]
         public void TestAddMember()
         {
             var options = serviceProvider.GetRequiredService<IOptions<LdapOptions>>();
@@ -29,11 +26,11 @@ namespace Korga.Server.Tests
             try
             {
                 ldapService.AddPerson($"uid=maxmust,{options.Value.BaseDn}", "Max", "Mustermann");
-                Assert.AreEqual(count + 1, ldapService.GetMembers());
+                Assert.Equal(count + 1, ldapService.GetMembers());
             }
             catch (DirectoryOperationException ex) when (ex.Response.ResultCode == ResultCode.EntryAlreadyExists)
             {
-                Assert.IsTrue(count > 0);
+                Assert.True(count > 0);
             }
         }
     }
