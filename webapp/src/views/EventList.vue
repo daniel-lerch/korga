@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <h1>Events</h1>
-    <div v-for="event in events" :key="event.id" class="card mb-3">
+    <div v-for="event in events" :key="event.id" class="card mb-3 shadow">
       <div class="card-body">
         <router-link
           class="h2 card-title subdued"
@@ -20,14 +20,12 @@
         </ul>
         <router-link
           :to="{ name: 'Register', params: { id: event.id } }"
-          class="btn btn-primary"
+          class="btn btn-success btn-emphasize mt-3 w-100"
           :class="{
-            disabled:
-              event.programs.length < 1 ||
-              (event.programs.length == 1 &&
-                event.programs[0].count >= event.programs[0].limit),
+            disabled: full(event),
           }"
-          >Anmelden</router-link
+        >
+          Anmelden</router-link
         >
       </div>
     </div>
@@ -47,7 +45,15 @@ export default defineComponent({
       // console.log(events.value)
     });
 
-    return { events };
+    const full = function (event: EventResponse) {
+      if (event === null) return false;
+      for (const program of event.programs) {
+        if (program.count < program.limit) return false;
+      }
+      return true;
+    };
+
+    return { events, full };
   },
 });
 </script>
@@ -58,11 +64,14 @@ h1 {
 }
 .h2 {
   display: block;
-  margin-bottom: 8px;
 }
 .disabled {
   /* color: lightgray; */
   opacity: 0.5;
   pointer-events: none;
+}
+
+.container {
+  max-width: 800px;
 }
 </style>

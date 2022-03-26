@@ -1,0 +1,41 @@
+// Custom Bootstrap variable overrides go first
+
+// Colors
+$primary: #223859; // Please update theme-color in index.html when changing this variable
+$secondary: #A4ABBD;
+$success: #2d734f;
+$danger: #954537;
+$body-bg: #F7F7F7;
+$body-color: #444;
+
+@import 'bootstrap/scss/bootstrap.scss';
+
+.shadow {
+  box-shadow: 0 3px 6px rgba(0,0,0,0.03), 0 3px 6px rgba(0,0,0,0.05) !important;
+}
+.btn {
+  padding: 0.5em 1em;
+}
+
+.card-body{
+  padding: 1.5em;
+}
+h1,h2,h3{
+  color: #111 !important;
+}
+
+h1{
+  margin-bottom: 1em;
+  font-size: calc(1.4rem + 1.5vw);
+}
+h2{
+  margin-bottom: 1em;
+}
+
+.btn-emphasize {
+  border-width: 2px;
+  font-weight: 600;
+  font-size: 1.1em;
+  text-transform: uppercase;
+  color: white;
+}
