@@ -6,32 +6,31 @@ using System;
 using System.DirectoryServices.Protocols;
 using Xunit;
 
-namespace Korga.Server.Tests
+namespace Korga.Server.Tests;
+
+public class LdapServiceTests
 {
-    public class LdapServiceTests
+    private readonly IServiceProvider serviceProvider;
+
+    public LdapServiceTests()
     {
-        private readonly IServiceProvider serviceProvider;
+        serviceProvider = TestHost.CreateServiceCollection().BuildServiceProvider();
+    }
 
-        public LdapServiceTests()
+    [Fact]
+    public void TestAddMember()
+    {
+        var options = serviceProvider.GetRequiredService<IOptions<LdapOptions>>();
+        var ldapService = serviceProvider.GetRequiredService<LdapService>();
+        int count = ldapService.GetMembers();
+        try
         {
-            serviceProvider = TestHost.CreateServiceCollection().BuildServiceProvider();
+            ldapService.AddPerson($"uid=maxmust,{options.Value.BaseDn}", "Max", "Mustermann");
+            Assert.Equal(count + 1, ldapService.GetMembers());
         }
-
-        [Fact]
-        public void TestAddMember()
+        catch (DirectoryOperationException ex) when (ex.Response.ResultCode == ResultCode.EntryAlreadyExists)
         {
-            var options = serviceProvider.GetRequiredService<IOptions<LdapOptions>>();
-            var ldapService = serviceProvider.GetRequiredService<LdapService>();
-            int count = ldapService.GetMembers();
-            try
-            {
-                ldapService.AddPerson($"uid=maxmust,{options.Value.BaseDn}", "Max", "Mustermann");
-                Assert.Equal(count + 1, ldapService.GetMembers());
-            }
-            catch (DirectoryOperationException ex) when (ex.Response.ResultCode == ResultCode.EntryAlreadyExists)
-            {
-                Assert.True(count > 0);
-            }
+            Assert.True(count > 0);
         }
     }
 }
