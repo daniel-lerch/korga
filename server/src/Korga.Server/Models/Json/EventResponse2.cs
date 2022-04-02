@@ -20,7 +20,8 @@ public class EventResponse2
         Name = @event.Name;
         Start = @event.Start;
         End = @event.End;
-        RegistrationPeriod = @event.RegistrationPeriod;
+        RegistrationStart = @event.RegistrationStart;
+        RegistrationDeadline = @event.RegistrationDeadline;
         Programs = programs;
     }
 
@@ -28,7 +29,8 @@ public class EventResponse2
     public string Name { get; set; }
     public DateTime Start { get; set; }
     public DateTime End { get; set; }
-    public RegistrationPeriod RegistrationPeriod { get; set; }
+    public DateTime RegistrationStart { get; set; }
+    public DateTime RegistrationDeadline { get; set; }
 
     public IList<Program> Programs { get; set; }
 
@@ -45,16 +47,12 @@ public class EventResponse2
         {
             Id = program.Id;
             Name = program.Name;
-            RegistrationStart = program.RegistrationStart;
-            RegistrationDeadline = program.RegistrationDeadline;
             Limit = program.Limit;
             Participants = participants;
         }
 
         public long Id { set; get; }
         public string Name { set; get; }
-        public DateTime RegistrationStart { get; set; }
-        public DateTime RegistrationDeadline { get; set; }
         public int Limit { set; get; }
         public IList<Participant> Participants { set; get; }
     }

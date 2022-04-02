@@ -1,5 +1,4 @@
-﻿using Korga.Server.Models;
-using System;
+﻿using System;
 
 namespace Korga.Server.Database.Entities;
 
@@ -14,5 +13,6 @@ public class Event
     public string Name { get; set; }
     public DateTime Start { get; set; }
     public DateTime End { get; set; }
-    public RegistrationPeriod RegistrationPeriod { get; set; }
+    public DateTime RegistrationStart { get; set; }
+    public DateTime RegistrationDeadline { get; set; }
 }

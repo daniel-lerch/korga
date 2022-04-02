@@ -30,15 +30,19 @@ public class EventControllerTests : IDisposable
         serviceScope = server.Services.CreateScope();
         database = serviceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-        testEvent = new Event(Guid.NewGuid().ToString()) { Start = DateTime.Parse("2022-03-26T16:02:31"), End = DateTime.Parse("2022-03-26T16:08:52") };
+        testEvent = new Event(Guid.NewGuid().ToString())
+        {
+            Start = DateTime.Parse("2022-03-26T16:02:31"),
+            End = DateTime.Parse("2022-03-26T16:08:52"),
+            RegistrationStart = DateTime.Parse("2022-03-25T07:55:00"),
+            RegistrationDeadline = DateTime.Parse("2022-03-26T15:10:26"),
+        };
         database.Events.Add(testEvent);
         database.SaveChanges();
 
         testProgram = new EventProgram(Guid.NewGuid().ToString())
         {
             EventId = testEvent.Id,
-            RegistrationStart = DateTime.Parse("2022-03-25T07:55:00"),
-            RegistrationDeadline = DateTime.Parse("2022-03-26T15:10:26"),
             Limit = 2
         };
         database.EventPrograms.Add(testProgram);
@@ -63,11 +67,11 @@ public class EventControllerTests : IDisposable
         Assert.Equal(testEvent.Name, response.Name);
         Assert.Equal(testEvent.Start, response.Start);
         Assert.Equal(testEvent.End, response.End);
+        Assert.Equal(testEvent.RegistrationStart, response.RegistrationStart);
+        Assert.Equal(testEvent.RegistrationDeadline, response.RegistrationDeadline);
         var program = response.Programs.Single();
         Assert.Equal(testProgram.Id, program.Id);
         Assert.Equal(testProgram.Name, program.Name);
-        Assert.Equal(testProgram.RegistrationStart, program.RegistrationStart);
-        Assert.Equal(testProgram.RegistrationDeadline, program.RegistrationDeadline);
         Assert.Equal(testProgram.Limit, program.Limit);
         Assert.Equal(0, program.Count);
     }
@@ -87,18 +91,17 @@ public class EventControllerTests : IDisposable
         };
         database.EventRegistrations.Add(registration);
         await database.SaveChangesAsync();
-        //database.SaveChanges();
 
         var response = await client.GetFromJsonAsync<EventResponse2>($"/api/event/{testEvent.Id}");
         Assert.NotNull(response);
         Assert.Equal(testEvent.Name, response.Name);
         Assert.Equal(testEvent.Start, response.Start);
         Assert.Equal(testEvent.End, response.End);
+        Assert.Equal(testEvent.RegistrationStart, response.RegistrationStart);
+        Assert.Equal(testEvent.RegistrationDeadline, response.RegistrationDeadline);
         var program = response.Programs.Single();
         Assert.Equal(testProgram.Id, program.Id);
         Assert.Equal(testProgram.Name, program.Name);
-        Assert.Equal(testProgram.RegistrationStart, program.RegistrationStart);
-        Assert.Equal(testProgram.RegistrationDeadline, program.RegistrationDeadline);
         Assert.Equal(testProgram.Limit, program.Limit);
         Assert.Equal(2, program.Participants.Count);
         Assert.NotEqual(0, program.Participants.Single(p => p.GivenName == "Katharina" && p.FamilyName == "Schäfer").Id);

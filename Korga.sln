@@ -19,6 +19,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Korga.Server.Tests", "serve
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2ED6D7FB-8B8A-4139-98C3-854E00A38490}"
 	ProjectSection(SolutionItems) = preProject
+		docs\concepts.md = docs\concepts.md
 		docs\docker-compose.yml = docs\docker-compose.yml
 	EndProjectSection
 EndProject

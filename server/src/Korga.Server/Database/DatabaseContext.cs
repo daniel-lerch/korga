@@ -38,13 +38,12 @@ namespace Korga.Server.Database
             @event.HasKey(e => e.Id);
             @event.Property(e => e.Start).HasPrecision(0);
             @event.Property(e => e.End).HasPrecision(0);
-            @event.Property(e => e.RegistrationPeriod).HasConversion<byte>();
+            @event.Property(e => e.RegistrationStart).HasPrecision(0);
+            @event.Property(e => e.RegistrationDeadline).HasPrecision(0);
 
             var program = modelBuilder.Entity<EventProgram>();
             program.HasKey(p => p.Id);
             program.HasOne(p => p.Event).WithMany().HasForeignKey(p => p.EventId);
-            program.Property(p => p.RegistrationStart).HasPrecision(0);
-            program.Property(p => p.RegistrationDeadline).HasPrecision(0);
 
             var registration = modelBuilder.Entity<EventRegistration>();
             registration.HasKey(r => r.Id);
