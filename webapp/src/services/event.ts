@@ -42,10 +42,11 @@ export function getEvent(id: string): Promise<EventResponse2> {
 }
 
 export async function registerForEvent(
-  data: EventRegistrationRequest
+  data: EventRegistrationRequest[],
+  eventId: string
 ): Promise<boolean> {
-  const response = await client.post("/api/events/register", data);
-  return response.status === 204;
+  const response = await client.post(`/api/event/${eventId}/register`, data);
+  return response.status === 200;
 }
 
 export async function deletePerson(id: string): Promise<boolean> {
