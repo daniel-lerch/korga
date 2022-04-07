@@ -108,6 +108,32 @@ namespace Korga.Server.Controllers
             return new JsonResult(new EventRegistrationResponse { Id = registration.Id, Token = registration.Token });
         }
 
+        [HttpGet("~/api/event/{id}/participants/query")]
+        [ProducesResponseType(typeof(EventParticipantQueryResponse[]), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> QueryParticipants(long id, [FromQuery] string givenName, [FromQuery] string familyName)
+        {
+            database.EventPrograms.Where(p => p.EventId == id);
+            var results = await
+                (from p in database.EventPrograms
+                 where p.EventId == id
+                 join pa in database.EventParticipants
+                     // String equality is translated to SQL equality which is case-insensitive on MySQL per default
+                     .Where(p => p.GivenName == givenName && p.FamilyName == familyName)
+                     on p.Id equals pa.ProgramId into grouping
+                 from pa in grouping.DefaultIfEmpty()
+                 select new { ProgramId = p.Id, pa.GivenName, pa.FamilyName })
+                .ToListAsync();
+            
+            if (results.Count == 0) return StatusCode(StatusCodes.Status404NotFound);
+
+            return new JsonResult(results
+                .Where(p => p.GivenName is not null && p.FamilyName is not null)
+                .Select(p => new EventParticipantQueryResponse(p.ProgramId, p.GivenName, p.FamilyName))
+                .ToArray());
+        }
+
         [HttpDelete("~/api/events/participant/{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
