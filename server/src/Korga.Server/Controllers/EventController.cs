@@ -1,6 +1,7 @@
 ﻿using Korga.Server.Database;
 using Korga.Server.Database.Entities;
 using Korga.Server.Models.Json;
+using Korga.Server.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,11 +16,13 @@ namespace Korga.Server.Controllers
     [ApiController]
     public class EventController : ControllerBase
     {
+        private readonly EventRegistrationService registrationService;
         private readonly DatabaseContext database;
         private readonly ILogger<EventController> logger;
 
-        public EventController(DatabaseContext database, ILogger<EventController> logger)
+        public EventController(EventRegistrationService registrationService, DatabaseContext database, ILogger<EventController> logger)
         {
+            this.registrationService = registrationService;
             this.database = database;
             this.logger = logger;
         }
@@ -75,39 +78,6 @@ namespace Korga.Server.Controllers
                 .ToList()));
         }
 
-        [HttpPost("~/api/event/{id}/register")]
-        [ProducesResponseType(typeof(EventRegistrationResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(void), StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> Register(long id, [FromBody] EventRegistrationRequest[] request)
-        {
-            if (!ModelState.IsValid) return StatusCode(StatusCodes.Status400BadRequest);
-
-            // Validate event programs and limits
-            foreach (var requestGroup in request.GroupBy(r => r.ProgramId).Select(g => new { ProgramId = g.Key, Count = g.Count() }))
-            {
-                var program = await database.EventPrograms
-                    .Where(p => p.EventId == id && p.Id == requestGroup.ProgramId)
-                    .Select(p => new { Program = p, Count = p.Participants.Count() })
-                    .SingleOrDefaultAsync();
-                if (program is null) return StatusCode(StatusCodes.Status404NotFound);
-                if (program.Count + requestGroup.Count > program.Program.Limit) return StatusCode(StatusCodes.Status409Conflict);
-            }
-
-            // Perform actual registration
-            var registration = new EventRegistration
-            {
-                EventId = id,
-                Token = Guid.NewGuid(),
-                Participants = request.Select(p => new EventParticipant(p.GivenName, p.FamilyName) { ProgramId = p.ProgramId }).ToArray()
-            };
-            database.EventRegistrations.Add(registration);
-            await database.SaveChangesAsync();
-
-            return new JsonResult(new EventRegistrationResponse { Id = registration.Id, Token = registration.Token });
-        }
-
         [HttpGet("~/api/event/{id}/participants/query")]
         [ProducesResponseType(typeof(EventParticipantQueryResponse[]), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
@@ -125,7 +95,7 @@ namespace Korga.Server.Controllers
                  from pa in grouping.DefaultIfEmpty()
                  select new { ProgramId = p.Id, pa.GivenName, pa.FamilyName })
                 .ToListAsync();
-            
+
             if (results.Count == 0) return StatusCode(StatusCodes.Status404NotFound);
 
             return new JsonResult(results
@@ -134,20 +104,81 @@ namespace Korga.Server.Controllers
                 .ToArray());
         }
 
-        [HttpDelete("~/api/events/participant/{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [HttpPost("~/api/event/{id}/register")]
+        [ProducesResponseType(typeof(EventRegistrationResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> DeleteRegistration(long id)
+        [ProducesResponseType(typeof(void), StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> Register(long id, [FromBody] EventRegistrationRequest[] request)
         {
-            EventParticipant? participant = await database.EventParticipants.SingleOrDefaultAsync(x => x.Id == id);
-            if (participant is null) return StatusCode(StatusCodes.Status404NotFound);
+            if (!ModelState.IsValid) return StatusCode(StatusCodes.Status400BadRequest);
 
-            database.EventParticipants.Remove(participant);
+            // Validate event programs and limits
+            int status = await registrationService.ValidateRequest(id, request);
+            if (status != StatusCodes.Status200OK) return StatusCode(status);
+
+            // Perform actual registration
+            var registration = new EventRegistration
+            {
+                EventId = id,
+                Token = Guid.NewGuid(),
+                Participants = request.Select(p => new EventParticipant(p.GivenName, p.FamilyName) { ProgramId = p.ProgramId }).ToArray()
+            };
+            database.EventRegistrations.Add(registration);
             await database.SaveChangesAsync();
 
-            logger.LogInformation("Deleted participant {givenName} {familyName} from program {programId}", participant.GivenName, participant.FamilyName, participant.ProgramId);
+            return new JsonResult(new EventRegistrationResponse { Id = registration.Id, Token = registration.Token });
+        }
+
+        [HttpDelete("~/api/events/registration")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteRegistration([FromQuery] Guid token)
+        {
+            EventRegistration? registration = await database.EventRegistrations.SingleOrDefaultAsync(r => r.Token == token);
+            if (registration is null) return StatusCode(StatusCodes.Status404NotFound);
+
+            database.EventRegistrations.Remove(registration);
+            await database.SaveChangesAsync();
 
             return StatusCode(StatusCodes.Status204NoContent);
         }
+
+        [HttpPost("~/api/events/registration/add")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> AddParticipant([FromQuery] Guid token, [FromBody] EventRegistrationRequest[] request)
+        {
+            if (!ModelState.IsValid) return StatusCode(StatusCodes.Status400BadRequest);
+
+            EventRegistration? registration = await database.EventRegistrations.SingleOrDefaultAsync(r => r.Token == token);
+            if (registration is null) return StatusCode(StatusCodes.Status404NotFound);
+
+            // Validate event programs and limits
+            int status = await registrationService.ValidateRequest(registration.EventId, request);
+            if (status != StatusCodes.Status200OK) return StatusCode(status);
+
+            database.EventParticipants.AddRange(request
+                .Select(p => new EventParticipant(p.GivenName, p.FamilyName) { ProgramId = p.ProgramId, RegistrationId = registration.Id })
+                .ToArray());
+            await database.SaveChangesAsync();
+
+            return StatusCode(StatusCodes.Status204NoContent);
+        }
+
+        //[HttpDelete("~/api/events/registration/{participantId}")]
+        //public async Task<IActionResult> DeleteParticipant([FromQuery] Guid token, long participantId)
+        //{
+        //    // TODO:
+        //    // 1. Validate token and participantId
+        //    // 2. Remove participant
+        //    // 3. Orphan delete entire registration
+        //}
+
+        //[HttpPost("~/api/events/registration/{id}/add")]
+        //public async Task<IActionResult> AddParticipant(long id)
+        //{
+        //    return StatusCode(StatusCodes.Status401Unauthorized);
+        //}
     }
 }

@@ -30,6 +30,8 @@ namespace Korga.Server
 
             services.AddDbContext<DatabaseContext>();
 
+            services.AddScoped<EventRegistrationService>();
+
             services.AddSpaStaticFiles(options => options.RootPath = environment.WebRootPath);
 
             if (environment.IsDevelopment())
