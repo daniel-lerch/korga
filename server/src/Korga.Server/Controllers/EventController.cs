@@ -5,7 +5,6 @@ using Korga.Server.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,13 +17,11 @@ namespace Korga.Server.Controllers
     {
         private readonly EventRegistrationService registrationService;
         private readonly DatabaseContext database;
-        private readonly ILogger<EventController> logger;
 
-        public EventController(EventRegistrationService registrationService, DatabaseContext database, ILogger<EventController> logger)
+        public EventController(EventRegistrationService registrationService, DatabaseContext database)
         {
             this.registrationService = registrationService;
             this.database = database;
-            this.logger = logger;
         }
 
         [HttpGet("~/api/events")]
@@ -147,7 +144,7 @@ namespace Korga.Server.Controllers
         [HttpPost("~/api/events/registration/add")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> AddParticipant([FromQuery] Guid token, [FromBody] EventRegistrationRequest[] request)
+        public async Task<IActionResult> AddParticipants([FromQuery] Guid token, [FromBody] EventRegistrationRequest[] request)
         {
             if (!ModelState.IsValid) return StatusCode(StatusCodes.Status400BadRequest);
 
@@ -166,14 +163,39 @@ namespace Korga.Server.Controllers
             return StatusCode(StatusCodes.Status204NoContent);
         }
 
-        //[HttpDelete("~/api/events/registration/{participantId}")]
-        //public async Task<IActionResult> DeleteParticipant([FromQuery] Guid token, long participantId)
-        //{
-        //    // TODO:
-        //    // 1. Validate token and participantId
-        //    // 2. Remove participant
-        //    // 3. Orphan delete entire registration
-        //}
+        [HttpDelete("~/api/events/registration/{participantId}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteParticipant([FromQuery] Guid token, long participantId)
+        {
+            var registrationParticipants = await
+                (from r in database.EventRegistrations
+                 where r.Token == token
+                 join p in database.EventParticipants
+                 on r.Id equals p.RegistrationId
+                 select new { Registration = r, Participant = p })
+                .ToListAsync();
+
+            if (registrationParticipants.Count == 0) return StatusCode(StatusCodes.Status404NotFound);
+
+            // Make sure participant ID is in this registration
+            var selected = registrationParticipants.SingleOrDefault(x => x.Participant.Id == participantId);
+            if (selected is null) return StatusCode(StatusCodes.Status404NotFound);
+
+            if (registrationParticipants.Count == 1)
+            {
+                // Manual orphan delete when the last participant of a registration is deleted
+                database.EventRegistrations.Remove(selected.Registration);
+            }
+            else
+            {
+                // There are remaining participants so we remove just this one
+                database.EventParticipants.Remove(selected.Participant);
+            }
+            await database.SaveChangesAsync();
+
+            return StatusCode(StatusCodes.Status204NoContent);
+        }
 
         //[HttpPost("~/api/events/registration/{id}/add")]
         //public async Task<IActionResult> AddParticipant(long id)
