@@ -32,21 +32,28 @@ public class Program
         }
         else
         {
-            try
+            return await CreateAndRunCommandLine(args);
+        }
+    }
+
+    private static async Task<int> CreateAndRunCommandLine(string[] args)
+    {
+        IServiceScope? scope = null;
+        try
+        {
+            return await CreateCliHostBuilder().RunCommandLineApplicationAsync<KorgaCommand>(args, app =>
             {
-                IServiceScope? scope = null;
-                int result = await CreateCliHostBuilder().RunCommandLineApplicationAsync<KorgaCommand>(args, app =>
-                {
-                    scope = app.CreateScope();
-                    app.Conventions.UseConstructorInjection(scope.ServiceProvider);
-                });
-                scope?.Dispose();
-                return result;
-            }
-            catch (UnrecognizedCommandParsingException) // Host integration of v3.0.0 does not support disabling this exception
-            {
-                return 1;
-            }
+                scope = app.CreateScope();
+                app.Conventions.UseConstructorInjection(scope.ServiceProvider);
+            });
+        }
+        catch (UnrecognizedCommandParsingException) // Host integration of v3.0.0 does not support disabling this exception
+        {
+            return 1;
+        }
+        finally
+        {
+            scope?.Dispose();
         }
     }
 
@@ -68,8 +75,8 @@ public class Program
             })
             .ConfigureServices((context, services) =>
             {
-                services.ConfigureKorga(context.Configuration);
+                services.AddKorgaOptions(context.Configuration);
                 services.AddSingleton<LdapService>();
-                services.AddMySqlDatabase();
+                services.AddKorgaMySqlDatabase();
             });
 }

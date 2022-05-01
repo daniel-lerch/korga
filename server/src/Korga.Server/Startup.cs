@@ -23,11 +23,11 @@ public class Startup
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
-        services.ConfigureKorga(Configuration);
+        services.AddKorgaOptions(Configuration);
 
         services.AddSingleton<LdapService>();
 
-        services.AddMySqlDatabase();
+        services.AddKorgaMySqlDatabase();
 
         services.AddScoped<EventRegistrationService>();
 

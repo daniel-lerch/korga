@@ -21,7 +21,7 @@ public static class TestHost
             .Build();
 
         var services = new ServiceCollection();
-        services.ConfigureKorga(configuration);
+        services.AddKorgaOptions(configuration);
         services.AddSingleton<ILoggerFactory>(new NullLoggerFactory());
         services.AddSingleton<LdapService>();
         services.AddDbContext<DatabaseContext>();
