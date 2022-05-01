@@ -25,7 +25,7 @@ public sealed partial class DatabaseContext : DbContext
 
         var program = modelBuilder.Entity<EventProgram>();
         program.HasKey(p => p.Id);
-        program.HasOne(p => p.Event).WithMany().HasForeignKey(p => p.EventId);
+        program.HasOne(p => p.Event).WithMany(e => e.Programs).HasForeignKey(p => p.EventId);
 
         var registration = modelBuilder.Entity<EventRegistration>();
         registration.HasKey(r => r.Id);

@@ -115,14 +115,7 @@ namespace Korga.Server.Controllers
             if (status != StatusCodes.Status200OK) return StatusCode(status);
 
             // Perform actual registration
-            var registration = new EventRegistration
-            {
-                EventId = id,
-                Token = Guid.NewGuid(),
-                Participants = request.Select(p => new EventParticipant(p.GivenName, p.FamilyName) { ProgramId = p.ProgramId }).ToArray()
-            };
-            database.EventRegistrations.Add(registration);
-            await database.SaveChangesAsync();
+            EventRegistration registration = await registrationService.CreateRegistration(id, request);
 
             return new JsonResult(new EventRegistrationResponse { Id = registration.Id, Token = registration.Token });
         }

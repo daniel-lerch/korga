@@ -1,7 +1,9 @@
 ﻿using Korga.Server.Database;
+using Korga.Server.Database.Entities;
 using Korga.Server.Models.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -37,6 +39,19 @@ namespace Korga.Server.Services
             }
 
             return StatusCodes.Status200OK;
+        }
+
+        public async Task<EventRegistration> CreateRegistration(long eventId, EventRegistrationRequest[] request)
+        {
+            var registration = new EventRegistration
+            {
+                EventId = eventId,
+                Token = Guid.NewGuid(),
+                Participants = request.Select(p => new EventParticipant(p.GivenName, p.FamilyName) { ProgramId = p.ProgramId }).ToArray()
+            };
+            database.EventRegistrations.Add(registration);
+            await database.SaveChangesAsync();
+            return registration;
         }
     }
 }
