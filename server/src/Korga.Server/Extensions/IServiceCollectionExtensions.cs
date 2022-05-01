@@ -10,7 +10,7 @@ namespace Korga.Server.Extensions;
 
 public static class IServiceCollectionExtensions
 {
-    public static IServiceCollection ConfigureKorga(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddKorgaOptions(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<DatabaseOptions>()
             .Bind(configuration.GetSection("Database"))
@@ -25,7 +25,7 @@ public static class IServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddMySqlDatabase(this IServiceCollection services)
+    public static IServiceCollection AddKorgaMySqlDatabase(this IServiceCollection services)
     {
         services.AddDbContext<DatabaseContext>((services, optionsBuilder) =>
         {
