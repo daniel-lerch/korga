@@ -1,40 +1,28 @@
 ﻿using Microsoft.AspNetCore.TestHost;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Xunit;
 
-namespace Korga.Server.Tests.Http
+namespace Korga.Server.Tests.Http;
+
+public class VueSpaTests
 {
-    [TestClass]
-    public class VueSpaTests
+    [Theory]
+    [InlineData("", "/")]
+    [InlineData("", "/events/list")]
+    [InlineData("/korga/test/pathbase", "/")]
+    [InlineData("/korga/test/pathbase", "/events/list")]
+    public async Task TestVueEntrypoint(string pathbase, string url)
     {
-        [TestMethod]
-        public async Task TestDefault()
-        {
-            TestServer server = TestHost.CreateTestServer(new Dictionary<string, string?> { { "Hosting:PathBase", null } });
-            HttpClient client = server.CreateClient();
+        TestServer server = TestHost.CreateTestServer(new Dictionary<string, string?> { { "Hosting:PathBase", pathbase } });
+        HttpClient client = server.CreateClient();
 
-            var response = await client.GetAsync("/");
-            Assert.AreEqual("text/html", response.Content.Headers.ContentType?.MediaType);
-            string body = await response.Content.ReadAsStringAsync();
-            Assert.IsTrue(body.StartsWith("<!DOCTYPE html>"), "Body is missing DOCTYPE");
-            Assert.IsTrue(body.Contains("window.resourceBasePath = '/'"), "Body is missing pathbase");
-        }
+        var response = await client.GetAsync(pathbase + url);
 
-        [TestMethod]
-        public async Task TestPathbase()
-        {
-            const string pathbase = "/korga/test/pathbase";
-
-            TestServer server = TestHost.CreateTestServer(new Dictionary<string, string?> { { "Hosting:PathBase", pathbase } });
-            HttpClient client = server.CreateClient();
-
-            var response = await client.GetAsync(pathbase);
-            Assert.AreEqual("text/html", response.Content.Headers.ContentType?.MediaType);
-            string body = await response.Content.ReadAsStringAsync();
-            Assert.IsTrue(body.StartsWith("<!DOCTYPE html>"), "Body is missing DOCTYPE");
-            Assert.IsTrue(body.Contains($"window.resourceBasePath = '{pathbase}/'"), "Body is missing pathbase");
-        }
+        Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
+        string body = await response.Content.ReadAsStringAsync();
+        Assert.True(body.StartsWith("<!DOCTYPE html>"), "Body is missing DOCTYPE");
+        Assert.True(body.Contains($"window.resourceBasePath = '{pathbase}/'"), "Body is missing pathbase");
     }
 }

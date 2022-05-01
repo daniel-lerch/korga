@@ -1,8 +1,8 @@
 # Korga
 
 ![Ubuntu build and tests](https://github.com/daniel-lerch/korga/workflows/Ubuntu%20build%20and%20tests/badge.svg)
-
-> ⚠ This project is work in progress and far away from being usable. For more information see _roadmap_ below.
+[![](https://img.shields.io/docker/pulls/daniellerch/korga.svg)](https://hub.docker.com/r/daniellerch/korga)
+[![](https://img.shields.io/docker/image-size/daniellerch/korga/latest.svg)](https://hub.docker.com/r/daniellerch/korga)
 
 ## What is Korga planned to be?
 
@@ -10,23 +10,16 @@ Korga stands for the german term _**K**irchen **Orga**nisation_ (church organiza
 Unlike all other church management systems known to the author, Korga is not designed to be an all-in-one solution for churches.
 It is rather the link between several open source applications, while it itself only provides church-specific functionality.
 
-| Feature | Applications |
-|---|---|
-| Account management | OpenLDAP,<br>Korga (OpenID Connect) |
-| People, Groups, Mailing lists | Korga |
-| File sharing | Nextcloud,<br>ownCloud |
-| Chat | Synapse (Matrix),<br>Rocket.Chat,<br>Nextcloud Talk |
-| Website | WordPress |
-
 ## Installation
 
-The only officially supported distribution are Docker containers. As there have not been releases so far you have to build the container locally:
-
-```
-$ docker build -t daniel-lerch/korga https://github.com/daniel-lerch/korga.git
-```
-
+The only officially supported distribution are Docker containers. An official image is available at [daniellerch/korga](https://hub.docker.com/r/daniellerch/korga).
 If you are using Docker Compose, take a look our example compose file in the `docs` folder.
+
+When you start Korga for the first time you have create the database schema via CLI
+
+```
+./Korga.Server database create -fp
+```
 
 ## Contributing
 

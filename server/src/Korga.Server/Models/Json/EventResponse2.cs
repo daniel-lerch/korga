@@ -1,4 +1,5 @@
 ﻿using Korga.Server.Database.Entities;
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -17,11 +18,20 @@ public class EventResponse2
     {
         Id = @event.Id;
         Name = @event.Name;
+        Start = @event.Start;
+        End = @event.End;
+        RegistrationStart = @event.RegistrationStart;
+        RegistrationDeadline = @event.RegistrationDeadline;
         Programs = programs;
     }
 
     public long Id { get; set; }
     public string Name { get; set; }
+    public DateTime Start { get; set; }
+    public DateTime End { get; set; }
+    public DateTime RegistrationStart { get; set; }
+    public DateTime RegistrationDeadline { get; set; }
+
     public IList<Program> Programs { get; set; }
 
     public class Program

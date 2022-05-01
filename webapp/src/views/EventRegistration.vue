@@ -50,6 +50,36 @@
               </label>
             </div>
           </div>
+          <div v-if="persons.length > 0" style="margin-top: 20px">
+            <h5>Hinzugefügte Personen</h5>
+            <ul class="list-group">
+              <li
+                v-for="person in persons"
+                :key="person.familyName"
+                class="list-group-item"
+              >
+                {{ person.givenName }} {{ person.familyName }} :
+                {{
+                  event?.programs.find((ele) => ele.id == person.programId)
+                    ?.name
+                }}
+                <button
+                  type="button"
+                  class="btn btn-outline-danger"
+                  @click="removePerson(person)"
+                >
+                  Entfernen
+                </button>
+              </li>
+            </ul>
+          </div>
+          <button
+            type="button"
+            class="btn btn-emphasize mt-3 w-100 btn-success"
+            @click="addPerson"
+          >
+            Weitere Person hinzufügen
+          </button>
           <div
             class="alert alert-warning alert-dismissible"
             role="alert"
@@ -108,6 +138,7 @@ export default defineComponent({
     const familyName = ref("");
     const programId = ref(0);
     const error = ref("");
+    const persons = ref<EventRegistrationRequest[]>([]);
 
     // Use computed value to avoid duplicate data which might be outdated.
     const full = computed(() => {
@@ -146,16 +177,36 @@ export default defineComponent({
       return false;
     });
 
-    const register = async function () {
+    const addPerson = function () {
       if (givenName.value == "") return;
       if (familyName.value == "") return;
-      const request: EventRegistrationRequest = {
+      if (programId.value == 0) return;
+      persons.value.push({
         programId: programId.value,
         givenName: givenName.value.trim(),
         familyName: familyName.value.trim(),
-      };
+      });
+      givenName.value = "";
+      familyName.value = "";
+      programId.value = 0;
+    };
 
-      const res = await registerForEvent(request);
+    const removePerson = function (person: EventRegistrationRequest) {
+      const index: number = persons.value.indexOf(person);
+      if (index > -1) {
+        persons.value.splice(index, 1); //remove item inplace
+      }
+    };
+
+    const register = async function () {
+      if (givenName.value == "") return;
+      if (familyName.value == "") return;
+      persons.value.push({
+        programId: programId.value,
+        givenName: givenName.value.trim(),
+        familyName: familyName.value.trim(),
+      });
+      const res = await registerForEvent(persons.value, props.id);
       if (res) {
         error.value = "";
         event.value = await getEvent(props.id);
@@ -173,7 +224,10 @@ export default defineComponent({
       programId,
       error,
       full,
+      persons,
       register,
+      addPerson,
+      removePerson,
       alreadyRegistered,
     };
   },
