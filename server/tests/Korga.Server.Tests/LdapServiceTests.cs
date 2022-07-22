@@ -2,39 +2,35 @@
 using Korga.Server.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.DirectoryServices.Protocols;
+using Xunit;
 
-namespace Korga.Server.Tests
+namespace Korga.Server.Tests;
+
+public class LdapServiceTests
 {
-    [TestClass]
-    public class LdapServiceTests
+    private readonly IServiceProvider serviceProvider;
+
+    public LdapServiceTests()
     {
-        // This variable is set by the test host
-        private IServiceProvider serviceProvider = null!;
+        serviceProvider = TestHost.CreateServiceCollection().BuildServiceProvider();
+    }
 
-        [TestInitialize]
-        public void Initizalize()
+    [Fact]
+    public void TestAddMember()
+    {
+        var options = serviceProvider.GetRequiredService<IOptions<LdapOptions>>();
+        var ldapService = serviceProvider.GetRequiredService<LdapService>();
+        int count = ldapService.GetMembers();
+        try
         {
-            serviceProvider = TestHost.CreateServiceCollection().BuildServiceProvider();
+            ldapService.AddPerson($"uid=maxmust,{options.Value.BaseDn}", "Max", "Mustermann");
+            Assert.Equal(count + 1, ldapService.GetMembers());
         }
-
-        [TestMethod]
-        public void TestAddMember()
+        catch (DirectoryOperationException ex) when (ex.Response.ResultCode == ResultCode.EntryAlreadyExists)
         {
-            var options = serviceProvider.GetRequiredService<IOptions<LdapOptions>>();
-            var ldapService = serviceProvider.GetRequiredService<LdapService>();
-            int count = ldapService.GetMembers();
-            try
-            {
-                ldapService.AddPerson($"uid=maxmust,{options.Value.BaseDn}", "Max", "Mustermann");
-                Assert.AreEqual(count + 1, ldapService.GetMembers());
-            }
-            catch (DirectoryOperationException ex) when (ex.Response.ResultCode == ResultCode.EntryAlreadyExists)
-            {
-                Assert.IsTrue(count > 0);
-            }
+            Assert.True(count > 0);
         }
     }
 }

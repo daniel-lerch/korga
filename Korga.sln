@@ -17,6 +17,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "server-tests", "server-test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Korga.Server.Tests", "server\tests\Korga.Server.Tests\Korga.Server.Tests.csproj", "{2A484A88-F6BD-4B36-92C8-0675ADDD8CDB}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2ED6D7FB-8B8A-4139-98C3-854E00A38490}"
+	ProjectSection(SolutionItems) = preProject
+		docs\docker-compose.yml = docs\docker-compose.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

@@ -2,7 +2,7 @@ version: '2.1'
 
 services:
   app:
-    image: daniel-lerch/korga
+    image: daniellerch/korga:latest
     restart: unless-stopped
     environment:
       # Change this according to your database settings
@@ -22,4 +22,4 @@ services:
       - MYSQL_USER=korga
       - MYSQL_PASSWORD=korga
     volumes:
-      - ./data/db:/var/lib/mysql
+      - ./data/mysql:/var/lib/mysql
