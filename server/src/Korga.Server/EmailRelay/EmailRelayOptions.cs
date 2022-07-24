@@ -14,4 +14,6 @@ public class EmailRelayOptions
     public bool ImapUseSsl { get; set; }
     [Required] public string ImapUsername { get; set; } = null!;
     [Required] public string ImapPassword { get; set; } = null!;
+
+    [Range(0.0, 1440.0)] public double RetrievalIntervalInMinutes { get; set; }
 }

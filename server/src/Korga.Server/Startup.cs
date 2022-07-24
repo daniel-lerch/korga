@@ -1,3 +1,4 @@
+using Korga.Server.EmailRelay;
 using Korga.Server.Extensions;
 using Korga.Server.Services;
 using Microsoft.AspNetCore.Builder;
@@ -47,6 +48,8 @@ public class Startup
         services.AddControllers();
 
         services.AddOpenApiDocument();
+
+        services.AddHostedService<EmailRelayHostedService>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
