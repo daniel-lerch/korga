@@ -189,14 +189,10 @@ input {
   margin-bottom: 12px;
 }
 
-h1 {
-  margin-top: 12px;
-}
 .h2 {
   display: block;
 }
 .disabled {
-  /* color: lightgray; */
   opacity: 0.5;
   pointer-events: none;
 }

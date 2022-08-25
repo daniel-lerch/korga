@@ -32,7 +32,7 @@
           <div v-if="!passwordsMatch" class="alert alert-danger">
             Passwörter stimmen nicht überein.
           </div>
-          <div v-if="passwordAcceptable && passwordsMatch">
+          <div v-if="passwordAcceptable && passwordsMatch" class="mb-3">
             <label for="passwordHash" class="form-label">Passwort Hash</label>
             <div class="input-group">
               <input
@@ -46,9 +46,16 @@
                 class="btn btn-outline-secondary"
                 @click="copyToClipboard"
               >
-                📋
+                {{ copyToClipboardText }}
               </button>
             </div>
+          </div>
+          <div
+            v-if="passwordAcceptable && passwordsMatch"
+            class="alert alert-success"
+          >
+            Fast geschafft! Kopiere jetzt den Passwort Hash und sende ihn an den
+            Administrator.
           </div>
         </form>
       </div>
@@ -67,6 +74,7 @@ export default defineComponent({
   setup() {
     const newPassword = ref("");
     const confirmPassword = ref("");
+    const copyToClipboardText = ref("📋");
 
     const passwordAcceptable = computed(
       () => entropy(newPassword.value).acceptable
@@ -76,14 +84,17 @@ export default defineComponent({
       () => newPassword.value === confirmPassword.value
     );
 
-    const passwordHash = computedAsync(
-      async () => await ssha(newPassword.value)
-    );
+    const passwordHash = computedAsync(async () => {
+      const hash = await ssha(newPassword.value);
+      copyToClipboardText.value = "📋";
+      return hash;
+    });
 
-    function copyToClipboard() {
-      if (navigator.clipboard)
-        navigator.clipboard.writeText(passwordHash.value);
-      else
+    async function copyToClipboard() {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(passwordHash.value);
+        copyToClipboardText.value = "✔";
+      } else
         alert(
           "Dein Browser unterstützt die Zwischenablage nicht. Du musst den Text manuell kopieren."
         );
@@ -92,6 +103,7 @@ export default defineComponent({
     return {
       newPassword,
       confirmPassword,
+      copyToClipboardText,
       passwordAcceptable,
       passwordsMatch,
       passwordHash,
@@ -100,3 +112,9 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+.container {
+  max-width: 800px;
+}
+</style>
