@@ -13,10 +13,14 @@
               class="form-control"
             />
           </div>
-          <div v-if="!passwordAcceptable" class="alert alert-warning">
+          <div v-if="!newPassword" class="alert alert-secondary">
+            Dein Passwort muss mindestens 8 Zeichen von mindestens zwei der
+            folgenden Kategorien enthalten Großbuchstaben, Kleinbuchstaben,
+            Zahlen und Sonderzeichen.
+          </div>
+          <div v-else-if="!passwordAcceptable" class="alert alert-warning">
             Dein Passwort ist zu unsicher. Verwende ein längeres Passwort im
-            Idealfall oder mit Groß- und Kleinbuchstaben, Zahlen und
-            Sonderzeichen.
+            Idealfall mit Groß- und Kleinbuchstaben, Zahlen und Sonderzeichen.
           </div>
           <div class="mb-3">
             <label for="passwordConfirmation" class="form-label">
