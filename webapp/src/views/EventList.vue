@@ -59,9 +59,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-h1 {
-  margin-top: 12px;
-}
 .h2 {
   display: block;
 }

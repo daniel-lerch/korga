@@ -11,24 +11,30 @@ $body-color: #444;
 @import 'bootstrap/scss/bootstrap.scss';
 
 .shadow {
-  box-shadow: 0 3px 6px rgba(0,0,0,0.03), 0 3px 6px rgba(0,0,0,0.05) !important;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.03), 0 3px 6px rgba(0, 0, 0, 0.05) !important;
 }
+
 .btn {
   padding: 0.5em 1em;
 }
 
-.card-body{
+.card-body {
   padding: 1.5em;
 }
-h1,h2,h3{
+
+h1,
+h2,
+h3 {
   color: #111 !important;
 }
 
-h1{
+h1 {
+  margin-top: 0.5em;
   margin-bottom: 1em;
   font-size: calc(1.4rem + 1.5vw);
 }
-h2{
+
+h2 {
   margin-bottom: 1em;
 }
 

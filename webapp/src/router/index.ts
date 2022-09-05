@@ -31,6 +31,12 @@ const routes: Array<RouteRecordRaw> = [
       import(/* webpackChunkName: "event" */ "../views/EventDetails.vue"),
     props: true,
   },
+  {
+    path: "/password",
+    name: "Password",
+    component: () =>
+      import(/* webpackChunkName: "password" */ "../views/PasswordHash.vue"),
+  },
 ];
 
 const router = createRouter({
