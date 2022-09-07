@@ -1,4 +1,4 @@
-﻿namespace Korga.Server.EmailRelay.Entities;
+﻿namespace Korga.Server.Database.Entities;
 
 public class EmailRecipient
 {

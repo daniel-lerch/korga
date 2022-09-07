@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Korga.Server.EmailRelay;
+namespace Korga.Server.Configuration;
 
 public class EmailRelayOptions
 {

@@ -1,4 +1,3 @@
-using Korga.Server.EmailRelay;
 using Korga.Server.Extensions;
 using Korga.Server.Services;
 using Microsoft.AspNetCore.Builder;
