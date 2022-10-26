@@ -22,63 +22,67 @@ public class EmailRelayHostedService : RepeatedExecutionService
     private readonly IServiceProvider serviceProvider;
 
     public EmailRelayHostedService(IOptions<EmailRelayOptions> options, ILogger<EmailRelayHostedService> logger, IServiceProvider serviceProvider)
-        : base(TimeSpan.FromMinutes(options.Value.RetrievalIntervalInMinutes))
     {
         this.options = options;
         this.logger = logger;
         this.serviceProvider = serviceProvider;
+
+        Interval = TimeSpan.FromMinutes(options.Value.RetrievalIntervalInMinutes);
     }
 
     protected override async ValueTask ExecuteOnce(CancellationToken stoppingToken)
     {
-        using (IServiceScope serviceScope = serviceProvider.CreateScope())
-        using (ImapClient imap = new())
+        using IServiceScope serviceScope = serviceProvider.CreateScope();
+        DatabaseContext database = serviceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
+
+        await RetrieveAndSaveMessages(database, stoppingToken);
+    }
+
+    private async ValueTask RetrieveAndSaveMessages(DatabaseContext database, CancellationToken stoppingToken)
+    {
+        using ImapClient imap = new();
+        await imap.ConnectAsync(options.Value.ImapHost, options.Value.ImapPort, options.Value.ImapUseSsl, stoppingToken);
+        await imap.AuthenticateAsync(options.Value.ImapUsername, options.Value.ImapPassword, stoppingToken);
+        await imap.Inbox.OpenAsync(FolderAccess.ReadWrite, stoppingToken);
+        logger.LogInformation("Opened IMAP inbox with {MessageCount} messages", imap.Inbox.Count);
+
+        MessageSummaryItems fetchItems =
+            MessageSummaryItems.UniqueId | MessageSummaryItems.Flags | MessageSummaryItems.Headers | MessageSummaryItems.Body;
+
+        IList<IMessageSummary> messages = await imap.Inbox.FetchAsync(0, -1, fetchItems, stoppingToken);
+
+        foreach (IMessageSummary message in messages)
         {
-            DatabaseContext database = serviceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
+            bool messageAlreadyDownloaded = message.Flags.GetValueOrDefault().HasFlag(MessageFlags.Seen);
+            if (messageAlreadyDownloaded) continue;
 
-            await imap.ConnectAsync(options.Value.ImapHost, options.Value.ImapPort, options.Value.ImapUseSsl, stoppingToken);
-            await imap.AuthenticateAsync(options.Value.ImapUsername, options.Value.ImapPassword, stoppingToken);
-            await imap.Inbox.OpenAsync(FolderAccess.ReadWrite, stoppingToken);
-            logger.LogInformation("Opened IMAP inbox with {MessageCount} messages", imap.Inbox.Count);
+            byte[] bodyContent;
 
-            MessageSummaryItems fetchItems =
-                MessageSummaryItems.UniqueId | MessageSummaryItems.Flags | MessageSummaryItems.Headers | MessageSummaryItems.Body;
-
-            IList<IMessageSummary> messages = await imap.Inbox.FetchAsync(0, -1, fetchItems, stoppingToken);
-
-            foreach (IMessageSummary message in messages)
+            // Dispose body and memoryStream directly after use to limit memory consumption
+            using (MimeEntity body = await imap.Inbox.GetBodyPartAsync(message.UniqueId, message.Body, stoppingToken))
+            using (System.IO.MemoryStream memoryStream = new())
             {
-                bool messageAlreadyDownloaded = message.Flags.GetValueOrDefault().HasFlag(MessageFlags.Seen);
-                if (messageAlreadyDownloaded) continue;
-
-                byte[] bodyContent;
-
-                // Dispose body and memoryStream directly after use to limit memory consumption
-                using (MimeEntity body = await imap.Inbox.GetBodyPartAsync(message.UniqueId, message.Body, stoppingToken))
-                using (System.IO.MemoryStream memoryStream = new())
-                {
-                    // Writing to a MemoryStream is a synchronous operation that won't be cancelled anyhow
-                    body.WriteTo(memoryStream, CancellationToken.None);
-                    bodyContent = memoryStream.ToArray();
-                }
-
-                string? receiver = GetReceiver(message.Headers);
-
-                database.Emails.Add(new Email(
-                    subject: message.Headers[HeaderId.Subject],
-                    from: message.Headers[HeaderId.From],
-                    sender: message.Headers[HeaderId.Sender],
-                    to: message.Headers[HeaderId.To],
-                    receiver: receiver,
-                    body: bodyContent));
-
-                await database.SaveChangesAsync(stoppingToken);
-
-                // Don't cancel this operation because messages would sent twice otherwise
-                await imap.Inbox.AddFlagsAsync(message.UniqueId, MessageFlags.Seen, silent: true, CancellationToken.None);
-
-                logger.LogInformation("Downloaded and stored message from {From} for {Receiver}", message.Headers[HeaderId.From], receiver);
+                // Writing to a MemoryStream is a synchronous operation that won't be cancelled anyhow
+                body.WriteTo(memoryStream, CancellationToken.None);
+                bodyContent = memoryStream.ToArray();
             }
+
+            string? receiver = GetReceiver(message.Headers);
+
+            database.Emails.Add(new Email(
+                subject: message.Headers[HeaderId.Subject],
+                from: message.Headers[HeaderId.From],
+                sender: message.Headers[HeaderId.Sender],
+                to: message.Headers[HeaderId.To],
+                receiver: receiver,
+                body: bodyContent));
+
+            await database.SaveChangesAsync(stoppingToken);
+
+            // Don't cancel this operation because messages would sent twice otherwise
+            await imap.Inbox.AddFlagsAsync(message.UniqueId, MessageFlags.Seen, silent: true, CancellationToken.None);
+
+            logger.LogInformation("Downloaded and stored message from {From} for {Receiver}", message.Headers[HeaderId.From], receiver);
         }
     }
 

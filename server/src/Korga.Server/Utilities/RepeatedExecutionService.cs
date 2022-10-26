@@ -8,12 +8,7 @@ namespace Korga.Server.Utilities;
 
 public abstract class RepeatedExecutionService : BackgroundService
 {
-    private readonly TimeSpan interval;
-
-    protected RepeatedExecutionService(TimeSpan interval)
-    {
-        this.interval = interval;
-    }
+    protected TimeSpan Interval { get; set; }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -25,10 +20,10 @@ public abstract class RepeatedExecutionService : BackgroundService
             {
                 stopwatch.Start();
 
-                await ExecuteAsync(stoppingToken);
+                await ExecuteOnce(stoppingToken);
 
                 stopwatch.Stop();
-                TimeSpan timeout = interval - stopwatch.Elapsed;
+                TimeSpan timeout = Interval - stopwatch.Elapsed;
                 stopwatch.Reset();
 
                 if (timeout.Ticks > 0) await Task.Delay(timeout, stoppingToken);
