@@ -1,15 +1,19 @@
-﻿using Korga.Server.Configuration;
+﻿using Korga.Server.ChurchTools;
+using Korga.Server.Configuration;
 using Korga.Server.Database;
 using Korga.Server.Database.Entities;
 using Korga.Server.Utilities;
 using MailKit;
 using MailKit.Net.Imap;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,12 +23,14 @@ public class EmailRelayHostedService : RepeatedExecutionService
 {
     private readonly IOptions<EmailRelayOptions> options;
     private readonly ILogger<EmailRelayHostedService> logger;
+    private readonly ChurchToolsApiService churchTools;
     private readonly IServiceProvider serviceProvider;
 
-    public EmailRelayHostedService(IOptions<EmailRelayOptions> options, ILogger<EmailRelayHostedService> logger, IServiceProvider serviceProvider)
+    public EmailRelayHostedService(IOptions<EmailRelayOptions> options, ILogger<EmailRelayHostedService> logger, ChurchToolsApiService churchTools, IServiceProvider serviceProvider)
     {
         this.options = options;
         this.logger = logger;
+        this.churchTools = churchTools;
         this.serviceProvider = serviceProvider;
 
         Interval = TimeSpan.FromMinutes(options.Value.RetrievalIntervalInMinutes);
@@ -36,6 +42,13 @@ public class EmailRelayHostedService : RepeatedExecutionService
         DatabaseContext database = serviceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
         await RetrieveAndSaveMessages(database, stoppingToken);
+
+        List<Email> retrieved =
+            await database.Emails.Where(m => m.RecipientsFetchTime == default).ToListAsync(stoppingToken);
+
+        if (retrieved.Count == 0) return;
+
+        Dictionary<string, int> groupIdForAlias = await GetGroupIdsForAliases();
     }
 
     private async ValueTask RetrieveAndSaveMessages(DatabaseContext database, CancellationToken stoppingToken)
@@ -125,5 +138,29 @@ public class EmailRelayHostedService : RepeatedExecutionService
         }
 
         return null;
+    }
+
+    private async ValueTask<Dictionary<string, int>> GetGroupIdsForAliases()
+    {
+        Dictionary<string, int> groupIdForAlias = new();
+
+        var groups = await churchTools.GetGroups();
+
+        foreach (Group group in groups.Data)
+        {
+            if (group.Information.TryGetValue(options.Value.ChurchToolsEmailAliasGroupField, out JsonElement emailAliasElement)
+                && emailAliasElement.ValueKind == JsonValueKind.String)
+            {
+                // Null forgiving reason:
+                // GetString() does not return null unless ValueKind is JsonValueKind.Null
+                string emailAlias = emailAliasElement.GetString()!;
+
+                groupIdForAlias[emailAlias] = group.Id;
+
+                logger.LogInformation("Group {GroupName} has alias {EmailAlias}", group.Name, emailAlias);
+            }
+        }
+
+        return groupIdForAlias;
     }
 }

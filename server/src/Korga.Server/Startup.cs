@@ -1,3 +1,4 @@
+using Korga.Server.ChurchTools;
 using Korga.Server.Extensions;
 using Korga.Server.Services;
 using Microsoft.AspNetCore.Builder;
@@ -26,6 +27,8 @@ public class Startup
         services.AddKorgaOptions(Configuration);
 
         services.AddSingleton<LdapService>();
+
+        services.AddSingleton<ChurchToolsApiService>();
 
         services.AddKorgaMySqlDatabase();
 
