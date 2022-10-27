@@ -3,8 +3,9 @@
 public class ChurchToolsResponse<T>
 {
     public T Data { get; set; }
+    public ListInformation? Meta { get; set; }
 
-    public class Meta
+    public class ListInformation
     {
         public int Count { get; set; }
         public int All { get; set; }

@@ -38,6 +38,7 @@ public sealed class DatabaseContext : DbContext
 
         var email = modelBuilder.Entity<Email>();
         email.HasKey(e => e.Id);
+        email.Property(e => e.DownloadTime).HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
 
         var emailRecipient = modelBuilder.Entity<EmailRecipient>();
         emailRecipient.HasKey(e => e.Id);

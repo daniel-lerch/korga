@@ -1,4 +1,6 @@
-﻿namespace Korga.Server.Database.Entities;
+﻿using System;
+
+namespace Korga.Server.Database.Entities;
 
 public class EmailRecipient
 {
@@ -12,4 +14,6 @@ public class EmailRecipient
 
     public long EmailId { get; set; }
     public Email? Email { get; set; }
+
+    public DateTime DeliveryTime { get; set; }
 }

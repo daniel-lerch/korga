@@ -23,5 +23,4 @@ public class Email
     public byte[] Body { get; set; }
     public DateTime DownloadTime { get; set; }
     public DateTime RecipientsFetchTime { get; set; }
-    public DateTime DeliveryTime { get; set; }
 }

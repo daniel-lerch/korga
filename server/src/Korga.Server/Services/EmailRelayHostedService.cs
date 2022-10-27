@@ -43,12 +43,7 @@ public class EmailRelayHostedService : RepeatedExecutionService
 
         await RetrieveAndSaveMessages(database, stoppingToken);
 
-        List<Email> retrieved =
-            await database.Emails.Where(m => m.RecipientsFetchTime == default).ToListAsync(stoppingToken);
-
-        if (retrieved.Count == 0) return;
-
-        Dictionary<string, int> groupIdForAlias = await GetGroupIdsForAliases();
+        await FetchRecipients(database, stoppingToken);
     }
 
     private async ValueTask RetrieveAndSaveMessages(DatabaseContext database, CancellationToken stoppingToken)
@@ -57,7 +52,7 @@ public class EmailRelayHostedService : RepeatedExecutionService
         await imap.ConnectAsync(options.Value.ImapHost, options.Value.ImapPort, options.Value.ImapUseSsl, stoppingToken);
         await imap.AuthenticateAsync(options.Value.ImapUsername, options.Value.ImapPassword, stoppingToken);
         await imap.Inbox.OpenAsync(FolderAccess.ReadWrite, stoppingToken);
-        logger.LogInformation("Opened IMAP inbox with {MessageCount} messages", imap.Inbox.Count);
+        logger.LogDebug("Opened IMAP inbox with {MessageCount} messages", imap.Inbox.Count);
 
         MessageSummaryItems fetchItems =
             MessageSummaryItems.UniqueId | MessageSummaryItems.Flags | MessageSummaryItems.Headers | MessageSummaryItems.Body;
@@ -82,20 +77,22 @@ public class EmailRelayHostedService : RepeatedExecutionService
 
             string? receiver = GetReceiver(message.Headers);
 
-            database.Emails.Add(new Email(
+            Email emailEntity = new(
                 subject: message.Headers[HeaderId.Subject],
                 from: message.Headers[HeaderId.From],
                 sender: message.Headers[HeaderId.Sender],
                 to: message.Headers[HeaderId.To],
                 receiver: receiver,
-                body: bodyContent));
+                body: bodyContent);
+
+            database.Emails.Add(emailEntity);
 
             await database.SaveChangesAsync(stoppingToken);
 
             // Don't cancel this operation because messages would sent twice otherwise
             await imap.Inbox.AddFlagsAsync(message.UniqueId, MessageFlags.Seen, silent: true, CancellationToken.None);
 
-            logger.LogInformation("Downloaded and stored message from {From} for {Receiver}", message.Headers[HeaderId.From], receiver);
+            logger.LogInformation("Downloaded and stored message {Id} from {From} for {Receiver}", emailEntity.Id, message.Headers[HeaderId.From], receiver);
         }
     }
 
@@ -140,11 +137,53 @@ public class EmailRelayHostedService : RepeatedExecutionService
         return null;
     }
 
-    private async ValueTask<Dictionary<string, int>> GetGroupIdsForAliases()
+    private async ValueTask FetchRecipients(DatabaseContext database, CancellationToken stoppingToken)
+    {
+        List<Email> retrieved =
+            await database.Emails.Where(m => m.RecipientsFetchTime == default).ToListAsync(stoppingToken);
+
+        if (retrieved.Count == 0) return;
+
+        Dictionary<string, int> groupIdForAlias = await GetGroupIdsForAliases(stoppingToken);
+
+        foreach (Email email in retrieved)
+        {
+            int recipientsCount = 0;
+
+            if (email.Receiver != null)
+            {
+                int atIdx = email.Receiver!.IndexOf('@');
+                string emailAlias = email.Receiver!.Remove(atIdx);
+
+                if (groupIdForAlias.TryGetValue(emailAlias, out int groupId))
+                {
+                    var groupMembers = await churchTools.GetGroupMembers(groupId, stoppingToken);
+
+                    foreach (GroupMember member in groupMembers.Data)
+                    {
+                        var person = await churchTools.GetPerson(member.PersonId, stoppingToken);
+
+                        if (!string.IsNullOrEmpty(person.Data.Email))
+                        {
+                            database.EmailRecipients.Add(new(person.Data.Email) { EmailId = email.Id });
+                            recipientsCount++;
+                        }
+                    }
+                }
+            }
+
+            email.RecipientsFetchTime = DateTime.UtcNow;
+            await database.SaveChangesAsync();
+
+            logger.LogInformation("Fetched {RecipientsCount} recipients for email {Id} to {Receiver}", recipientsCount, email.Id, email.Receiver);
+        }
+    }
+
+    private async ValueTask<Dictionary<string, int>> GetGroupIdsForAliases(CancellationToken cancellationToken)
     {
         Dictionary<string, int> groupIdForAlias = new();
 
-        var groups = await churchTools.GetGroups();
+        var groups = await churchTools.GetGroups(cancellationToken);
 
         foreach (Group group in groups.Data)
         {
@@ -157,7 +196,7 @@ public class EmailRelayHostedService : RepeatedExecutionService
 
                 groupIdForAlias[emailAlias] = group.Id;
 
-                logger.LogInformation("Group {GroupName} has alias {EmailAlias}", group.Name, emailAlias);
+                logger.LogDebug("Group {GroupName} has alias {EmailAlias}", group.Name, emailAlias);
             }
         }
 
