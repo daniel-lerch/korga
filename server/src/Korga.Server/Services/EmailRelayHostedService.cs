@@ -5,6 +5,7 @@ using Korga.Server.Database.Entities;
 using Korga.Server.Utilities;
 using MailKit;
 using MailKit.Net.Imap;
+using MailKit.Net.Smtp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -44,6 +45,8 @@ public class EmailRelayHostedService : RepeatedExecutionService
         await RetrieveAndSaveMessages(database, stoppingToken);
 
         await FetchRecipients(database, stoppingToken);
+
+        await DeliverToRecipients(database, stoppingToken);
     }
 
     private async ValueTask RetrieveAndSaveMessages(DatabaseContext database, CancellationToken stoppingToken)
@@ -165,7 +168,7 @@ public class EmailRelayHostedService : RepeatedExecutionService
 
                         if (!string.IsNullOrEmpty(person.Data.Email))
                         {
-                            database.EmailRecipients.Add(new(person.Data.Email) { EmailId = email.Id });
+                            database.EmailRecipients.Add(new(person.Data.Email, person.Data.FirstName, person.Data.LastName) { EmailId = email.Id });
                             recipientsCount++;
                         }
                     }
@@ -201,5 +204,51 @@ public class EmailRelayHostedService : RepeatedExecutionService
         }
 
         return groupIdForAlias;
+    }
+
+    private async ValueTask DeliverToRecipients(DatabaseContext database, CancellationToken stoppingToken)
+    {
+        using SmtpClient smtpClient = new();
+        await smtpClient.ConnectAsync(options.Value.SmtpHost, options.Value.SmtpPort, options.Value.SmtpUseSsl, stoppingToken);
+        await smtpClient.AuthenticateAsync(options.Value.SmtpUsername, options.Value.SmtpPassword, stoppingToken);
+
+        // TODO: Get emails with pending recipients via JOIN
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            Email? pending = await
+                (from m in database.Emails.Where(m => m.RecipientsFetchTime != default)
+                 join r in database.EmailRecipients.Where(r => r.DeliveryTime == default) on m.Id equals r.EmailId
+                 orderby m.Id
+                 select m)
+                 .FirstOrDefaultAsync(stoppingToken);
+
+            if (pending == null) break;
+
+            List<EmailRecipient> recipients = await
+                database.EmailRecipients.Where(r => r.EmailId == pending.Id && r.DeliveryTime == default).ToListAsync(stoppingToken);
+
+            logger.LogInformation("Delivering email {Id} to {RecipientsCount}", pending.Id, recipients.Count);
+
+            foreach (EmailRecipient recipient in recipients)
+            {
+                using System.IO.MemoryStream memoryStream = new(pending.Body);
+                MimeEntity body = MimeEntity.Load(memoryStream);
+                MimeMessage mimeMessage = new();
+                mimeMessage.From.Add(MailboxAddress.Parse(pending.From));
+                mimeMessage.Sender = new MailboxAddress(options.Value.SenderName, options.Value.SenderAddress);
+                mimeMessage.To.Add(new MailboxAddress(recipient.GivenName, recipient.EmailAddress));
+                mimeMessage.Subject = pending.Subject;
+                mimeMessage.Body = body;
+                await smtpClient.SendAsync(mimeMessage, stoppingToken);
+
+                recipient.DeliveryTime = DateTime.UtcNow;
+
+                // Don't cancel this operation because messages would sent twice otherwise
+                await database.SaveChangesAsync(CancellationToken.None);
+
+                logger.LogInformation("Delivered email {Id} to {GivenName} {FamilyName} <{EmailAddress}>",
+                    pending.Id, recipient.GivenName, recipient.FamilyName, recipient.EmailAddress);
+            }
+        }
     }
 }
