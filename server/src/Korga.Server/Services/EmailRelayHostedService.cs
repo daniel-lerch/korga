@@ -23,14 +23,13 @@ namespace Korga.Server.Services;
 public class EmailRelayHostedService : RepeatedExecutionService
 {
     private readonly IOptions<EmailRelayOptions> options;
-    private readonly ILogger<EmailRelayHostedService> logger;
     private readonly ChurchToolsApiService churchTools;
     private readonly IServiceProvider serviceProvider;
 
     public EmailRelayHostedService(IOptions<EmailRelayOptions> options, ILogger<EmailRelayHostedService> logger, ChurchToolsApiService churchTools, IServiceProvider serviceProvider)
+        : base(logger)
     {
         this.options = options;
-        this.logger = logger;
         this.churchTools = churchTools;
         this.serviceProvider = serviceProvider;
 
@@ -97,6 +96,8 @@ public class EmailRelayHostedService : RepeatedExecutionService
 
             logger.LogInformation("Downloaded and stored message {Id} from {From} for {Receiver}", emailEntity.Id, message.Headers[HeaderId.From], receiver);
         }
+
+        await imap.DisconnectAsync(quit: true, stoppingToken);
     }
 
     private string? GetReceiver(HeaderList headers)
@@ -197,9 +198,16 @@ public class EmailRelayHostedService : RepeatedExecutionService
                 // GetString() does not return null unless ValueKind is JsonValueKind.Null
                 string emailAlias = emailAliasElement.GetString()!;
 
-                groupIdForAlias[emailAlias] = group.Id;
-
-                logger.LogDebug("Group {GroupName} has alias {EmailAlias}", group.Name, emailAlias);
+                if (groupIdForAlias.TryAdd(emailAlias, group.Id))
+                {
+                    logger.LogDebug("Group {GroupName} (#{GroupId}) has alias {EmailAlias}", group.Name, group.Id, emailAlias);
+                }
+                else
+                {
+                    Group conflict = groups.Data.Single(g => g.Id == groupIdForAlias[emailAlias]);
+                    logger.LogWarning("Group {GroupName} (#{GroupId}) has alias {EmailAlias}, the same alias like {ConflictName} (#{ConflictId})",
+                        group.Name, group.Id, emailAlias, conflict.Name, conflict.Id);
+                }
             }
         }
 
@@ -212,7 +220,7 @@ public class EmailRelayHostedService : RepeatedExecutionService
         await smtpClient.ConnectAsync(options.Value.SmtpHost, options.Value.SmtpPort, options.Value.SmtpUseSsl, stoppingToken);
         await smtpClient.AuthenticateAsync(options.Value.SmtpUsername, options.Value.SmtpPassword, stoppingToken);
 
-        // TODO: Get emails with pending recipients via JOIN
+        // Get emails one by one for lower memory usage
         while (!stoppingToken.IsCancellationRequested)
         {
             Email? pending = await
@@ -224,22 +232,45 @@ public class EmailRelayHostedService : RepeatedExecutionService
 
             if (pending == null) break;
 
+            MimeEntity body;
+            using (System.IO.MemoryStream memoryStream = new(pending.Body))
+                body = MimeEntity.Load(memoryStream);
+
             List<EmailRecipient> recipients = await
                 database.EmailRecipients.Where(r => r.EmailId == pending.Id && r.DeliveryTime == default).ToListAsync(stoppingToken);
 
-            logger.LogInformation("Delivering email {Id} to {RecipientsCount}", pending.Id, recipients.Count);
+            logger.LogInformation("Delivering email {Id} to {RecipientsCount} recipients", pending.Id, recipients.Count);
 
             foreach (EmailRecipient recipient in recipients)
             {
-                using System.IO.MemoryStream memoryStream = new(pending.Body);
-                MimeEntity body = MimeEntity.Load(memoryStream);
                 MimeMessage mimeMessage = new();
                 mimeMessage.From.Add(MailboxAddress.Parse(pending.From));
                 mimeMessage.Sender = new MailboxAddress(options.Value.SenderName, options.Value.SenderAddress);
                 mimeMessage.To.Add(new MailboxAddress(recipient.GivenName, recipient.EmailAddress));
                 mimeMessage.Subject = pending.Subject;
                 mimeMessage.Body = body;
-                await smtpClient.SendAsync(mimeMessage, stoppingToken);
+
+                try
+                {
+                    await smtpClient.SendAsync(mimeMessage, stoppingToken);
+                }
+                catch (SmtpCommandException ex) when (ex.StatusCode == SmtpStatusCode.MailboxBusy)
+                {
+                    // We have to handle the case of an SMTP rate limit when multiple customers are supposed to receive a mail at the same time
+                    // Strato for reference only allows you to send 50 emails without delay (September 2021)
+                    //
+                    // RFC 821 defines common status code as 450 mailbox unavailable (busy or blocked for policy reasons)
+                    // RFC 3463 defines enhanced status code as 4.7.X for persistent transient failures caused by security or policy status
+
+                    logger.LogInformation("Mailbox busy. This is most likely caused by a temporary rate limit.");
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Sending email {Id} to {GivenName} {FamilyName} <{EmailAddress}> failed",
+                        pending.Id, recipient.GivenName, recipient.FamilyName, recipient.EmailAddress);
+                    break;
+                }
 
                 recipient.DeliveryTime = DateTime.UtcNow;
 
@@ -250,5 +281,7 @@ public class EmailRelayHostedService : RepeatedExecutionService
                     pending.Id, recipient.GivenName, recipient.FamilyName, recipient.EmailAddress);
             }
         }
+
+        await smtpClient.DisconnectAsync(quit: true, stoppingToken);
     }
 }

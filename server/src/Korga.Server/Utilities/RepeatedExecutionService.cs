@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -8,6 +9,13 @@ namespace Korga.Server.Utilities;
 
 public abstract class RepeatedExecutionService : BackgroundService
 {
+    protected readonly ILogger logger;
+
+    protected RepeatedExecutionService(ILogger logger)
+    {
+        this.logger = logger;
+    }
+
     protected TimeSpan Interval { get; set; }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -31,6 +39,10 @@ public abstract class RepeatedExecutionService : BackgroundService
             catch (OperationCanceledException)
             {
                 break;
+            }
+            catch (Exception ex)
+            {
+                logger.LogCritical(ex, "An unhandled exception occurred in a background service");
             }
         }
     }

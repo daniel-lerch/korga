@@ -1,6 +1,7 @@
 ﻿using Korga.Server.Configuration;
 using Microsoft.Extensions.Options;
 using System;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -20,19 +21,22 @@ public class ChurchToolsApiService : IDisposable
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Login", options.Value.ChurchToolsLoginToken);
     }
 
-    public Task<ChurchToolsResponse<Group[]>?> GetGroups(CancellationToken cancellationToken)
+    public async ValueTask<ChurchToolsResponse<Group[]>> GetGroups(CancellationToken cancellationToken)
     {
-        return httpClient.GetFromJsonAsync<ChurchToolsResponse<Group[]>>("/api/groups", cancellationToken);
+        return await httpClient.GetFromJsonAsync<ChurchToolsResponse<Group[]>>("/api/groups", cancellationToken) 
+            ?? throw new InvalidDataException();
     }
 
-    public Task<ChurchToolsResponse<GroupMember[]>?> GetGroupMembers(int groupId, CancellationToken cancellationToken)
+    public async ValueTask<ChurchToolsResponse<GroupMember[]>> GetGroupMembers(int groupId, CancellationToken cancellationToken)
     {
-        return httpClient.GetFromJsonAsync<ChurchToolsResponse<GroupMember[]>>($"/api/groups/{groupId}/members", cancellationToken);
+        return await httpClient.GetFromJsonAsync<ChurchToolsResponse<GroupMember[]>>($"/api/groups/{groupId}/members", cancellationToken) 
+            ?? throw new InvalidDataException();
     }
 
-    public Task<ChurchToolsResponse<Person>?> GetPerson(int personId, CancellationToken cancellationToken)
+    public async ValueTask<ChurchToolsResponse<Person>> GetPerson(int personId, CancellationToken cancellationToken)
     {
-        return httpClient.GetFromJsonAsync<ChurchToolsResponse<Person>>($"/api/persons/{personId}", cancellationToken);
+        return await httpClient.GetFromJsonAsync<ChurchToolsResponse<Person>>($"/api/persons/{personId}", cancellationToken)
+            ?? throw new InvalidDataException();
     }
 
     public void Dispose()
