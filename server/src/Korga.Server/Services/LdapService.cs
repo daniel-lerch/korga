@@ -30,12 +30,11 @@ namespace Korga.Server.Services
             mapper = new LdapMapper(connection);
         }
 
-        public int GetMembers()
+        public InetOrgPerson[] GetMembers()
         {
             if (disposed) throw new ObjectDisposedException(nameof(LdapService));
 
-            InetOrgPerson[] result = mapper.Search<InetOrgPerson>(options.Value.BaseDn, "(objectClass=inetOrgPerson)", SearchScope.OneLevel);
-            return result.Length;
+            return mapper.Search<InetOrgPerson>(options.Value.BaseDn, "(objectClass=inetOrgPerson)", SearchScope.OneLevel);
         }
 
         public void AddOrganizationalUnit(string distinguishedName, string name)
@@ -45,7 +44,7 @@ namespace Korga.Server.Services
             mapper.Add(distinguishedName, new OrganizationalUnit(name));
         }
 
-        public void AddPerson(string distinguishedName, string givenName, string familyName)
+        public void AddPerson(string distinguishedName, string givenName, string familyName, string mailAddress)
         {
             if (disposed) throw new ObjectDisposedException(nameof(LdapService));
 
@@ -54,10 +53,18 @@ namespace Korga.Server.Services
             var person = new InetOrgPerson(cn: name, familyName)
             {
                 GivenName = givenName,
-                DisplayName = name
+                DisplayName = name,
+                Mail = mailAddress
             };
 
             mapper.Add(distinguishedName, person);
+        }
+
+        public void Delete(string distinguishedName)
+        {
+            if (disposed) throw new ObjectDisposedException(nameof(LdapService));
+
+            mapper.Delete(distinguishedName);
         }
 
         public void Dispose()

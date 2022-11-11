@@ -1,4 +1,5 @@
 ﻿using Korga.Server.Configuration;
+using Korga.Server.Ldap.ObjectClasses;
 using Korga.Server.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -22,15 +23,15 @@ public class LdapServiceTests
     {
         var options = serviceProvider.GetRequiredService<IOptions<LdapOptions>>();
         var ldapService = serviceProvider.GetRequiredService<LdapService>();
-        int count = ldapService.GetMembers();
+        InetOrgPerson[] members = ldapService.GetMembers();
         try
         {
-            ldapService.AddPerson($"uid=maxmust,{options.Value.BaseDn}", "Max", "Mustermann");
-            Assert.Equal(count + 1, ldapService.GetMembers());
+            ldapService.AddPerson($"uid=maxmust,{options.Value.BaseDn}", "Max", "Mustermann", "max.mustermann@example.org");
+            Assert.Equal(members.Length + 1, ldapService.GetMembers().Length);
         }
         catch (DirectoryOperationException ex) when (ex.Response.ResultCode == ResultCode.EntryAlreadyExists)
         {
-            Assert.True(count > 0);
+            Assert.True(members.Length > 0);
         }
     }
 }
