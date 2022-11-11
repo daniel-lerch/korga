@@ -43,6 +43,9 @@ jobs:
         EOF
         sudo dpkg-reconfigure -f noninteractive slapd
 
+        # .NET attempts to load a specific version of libldap: https://github.com/dotnet/runtime/issues/69456
+        sudo ln -s /usr/lib/x86_64-linux-gnu/libldap-2.5.so.0 /usr/lib/x86_64-linux-gnu/libldap-2.4.so.2
+
         # Launch and prepare OpenLDAP server
         sudo systemctl start slapd.service
         dotnet run -c Release --no-build -p server/src/Korga.Server -- ldap create
