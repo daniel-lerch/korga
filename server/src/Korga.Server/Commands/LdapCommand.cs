@@ -5,25 +5,24 @@ using Microsoft.Extensions.Options;
 
 #pragma warning disable IDE0051 // Remove unused private members
 
-namespace Korga.Server.Commands
-{
-    [Command("ldap")]
-    [Subcommand(typeof(Create))]
-    public class LdapCommand
-    {
-        private int OnExecute(CommandLineApplication app)
-        {
-            app.ShowHint();
-            return 1;
-        }
+namespace Korga.Server.Commands;
 
-        [Command("create")]
-        public class Create
+[Command("ldap")]
+[Subcommand(typeof(Create))]
+public class LdapCommand
+{
+    private int OnExecute(CommandLineApplication app)
+    {
+        app.ShowHint();
+        return 1;
+    }
+
+    [Command("create")]
+    public class Create
+    {
+        private void OnExecute(IOptions<LdapOptions> options, LdapService ldap)
         {
-            private void OnExecute(IOptions<LdapOptions> options, LdapService ldap)
-            {
-                ldap.AddOrganizationalUnit(options.Value.BaseDn, "members");
-            }
+            ldap.AddOrganizationalUnit(options.Value.BaseDn, "members");
         }
     }
 }
