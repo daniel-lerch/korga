@@ -2,16 +2,15 @@
 
 #pragma warning disable IDE0051 // Remove unused private members
 
-namespace Korga.Server.Commands
+namespace Korga.Server.Commands;
+
+[Command("korga", Description = "Korga server management console")]
+[Subcommand(typeof(DatabaseCommand), typeof(LdapCommand))]
+public class KorgaCommand
 {
-    [Command("korga", Description = "Korga server management console")]
-    [Subcommand(typeof(DatabaseCommand), typeof(LdapCommand))]
-    public class KorgaCommand
+    private int OnExecute(CommandLineApplication app)
     {
-        private int OnExecute(CommandLineApplication app)
-        {
-            app.ShowHint();
-            return 1;
-        }
+        app.ShowHint();
+        return 1;
     }
 }
