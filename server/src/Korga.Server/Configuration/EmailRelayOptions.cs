@@ -5,6 +5,7 @@ namespace Korga.Server.Configuration;
 public class EmailRelayOptions
 {
     // Validation ensures that required values cannot be null
+    public bool Enable { get; set; }
     [Required] public string ChurchToolsHost { get; set; } = null!;
     [Required] public string ChurchToolsLoginToken { get; set; } = null!;
     [Required] public string ChurchToolsEmailAliasGroupField { get; set; } = null!;
