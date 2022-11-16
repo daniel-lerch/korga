@@ -45,7 +45,7 @@ public class EmailRelayHostedService : RepeatedExecutionService
 
         await FetchRecipients(database, stoppingToken);
 
-        await DeliverToRecipients(database, stoppingToken);
+        //await DeliverToRecipients(database, stoppingToken);
     }
 
     private async ValueTask RetrieveAndSaveMessages(DatabaseContext database, CancellationToken stoppingToken)
@@ -59,7 +59,7 @@ public class EmailRelayHostedService : RepeatedExecutionService
         MessageSummaryItems fetchItems =
             MessageSummaryItems.UniqueId | MessageSummaryItems.Flags | MessageSummaryItems.Headers | MessageSummaryItems.Body;
 
-        IList<IMessageSummary> messages = await imap.Inbox.FetchAsync(0, -1, fetchItems, stoppingToken);
+        IList<IMessageSummary> messages = await imap.Inbox.FetchAsync(min: 0, max: -1, fetchItems, stoppingToken);
 
         foreach (IMessageSummary message in messages)
         {
@@ -120,7 +120,6 @@ public class EmailRelayHostedService : RepeatedExecutionService
                     return receivedHeader[startIdx..endIdx];
                 }
             }
-            logger.LogInformation(receivedHeader);
         }
 
         // 2. Try to get receiver from Envelope-To or X-Envelope-To headers
@@ -161,19 +160,11 @@ public class EmailRelayHostedService : RepeatedExecutionService
 
                 if (groupIdForAlias.TryGetValue(emailAlias, out int groupId))
                 {
-                    var groupMembers = await churchTools.GetGroupMembers(groupId, stoppingToken);
-
-                    foreach (GroupMember member in groupMembers)
-                    {
-                        var person = await churchTools.GetPerson(member.PersonId, stoppingToken);
-
-                        if (!string.IsNullOrEmpty(person.Email))
-                        {
-                            database.EmailRecipients.Add(new(person.Email, person.FirstName, person.LastName) { EmailId = email.Id });
-                            recipientsCount++;
-                        }
-                    }
+                    EmailRecipient[] recipients = await GetRecipientsForGroupId(groupId, email.Id, stoppingToken);
+                    recipientsCount = recipients.Length;
+                    database.EmailRecipients.AddRange(recipients);
                 }
+                // TODO: Handle invalid aliases
             }
 
             email.RecipientsFetchTime = DateTime.UtcNow;
@@ -194,9 +185,8 @@ public class EmailRelayHostedService : RepeatedExecutionService
             if (group.Information.TryGetValue(options.Value.ChurchToolsEmailAliasGroupField, out JsonElement emailAliasElement)
                 && emailAliasElement.ValueKind == JsonValueKind.String)
             {
-                // Null forgiving reason:
-                // GetString() does not return null unless ValueKind is JsonValueKind.Null
-                string emailAlias = emailAliasElement.GetString()!;
+                string? emailAlias = emailAliasElement.GetString();
+                if (string.IsNullOrEmpty(emailAlias)) continue;
 
                 if (groupIdForAlias.TryAdd(emailAlias, group.Id))
                 {
@@ -212,6 +202,33 @@ public class EmailRelayHostedService : RepeatedExecutionService
         }
 
         return groupIdForAlias;
+    }
+
+    private async ValueTask<EmailRecipient[]> GetRecipientsForGroupId(int groupId, long emailId, CancellationToken cancellationToken)
+    {
+        var groupMembers = await churchTools.GetGroupMembers(groupId, cancellationToken);
+
+        List<EmailRecipient> recipients = new();
+
+        foreach (GroupMember member in groupMembers)
+        {
+            var person = await churchTools.GetPerson(member.PersonId, cancellationToken);
+
+            if (!string.IsNullOrEmpty(person.Email))
+            {
+                recipients.Add(new(person.Email, person.FirstName, person.LastName));
+            }
+        }
+
+        // Avoid duplicate emails for married couples with a shared email address
+        return recipients
+            .GroupBy(r => r.EmailAddress)
+            .Select(grouping => new EmailRecipient(
+                emailAddress: grouping.Key,
+                givenName: string.Join(", ", grouping.Select(r => r.GivenName)),
+                familyName: grouping.First().FamilyName)
+            { EmailId = emailId })
+            .ToArray();
     }
 
     private async ValueTask DeliverToRecipients(DatabaseContext database, CancellationToken stoppingToken)
