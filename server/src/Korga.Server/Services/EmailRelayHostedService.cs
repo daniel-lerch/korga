@@ -163,13 +163,13 @@ public class EmailRelayHostedService : RepeatedExecutionService
                 {
                     var groupMembers = await churchTools.GetGroupMembers(groupId, stoppingToken);
 
-                    foreach (GroupMember member in groupMembers.Data)
+                    foreach (GroupMember member in groupMembers)
                     {
                         var person = await churchTools.GetPerson(member.PersonId, stoppingToken);
 
-                        if (!string.IsNullOrEmpty(person.Data.Email))
+                        if (!string.IsNullOrEmpty(person.Email))
                         {
-                            database.EmailRecipients.Add(new(person.Data.Email, person.Data.FirstName, person.Data.LastName) { EmailId = email.Id });
+                            database.EmailRecipients.Add(new(person.Email, person.FirstName, person.LastName) { EmailId = email.Id });
                             recipientsCount++;
                         }
                     }
@@ -189,7 +189,7 @@ public class EmailRelayHostedService : RepeatedExecutionService
 
         var groups = await churchTools.GetGroups(cancellationToken);
 
-        foreach (Group group in groups.Data)
+        foreach (Group group in groups)
         {
             if (group.Information.TryGetValue(options.Value.ChurchToolsEmailAliasGroupField, out JsonElement emailAliasElement)
                 && emailAliasElement.ValueKind == JsonValueKind.String)
@@ -204,7 +204,7 @@ public class EmailRelayHostedService : RepeatedExecutionService
                 }
                 else
                 {
-                    Group conflict = groups.Data.Single(g => g.Id == groupIdForAlias[emailAlias]);
+                    Group conflict = groups.Single(g => g.Id == groupIdForAlias[emailAlias]);
                     logger.LogWarning("Group {GroupName} (#{GroupId}) has alias {EmailAlias}, the same alias like {ConflictName} (#{ConflictId})",
                         group.Name, group.Id, emailAlias, conflict.Name, conflict.Id);
                 }
