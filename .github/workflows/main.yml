@@ -6,13 +6,13 @@ on:
 jobs:
   server:
     name: Backend build and integration tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET SDK
-      uses: actions/setup-dotnet@v2
+      uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 7.0.x
     - name: Restore NuGet packages
       run: dotnet restore
     - name: Build
@@ -43,6 +43,9 @@ jobs:
         EOF
         sudo dpkg-reconfigure -f noninteractive slapd
 
+        # .NET attempts to load a specific version of libldap: https://github.com/dotnet/runtime/issues/69456
+        sudo ln -s /usr/lib/x86_64-linux-gnu/libldap-2.5.so.0 /usr/lib/x86_64-linux-gnu/libldap-2.4.so.2
+
         # Launch and prepare OpenLDAP server
         sudo systemctl start slapd.service
         dotnet run -c Release --no-build -p server/src/Korga.Server -- ldap create
@@ -51,7 +54,7 @@ jobs:
 
   webapp:
     name: Frontend build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
     - name: Setup NodeJS
@@ -67,7 +70,7 @@ jobs:
 
   docker:
     name: Docker build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
     - name: Docker meta

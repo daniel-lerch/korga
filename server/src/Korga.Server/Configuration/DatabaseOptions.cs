@@ -1,10 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Korga.Server.Configuration
+namespace Korga.Server.Configuration;
+
+public class DatabaseOptions
 {
-    public class DatabaseOptions
-    {
-        // Validation ensures that required values cannot be null
-        [Required] public string ConnectionString { get; set; } = null!;
-    }
+    // Validation ensures that required values cannot be null
+    [Required] public string ConnectionString { get; set; } = null!;
 }
