@@ -4,11 +4,10 @@ namespace Korga.Server.Database.Entities;
 
 public class EmailRecipient
 {
-    public EmailRecipient(string emailAddress, string givenName, string familyName)
+    public EmailRecipient(string emailAddress, string fullName)
     {
         EmailAddress = emailAddress;
-        GivenName = givenName;
-        FamilyName = familyName;
+        FullName = fullName;
     }
 
     public long Id { get; set; }
@@ -17,7 +16,6 @@ public class EmailRecipient
     public Email? Email { get; set; }
 
     public string EmailAddress { get; set; }
-    public string GivenName { get; set; }
-    public string FamilyName { get; set; }
+    public string FullName { get; set; }
     public DateTime DeliveryTime { get; set; }
 }

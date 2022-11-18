@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Korga.Server.Models;
+using System;
+using System.Collections.Generic;
 
 namespace Korga.Server.Database.Entities;
 
@@ -23,4 +25,7 @@ public class Email
     public byte[] Body { get; set; }
     public DateTime DownloadTime { get; set; }
     public DateTime RecipientsFetchTime { get; set; }
+    public DistributionListType DistributionListType { get; set; }
+
+    public IEnumerable<EmailRecipient>? Recipients { get; set; }
 }

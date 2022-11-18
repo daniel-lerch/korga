@@ -2,6 +2,8 @@
 using Korga.Server.Configuration;
 using Korga.Server.Database;
 using Korga.Server.Database.Entities;
+using Korga.Server.Extensions;
+using Korga.Server.Models;
 using Korga.Server.Utilities;
 using MailKit;
 using MailKit.Net.Imap;
@@ -14,7 +16,6 @@ using MimeKit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,14 +24,12 @@ namespace Korga.Server.Services;
 public class EmailRelayHostedService : RepeatedExecutionService
 {
     private readonly IOptions<EmailRelayOptions> options;
-    private readonly ChurchToolsApiService churchTools;
     private readonly IServiceProvider serviceProvider;
 
-    public EmailRelayHostedService(IOptions<EmailRelayOptions> options, ILogger<EmailRelayHostedService> logger, ChurchToolsApiService churchTools, IServiceProvider serviceProvider)
+    public EmailRelayHostedService(IOptions<EmailRelayOptions> options, ILogger<EmailRelayHostedService> logger, IServiceProvider serviceProvider)
         : base(logger)
     {
         this.options = options;
-        this.churchTools = churchTools;
         this.serviceProvider = serviceProvider;
 
         Interval = TimeSpan.FromMinutes(options.Value.RetrievalIntervalInMinutes);
@@ -40,12 +39,13 @@ public class EmailRelayHostedService : RepeatedExecutionService
     {
         using IServiceScope serviceScope = serviceProvider.CreateScope();
         DatabaseContext database = serviceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
+        DistributionListService distributionList = serviceScope.ServiceProvider.GetRequiredService<DistributionListService>();
 
         await RetrieveAndSaveMessages(database, stoppingToken);
 
-        await FetchRecipients(database, stoppingToken);
+        await FetchRecipients(database, distributionList, stoppingToken);
 
-        //await DeliverToRecipients(database, stoppingToken);
+        await DeliverToRecipients(database, stoppingToken);
     }
 
     private async ValueTask RetrieveAndSaveMessages(DatabaseContext database, CancellationToken stoppingToken)
@@ -77,15 +77,26 @@ public class EmailRelayHostedService : RepeatedExecutionService
                 bodyContent = memoryStream.ToArray();
             }
 
-            string? receiver = GetReceiver(message.Headers);
+            string from = message.Headers[HeaderId.From];
+            string? receiver = message.Headers.GetReceiver();
 
             Email emailEntity = new(
                 subject: message.Headers[HeaderId.Subject],
-                from: message.Headers[HeaderId.From],
+                from: from,
                 sender: message.Headers[HeaderId.Sender],
                 to: message.Headers[HeaderId.To],
                 receiver: receiver,
                 body: bodyContent);
+
+            if (receiver == null)
+            {
+                // Skip next stage if receiver could not be determined
+                emailEntity.RecipientsFetchTime = DateTime.UtcNow;
+
+                if (MailboxAddress.TryParse(from, out MailboxAddress fromAddress))
+                    // TODO: Mark this as an error message
+                    emailEntity.Recipients = new[] { new EmailRecipient(fromAddress.Address, fromAddress.Name) };
+            }
 
             database.Emails.Add(emailEntity);
 
@@ -94,60 +105,16 @@ public class EmailRelayHostedService : RepeatedExecutionService
             // Don't cancel this operation because messages would sent twice otherwise
             await imap.Inbox.AddFlagsAsync(message.UniqueId, MessageFlags.Seen, silent: true, CancellationToken.None);
 
-            logger.LogInformation("Downloaded and stored message {Id} from {From} for {Receiver}", emailEntity.Id, message.Headers[HeaderId.From], receiver);
+            logger.LogInformation("Downloaded and stored message #{Id} from {From} for {Receiver}", emailEntity.Id, message.Headers[HeaderId.From], receiver);
         }
 
         await imap.DisconnectAsync(quit: true, stoppingToken);
     }
 
-    private string? GetReceiver(HeaderList headers)
-    {
-        //logger.LogInformation(string.Join(",\r\n", headers.Select(x => $"{x.Field}: {x.Value}")));
-
-        // 1. Try to get receiver from Received header
-        string? receivedHeader = headers[HeaderId.Received];
-        if (receivedHeader != null)
-        {
-            string prefix = "for <";
-            string suffix = ">;";
-            int prefixIdx = receivedHeader.IndexOf(prefix);
-            if (prefixIdx != -1)
-            {
-                int endIdx = receivedHeader.IndexOf(suffix);
-                if (endIdx != -1)
-                {
-                    int startIdx = prefixIdx + prefix.Length;
-                    return receivedHeader[startIdx..endIdx];
-                }
-            }
-        }
-
-        // 2. Try to get receiver from Envelope-To or X-Envelope-To headers
-        string? envelopeTo = headers["Envelope-To"] ?? headers["X-Envelope-To"];
-        if (envelopeTo != null)
-        {
-            int prefixIdx = envelopeTo.IndexOf('<');
-            if (prefixIdx != -1)
-            {
-                int endIdx = envelopeTo.IndexOf('>');
-                if (endIdx != -1)
-                {
-                    return envelopeTo[(prefixIdx + 1)..endIdx];
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private async ValueTask FetchRecipients(DatabaseContext database, CancellationToken stoppingToken)
+    private async ValueTask FetchRecipients(DatabaseContext database, DistributionListService distributionList, CancellationToken stoppingToken)
     {
         List<Email> retrieved =
             await database.Emails.Where(m => m.RecipientsFetchTime == default).ToListAsync(stoppingToken);
-
-        if (retrieved.Count == 0) return;
-
-        Dictionary<string, int> groupIdForAlias = await GetGroupIdsForAliases(stoppingToken);
 
         foreach (Email email in retrieved)
         {
@@ -158,77 +125,28 @@ public class EmailRelayHostedService : RepeatedExecutionService
                 int atIdx = email.Receiver!.IndexOf('@');
                 string emailAlias = email.Receiver!.Remove(atIdx);
 
-                if (groupIdForAlias.TryGetValue(emailAlias, out int groupId))
+                Group? group = await distributionList.GetGroupForAlias(emailAlias, stoppingToken);
+
+                if (group != null)
                 {
-                    EmailRecipient[] recipients = await GetRecipientsForGroupId(groupId, email.Id, stoppingToken);
+                    EmailRecipient[] recipients = await distributionList.GetRecipientsForGroup(group, email.Id, stoppingToken);
                     recipientsCount = recipients.Length;
                     database.EmailRecipients.AddRange(recipients);
+                    email.DistributionListType = DistributionListType.CTGroup;
                 }
-                // TODO: Handle invalid aliases
+                else // In case of an invalid alias DistributionListType is None. An error email will be sent to the sender at the next stage.
+                {
+                    if (MailboxAddress.TryParse(email.From, out MailboxAddress fromAddress))
+                        // TODO: Mark this as an error message
+                        database.EmailRecipients.Add(new(fromAddress.Address, fromAddress.Name) { EmailId = email.Id });
+                }
             }
 
             email.RecipientsFetchTime = DateTime.UtcNow;
-            await database.SaveChangesAsync();
+            await database.SaveChangesAsync(stoppingToken);
 
-            logger.LogInformation("Fetched {RecipientsCount} recipients for email {Id} to {Receiver}", recipientsCount, email.Id, email.Receiver);
+            logger.LogInformation("Fetched {RecipientsCount} recipients for email #{Id} to {Receiver}", recipientsCount, email.Id, email.Receiver);
         }
-    }
-
-    private async ValueTask<Dictionary<string, int>> GetGroupIdsForAliases(CancellationToken cancellationToken)
-    {
-        Dictionary<string, int> groupIdForAlias = new();
-
-        var groups = await churchTools.GetGroups(cancellationToken);
-
-        foreach (Group group in groups)
-        {
-            if (group.Information.TryGetValue(options.Value.ChurchToolsEmailAliasGroupField, out JsonElement emailAliasElement)
-                && emailAliasElement.ValueKind == JsonValueKind.String)
-            {
-                string? emailAlias = emailAliasElement.GetString();
-                if (string.IsNullOrEmpty(emailAlias)) continue;
-
-                if (groupIdForAlias.TryAdd(emailAlias, group.Id))
-                {
-                    logger.LogDebug("Group {GroupName} (#{GroupId}) has alias {EmailAlias}", group.Name, group.Id, emailAlias);
-                }
-                else
-                {
-                    Group conflict = groups.Single(g => g.Id == groupIdForAlias[emailAlias]);
-                    logger.LogWarning("Group {GroupName} (#{GroupId}) has alias {EmailAlias}, the same alias like {ConflictName} (#{ConflictId})",
-                        group.Name, group.Id, emailAlias, conflict.Name, conflict.Id);
-                }
-            }
-        }
-
-        return groupIdForAlias;
-    }
-
-    private async ValueTask<EmailRecipient[]> GetRecipientsForGroupId(int groupId, long emailId, CancellationToken cancellationToken)
-    {
-        var groupMembers = await churchTools.GetGroupMembers(groupId, cancellationToken);
-
-        List<EmailRecipient> recipients = new();
-
-        foreach (GroupMember member in groupMembers)
-        {
-            var person = await churchTools.GetPerson(member.PersonId, cancellationToken);
-
-            if (!string.IsNullOrEmpty(person.Email))
-            {
-                recipients.Add(new(person.Email, person.FirstName, person.LastName));
-            }
-        }
-
-        // Avoid duplicate emails for married couples with a shared email address
-        return recipients
-            .GroupBy(r => r.EmailAddress)
-            .Select(grouping => new EmailRecipient(
-                emailAddress: grouping.Key,
-                givenName: string.Join(", ", grouping.Select(r => r.GivenName)),
-                familyName: grouping.First().FamilyName)
-            { EmailId = emailId })
-            .ToArray();
     }
 
     private async ValueTask DeliverToRecipients(DatabaseContext database, CancellationToken stoppingToken)
@@ -249,6 +167,8 @@ public class EmailRelayHostedService : RepeatedExecutionService
 
             if (pending == null) break;
 
+            // TODO: Handle error messages
+
             MimeEntity body;
             using (System.IO.MemoryStream memoryStream = new(pending.Body))
                 body = MimeEntity.Load(memoryStream);
@@ -256,14 +176,14 @@ public class EmailRelayHostedService : RepeatedExecutionService
             List<EmailRecipient> recipients = await
                 database.EmailRecipients.Where(r => r.EmailId == pending.Id && r.DeliveryTime == default).ToListAsync(stoppingToken);
 
-            logger.LogInformation("Delivering email {Id} to {RecipientsCount} recipients", pending.Id, recipients.Count);
+            logger.LogInformation("Delivering email #{Id} to {RecipientsCount} recipients", pending.Id, recipients.Count);
 
             foreach (EmailRecipient recipient in recipients)
             {
                 MimeMessage mimeMessage = new();
                 mimeMessage.From.Add(MailboxAddress.Parse(pending.From));
                 mimeMessage.Sender = new MailboxAddress(options.Value.SenderName, options.Value.SenderAddress);
-                mimeMessage.To.Add(new MailboxAddress(recipient.GivenName, recipient.EmailAddress));
+                mimeMessage.To.Add(new MailboxAddress(recipient.FullName, recipient.EmailAddress));
                 mimeMessage.Subject = pending.Subject;
                 mimeMessage.Body = body;
 
@@ -284,8 +204,8 @@ public class EmailRelayHostedService : RepeatedExecutionService
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Sending email {Id} to {GivenName} {FamilyName} <{EmailAddress}> failed",
-                        pending.Id, recipient.GivenName, recipient.FamilyName, recipient.EmailAddress);
+                    logger.LogError(ex, "Sending email #{Id} to {FullName} <{EmailAddress}> failed",
+                        pending.Id, recipient.FullName, recipient.EmailAddress);
                     break;
                 }
 
@@ -294,8 +214,8 @@ public class EmailRelayHostedService : RepeatedExecutionService
                 // Don't cancel this operation because messages would sent twice otherwise
                 await database.SaveChangesAsync(CancellationToken.None);
 
-                logger.LogInformation("Delivered email {Id} to {GivenName} {FamilyName} <{EmailAddress}>",
-                    pending.Id, recipient.GivenName, recipient.FamilyName, recipient.EmailAddress);
+                logger.LogInformation("Delivered email #{Id} to {FullName} <{EmailAddress}>",
+                    pending.Id, recipient.FullName, recipient.EmailAddress);
             }
         }
 
