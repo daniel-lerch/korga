@@ -78,25 +78,20 @@ public class EmailRelayHostedService : RepeatedExecutionService
             }
 
             string from = message.Headers[HeaderId.From];
+            string to = message.Headers[HeaderId.To];
             string? receiver = message.Headers.GetReceiver();
 
             Email emailEntity = new(
                 subject: message.Headers[HeaderId.Subject],
                 from: from,
                 sender: message.Headers[HeaderId.Sender],
-                to: message.Headers[HeaderId.To],
+                to: to,
                 receiver: receiver,
                 body: bodyContent);
 
+            // Skip next stage if receiver could not be determined
             if (receiver == null)
-            {
-                // Skip next stage if receiver could not be determined
                 emailEntity.RecipientsFetchTime = DateTime.UtcNow;
-
-                if (MailboxAddress.TryParse(from, out MailboxAddress fromAddress))
-                    // TODO: Mark this as an error message
-                    emailEntity.Recipients = new[] { new EmailRecipient(fromAddress.Address, fromAddress.Name) };
-            }
 
             database.Emails.Add(emailEntity);
 
@@ -105,7 +100,15 @@ public class EmailRelayHostedService : RepeatedExecutionService
             // Don't cancel this operation because messages would sent twice otherwise
             await imap.Inbox.AddFlagsAsync(message.UniqueId, MessageFlags.Seen, silent: true, CancellationToken.None);
 
-            logger.LogInformation("Downloaded and stored message #{Id} from {From} for {Receiver}", emailEntity.Id, message.Headers[HeaderId.From], receiver);
+            if (receiver != null)
+            {
+                logger.LogInformation("Downloaded and stored message #{Id} from {From} for {Receiver}", emailEntity.Id, from, receiver);
+            }
+            else
+            {
+                logger.LogWarning("Could not determine receiver for message #{Id} from {From} to {To}. This message will not be forwarded." +
+                    "Please make sure your email provider specifies the receiver in the Received, Envelope-To, or X-Envelope-To header", emailEntity.Id, from, to);
+            }
         }
 
         await imap.DisconnectAsync(quit: true, stoppingToken);
@@ -114,38 +117,40 @@ public class EmailRelayHostedService : RepeatedExecutionService
     private async ValueTask FetchRecipients(DatabaseContext database, DistributionListService distributionList, CancellationToken stoppingToken)
     {
         List<Email> retrieved =
-            await database.Emails.Where(m => m.RecipientsFetchTime == default).ToListAsync(stoppingToken);
+            await database.Emails.Where(m => m.Receiver != null && m.RecipientsFetchTime == default).ToListAsync(stoppingToken);
 
         foreach (Email email in retrieved)
         {
-            int recipientsCount = 0;
+            int atIdx = email.Receiver!.IndexOf('@');
+            string emailAlias = email.Receiver!.Remove(atIdx);
 
-            if (email.Receiver != null)
+            Group? group = await distributionList.GetGroupForAlias(emailAlias, stoppingToken);
+
+            if (group != null)
             {
-                int atIdx = email.Receiver!.IndexOf('@');
-                string emailAlias = email.Receiver!.Remove(atIdx);
+                EmailRecipient[] recipients = await distributionList.GetRecipientsForGroup(group, email.Id, stoppingToken);
+                database.EmailRecipients.AddRange(recipients);
+                email.DistributionListType = DistributionListType.CTGroup;
+                email.RecipientsFetchTime = DateTime.UtcNow;
+                await database.SaveChangesAsync(stoppingToken);
 
-                Group? group = await distributionList.GetGroupForAlias(emailAlias, stoppingToken);
-
-                if (group != null)
-                {
-                    EmailRecipient[] recipients = await distributionList.GetRecipientsForGroup(group, email.Id, stoppingToken);
-                    recipientsCount = recipients.Length;
-                    database.EmailRecipients.AddRange(recipients);
-                    email.DistributionListType = DistributionListType.CTGroup;
-                }
-                else // In case of an invalid alias DistributionListType is None. An error email will be sent to the sender at the next stage.
-                {
-                    if (MailboxAddress.TryParse(email.From, out MailboxAddress fromAddress))
-                        // TODO: Mark this as an error message
-                        database.EmailRecipients.Add(new(fromAddress.Address, fromAddress.Name) { EmailId = email.Id });
-                }
+                logger.LogInformation("Fetched {RecipientsCount} recipients for email #{Id} to {Receiver}", recipients.Length, email.Id, email.Receiver);
             }
+            else // In case of an invalid alias DistributionListType is None. An error email will be sent to the sender at the next stage.
+            {
+                if (MailboxAddress.TryParse(email.From, out MailboxAddress fromAddress))
+                {
+                    string errorMessage = $"Hallo {fromAddress.Name},\r\ndeine E-Mail mit dem Betreff {email.Subject} an {email.Receiver} konnte nicht zugestellt werden. " +
+                        "Die E-Mail-Adresse ist ungültig.";
 
-            email.RecipientsFetchTime = DateTime.UtcNow;
-            await database.SaveChangesAsync(stoppingToken);
+                    database.EmailRecipients.Add(new(fromAddress.Address, fromAddress.Name) { EmailId = email.Id, ErrorMessage = errorMessage });
+                }
 
-            logger.LogInformation("Fetched {RecipientsCount} recipients for email #{Id} to {Receiver}", recipientsCount, email.Id, email.Receiver);
+                email.RecipientsFetchTime = DateTime.UtcNow;
+                await database.SaveChangesAsync(stoppingToken);
+
+                logger.LogInformation("No group found with alias {Receiver} for email #{Id} from {From}", email.Receiver, email.Id, email.From);
+            }
         }
     }
 
@@ -167,8 +172,6 @@ public class EmailRelayHostedService : RepeatedExecutionService
 
             if (pending == null) break;
 
-            // TODO: Handle error messages
-
             MimeEntity body;
             using (System.IO.MemoryStream memoryStream = new(pending.Body))
                 body = MimeEntity.Load(memoryStream);
@@ -181,11 +184,21 @@ public class EmailRelayHostedService : RepeatedExecutionService
             foreach (EmailRecipient recipient in recipients)
             {
                 MimeMessage mimeMessage = new();
-                mimeMessage.From.Add(MailboxAddress.Parse(pending.From));
-                mimeMessage.Sender = new MailboxAddress(options.Value.SenderName, options.Value.SenderAddress);
                 mimeMessage.To.Add(new MailboxAddress(recipient.FullName, recipient.EmailAddress));
-                mimeMessage.Subject = pending.Subject;
-                mimeMessage.Body = body;
+
+                if (recipient.ErrorMessage == null)
+                {
+                    mimeMessage.From.Add(MailboxAddress.Parse(pending.From));
+                    mimeMessage.Sender = new MailboxAddress(options.Value.SenderName, options.Value.SenderAddress);
+                    mimeMessage.Subject = pending.Subject;
+                    mimeMessage.Body = body;
+                }
+                else
+                {
+                    mimeMessage.From.Add(new MailboxAddress(options.Value.SenderName, options.Value.SenderName));
+                    mimeMessage.Subject = "Unzustellbar: " + pending.Subject;
+                    mimeMessage.Body = new TextPart(MimeKit.Text.TextFormat.Plain) { Text = recipient.ErrorMessage };
+                }
 
                 try
                 {

@@ -17,5 +17,6 @@ public class EmailRecipient
 
     public string EmailAddress { get; set; }
     public string FullName { get; set; }
+    public string? ErrorMessage { get; set; }
     public DateTime DeliveryTime { get; set; }
 }
