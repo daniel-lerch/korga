@@ -70,15 +70,33 @@ public class LdapCommand
     [Command("delete")]
     public class Delete
     {
+        [Option(Description = "Deletes the main organizational unit which may have members")]
+        public bool OrganizationalUnit { get; set; }
+
         [Argument(0)]
         public string? Uid { get; set; }
 
         private int OnExecute(IOptions<LdapOptions> options, LdapService ldap)
         {
-            if (string.IsNullOrEmpty(Uid)) return 1;
+            if (OrganizationalUnit)
+            {
+                if (Prompt.GetYesNo("Do you really want to delete the main organizational unit?", false))
+                {
+                    ldap.Delete(options.Value.BaseDn);
+                    return 0;
+                }
+                else
+                {
+                    return 1;
+                }
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(Uid)) return 1;
 
-            ldap.Delete($"uid={Uid},{options.Value.BaseDn}");
-            return 0;
+                ldap.Delete($"uid={Uid},{options.Value.BaseDn}");
+                return 0;
+            }
         }
     }
 
