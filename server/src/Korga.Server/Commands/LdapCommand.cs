@@ -4,6 +4,7 @@ using Korga.Server.Services;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
 using System;
+using System.Linq;
 
 #pragma warning disable IDE0051 // Remove unused private members
 
@@ -11,6 +12,7 @@ namespace Korga.Server.Commands;
 
 [Command("ldap")]
 [Subcommand(typeof(Create))]
+[Subcommand(typeof(Edit))]
 [Subcommand(typeof(Delete))]
 [Subcommand(typeof(List))]
 public class LdapCommand
@@ -64,6 +66,41 @@ public class LdapCommand
                 ldap.AddPerson($"uid={uid},{options.Value.BaseDn}", givenName, familyName, mailAddress);
                 return 0;
             }
+        }
+    }
+
+    [Command("edit")]
+    public class Edit
+    {
+        [Argument(0)]
+        public string? Uid { get; set; }
+
+        private int OnExecute(IOptions<LdapOptions> options, LdapService ldap)
+        {
+            if (string.IsNullOrEmpty(Uid)) return 1;
+
+            InetOrgPerson[] people = ldap.GetMembers();
+            InetOrgPerson? person = people.SingleOrDefault(p => p.Uid == Uid);
+
+            if (person == null) return 2;
+
+            Console.Write("Given name [{0}]: ", person.GivenName);
+            string? givenName = Console.ReadLine();
+            if (givenName == null) return 1;
+            if (givenName.Length > 0) person.GivenName = givenName;
+
+            Console.Write("Family name [{0}]: ", person.Sn);
+            string? familyName = Console.ReadLine();
+            if (familyName == null) return 1;
+            if (familyName.Length > 0) person.Sn = familyName;
+
+            Console.Write("Email address [{0}]: ", person.Mail);
+            string? mailAddress = Console.ReadLine();
+            if (mailAddress == null) return 1;
+            if (mailAddress.Length > 0) person.Mail = mailAddress;
+
+            ldap.SavePerson($"uid={Uid},{options.Value.BaseDn}", person);
+            return 0;
         }
     }
 

@@ -4,5 +4,7 @@ public interface IObjectClass<T>
 {
     static abstract string[] Attributes { get; }
     static abstract T Deserialize(AttributeCollection attributes);
-    static abstract void Serialize(AttributeCollection attributes, T entry);
+    void Serialize(AttributeCollection attributes);
+    void SerializeChanges(AttributeModificationCollection modifications);
+    void AcceptNewValues();
 }

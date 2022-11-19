@@ -4,6 +4,9 @@ public class OrganizationalUnit : IObjectClass<OrganizationalUnit>
 {
     private const string objectClass = "organizationalUnit";
 
+    private string? _ou;
+    private string? _description;
+
     public OrganizationalUnit(string ou)
     {
         Ou = ou;
@@ -30,17 +33,31 @@ public class OrganizationalUnit : IObjectClass<OrganizationalUnit>
 
     public static OrganizationalUnit Deserialize(AttributeCollection attributes)
     {
-        return new OrganizationalUnit(attributes.GetRequiredValue("ou"))
+        OrganizationalUnit result = new(attributes.GetRequiredValue("ou"))
         {
             Description = attributes.GetValue("description")
         };
+        ((IObjectClass<OrganizationalUnit>)result).AcceptNewValues();
+        return result;
     }
 
-    public static void Serialize(AttributeCollection attributes, OrganizationalUnit entry)
+    void IObjectClass<OrganizationalUnit>.Serialize(AttributeCollection attributes)
     {
-        attributes.Add("objectClass", entry.ObjectClass);
-        attributes.Add("ou", entry.Ou);
-        attributes.AddIfNotEmpty("description", entry.Description);
+        attributes.Add("objectClass", ObjectClass);
+        attributes.Add("ou", Ou);
+        attributes.AddIfNotEmpty("description", Description);
+    }
+
+    void IObjectClass<OrganizationalUnit>.SerializeChanges(AttributeModificationCollection modifications)
+    {
+        modifications.AddIfChanged("ou", Ou, _ou);
+        modifications.AddIfChanged("description", Description, _description);
+    }
+
+    void IObjectClass<OrganizationalUnit>.AcceptNewValues()
+    {
+        _ou = Ou;
+        _description = Description;
     }
     #endregion
 }

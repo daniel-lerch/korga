@@ -15,9 +15,19 @@ public class LdapMapper : IDisposable
     public void Add<T>(string distinguishedName, T entry) where T : IObjectClass<T>
     {
         AttributeCollection attributes = new();
-        T.Serialize(attributes, entry);
+        entry.Serialize(attributes);
         var request = new AddRequest(distinguishedName, attributes.ToArray());
         var response = (AddResponse)connection.SendRequest(request);
+        entry.AcceptNewValues();
+    }
+
+    public void SaveChanges<T>(string distinguishedName, T entry) where T : IObjectClass<T>
+    {
+        AttributeModificationCollection modifications = new();
+        entry.SerializeChanges(modifications);
+        var request = new ModifyRequest(distinguishedName, modifications.ToArray());
+        var response = (ModifyResponse)connection.SendRequest(request);
+        entry.AcceptNewValues();
     }
 
     public void Delete(string distinguishedName)

@@ -60,6 +60,11 @@ public class LdapService : IDisposable
         mapper.Add(distinguishedName, person);
     }
 
+    public void SavePerson(string distinguishedName, InetOrgPerson person)
+    {
+        mapper.SaveChanges(distinguishedName, person);
+    }
+
     public void Delete(string distinguishedName)
     {
         if (disposed) throw new ObjectDisposedException(nameof(LdapService));
