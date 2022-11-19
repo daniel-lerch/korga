@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using System;
 using System.Collections.Generic;
 
 namespace Korga.Server.Tests;
@@ -43,5 +44,10 @@ public static class TestHost
                 }
             })
             .UseStartup<Startup>());
+    }
+
+    public static string RandomUid()
+    {
+        return "unittest" + Random.Shared.Next(int.MinValue, int.MaxValue).ToString("x2");
     }
 }

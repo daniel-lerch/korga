@@ -4,6 +4,7 @@ using Korga.Server.Ldap.ObjectClasses;
 using Microsoft.Extensions.Options;
 using System;
 using System.DirectoryServices.Protocols;
+using System.Linq;
 using System.Net;
 
 namespace Korga.Server.Services;
@@ -37,6 +38,13 @@ public class LdapService : IDisposable
         return mapper.Search<InetOrgPerson>(options.Value.BaseDn, "(objectClass=inetOrgPerson)", SearchScope.OneLevel);
     }
 
+    public InetOrgPerson? GetMember(string uid)
+    {
+        if (disposed) throw new ObjectDisposedException(nameof(LdapService));
+
+        return mapper.Search<InetOrgPerson>(options.Value.BaseDn, $"(& (objectClass=inetOrgPerson) (uid={uid}))", SearchScope.OneLevel).SingleOrDefault();
+    }
+
     public void AddOrganizationalUnit(string distinguishedName, string name)
     {
         if (disposed) throw new ObjectDisposedException(nameof(LdapService));
@@ -44,7 +52,7 @@ public class LdapService : IDisposable
         mapper.Add(distinguishedName, new OrganizationalUnit(name));
     }
 
-    public void AddPerson(string distinguishedName, string givenName, string familyName, string mailAddress)
+    public void AddPerson(string uid, string givenName, string familyName, string mailAddress)
     {
         if (disposed) throw new ObjectDisposedException(nameof(LdapService));
 
@@ -57,12 +65,12 @@ public class LdapService : IDisposable
             Mail = mailAddress
         };
 
-        mapper.Add(distinguishedName, person);
+        mapper.Add($"uid={uid},{options.Value.BaseDn}", person);
     }
 
-    public void SavePerson(string distinguishedName, InetOrgPerson person)
+    public void SavePerson(string uid, InetOrgPerson person)
     {
-        mapper.SaveChanges(distinguishedName, person);
+        mapper.SaveChanges($"uid={uid},{options.Value.BaseDn}", person);
     }
 
     public void Delete(string distinguishedName)

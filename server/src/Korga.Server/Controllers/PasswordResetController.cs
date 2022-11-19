@@ -32,7 +32,7 @@ public class PasswordResetController : ControllerBase
         PasswordReset? passwordReset = await database.PasswordResets.SingleOrDefaultAsync(r => r.Token == request.Token);
         if (passwordReset == null) return StatusCode(StatusCodes.Status410Gone);
 
-        if (passwordReset.Expiry >= DateTime.UtcNow)
+        if (passwordReset.Expiry < DateTime.UtcNow)
         {
             database.PasswordResets.Remove(passwordReset);
             await database.SaveChangesAsync();
@@ -40,9 +40,17 @@ public class PasswordResetController : ControllerBase
             return StatusCode(StatusCodes.Status410Gone);
         }
 
-        InetOrgPerson[] people = ldap.GetMembers();
-        logger.LogInformation("{People}", people);
+        InetOrgPerson? person = ldap.GetMember(passwordReset.Uid);
+        if (person == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
-        return StatusCode(StatusCodes.Status410Gone);
+        person.UserPassword = request.PasswordHash;
+        ldap.SavePerson(passwordReset.Uid, person);
+
+        database.PasswordResets.Remove(passwordReset);
+        await database.SaveChangesAsync();
+
+        logger.LogInformation("Successfully changed LDAP password for {Uid}", passwordReset.Uid);
+
+        return StatusCode(StatusCodes.Status204NoContent);
     }
 }

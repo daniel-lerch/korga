@@ -1,10 +1,12 @@
 ﻿using Korga.Server.Configuration;
+using Korga.Server.Database;
+using Korga.Server.Database.Entities;
 using Korga.Server.Ldap.ObjectClasses;
 using Korga.Server.Services;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
 using System;
-using System.Linq;
+using System.Threading.Tasks;
 
 #pragma warning disable IDE0051 // Remove unused private members
 
@@ -29,7 +31,7 @@ public class LdapCommand
         [Option(Description = "Creates an organizational unit which can have members")]
         public bool OrganizationalUnit { get; set; }
 
-        private int OnExecute(IOptions<LdapOptions> options, LdapService ldap)
+        private async Task<int> OnExecute(IOptions<LdapOptions> options, LdapService ldap, DatabaseContext database)
         {
             if (OrganizationalUnit)
             {
@@ -63,7 +65,17 @@ public class LdapCommand
 
                 string uid = normalizedGivenName[0..3] + normalizedFamilyName[0..4];
 
-                ldap.AddPerson($"uid={uid},{options.Value.BaseDn}", givenName, familyName, mailAddress);
+                ldap.AddPerson(uid, givenName, familyName, mailAddress);
+
+                PasswordReset passwordReset = new(uid)
+                {
+                    Token = Guid.NewGuid(),
+                    Expiry = DateTime.UtcNow.AddDays(1)
+                };
+                database.PasswordResets.Add(passwordReset);
+                await database.SaveChangesAsync();
+
+                Console.WriteLine("Password reset token: {0}", passwordReset.Token);
                 return 0;
             }
         }
@@ -79,8 +91,7 @@ public class LdapCommand
         {
             if (string.IsNullOrEmpty(Uid)) return 1;
 
-            InetOrgPerson[] people = ldap.GetMembers();
-            InetOrgPerson? person = people.SingleOrDefault(p => p.Uid == Uid);
+            InetOrgPerson? person = ldap.GetMember(Uid);
 
             if (person == null) return 2;
 
@@ -99,7 +110,7 @@ public class LdapCommand
             if (mailAddress == null) return 1;
             if (mailAddress.Length > 0) person.Mail = mailAddress;
 
-            ldap.SavePerson($"uid={Uid},{options.Value.BaseDn}", person);
+            ldap.SavePerson(Uid, person);
             return 0;
         }
     }
@@ -150,6 +161,7 @@ public class LdapCommand
                 Console.WriteLine("\tsn: {0}", person.Sn);
                 Console.WriteLine("\tdisplayName: {0}", person.DisplayName);
                 Console.WriteLine("\tmail: {0}", person.Mail);
+                Console.WriteLine("\tuserPassword: {0}", person.UserPassword);
             }
         }
     }

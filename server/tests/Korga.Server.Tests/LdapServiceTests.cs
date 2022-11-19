@@ -19,19 +19,22 @@ public class LdapServiceTests
     }
 
     [Fact]
-    public void TestAddMember()
+    public void TestAddAndDeleteMember()
     {
         var options = serviceProvider.GetRequiredService<IOptions<LdapOptions>>();
         var ldapService = serviceProvider.GetRequiredService<LdapService>();
-        InetOrgPerson[] members = ldapService.GetMembers();
-        try
-        {
-            ldapService.AddPerson($"uid=maxmust,{options.Value.BaseDn}", "Max", "Mustermann", "max.mustermann@example.org");
-            Assert.Equal(members.Length + 1, ldapService.GetMembers().Length);
-        }
-        catch (DirectoryOperationException ex) when (ex.Response.ResultCode == ResultCode.EntryAlreadyExists)
-        {
-            Assert.True(members.Length > 0);
-        }
+
+        string uid = TestHost.RandomUid();
+
+        ldapService.AddPerson(uid, "Max", "Mustermann", "max.mustermann@example.org");
+        InetOrgPerson? queried = ldapService.GetMember(uid);
+        Assert.NotNull(queried);
+        Assert.Equal("Max", queried.GivenName);
+        Assert.Equal("Mustermann", queried.Sn);
+        Assert.Equal("max.mustermann@example.org", queried.Mail);
+
+        ldapService.Delete($"uid={uid},{options.Value.BaseDn}");
+        queried = ldapService.GetMember(uid);
+        Assert.Null(queried);
     }
 }
