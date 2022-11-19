@@ -8,6 +8,7 @@ public sealed class DatabaseContext : DbContext
     public DbSet<Event> Events => Set<Event>();
     public DbSet<EventProgram> EventPrograms => Set<EventProgram>();
     public DbSet<EventParticipant> EventParticipants => Set<EventParticipant>();
+    public DbSet<PasswordReset> PasswordResets => Set<PasswordReset>();
 
     public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
 
@@ -25,5 +26,8 @@ public sealed class DatabaseContext : DbContext
         var participant = modelBuilder.Entity<EventParticipant>();
         participant.HasKey(p => p.Id);
         participant.HasOne(p => p.Program).WithMany(p => p.Participants).HasForeignKey(p => p.ProgramId);
+
+        var passwordReset = modelBuilder.Entity<PasswordReset>();
+        passwordReset.HasKey(r => r.Token);
     }
 }
