@@ -1,6 +1,6 @@
 ﻿namespace Korga.Server.Ldap.ObjectClasses;
 
-public class InetOrgPerson
+public class InetOrgPerson : IObjectClass<InetOrgPerson>
 {
     private const string objectClass = "inetOrgPerson";
 
@@ -45,4 +45,47 @@ public class InetOrgPerson
     /// Gets or sets the password hash for connected applications.
     /// </summary>
     public string? UserPassword { get; set; }
+
+
+
+    #region Serialization
+    public static string[] Attributes => new[]
+    {
+        "cn",
+        "objectClass",
+        "sn",
+        "displayName",
+        "employeeNumber",
+        "givenName",
+        "mail",
+        "uid",
+        "userPassword"
+    };
+
+    public static InetOrgPerson Deserialize(AttributeCollection attributes)
+    {
+        return new InetOrgPerson(attributes.GetRequiredValue("cn"), attributes.GetRequiredValue("sn"))
+        {
+            DisplayName = attributes.GetValue("displayName"),
+            EmployeeNumber = attributes.GetValue("employeeNumber"),
+            GivenName = attributes.GetValue("givenName"),
+            Mail = attributes.GetValue("mail"),
+            Uid = attributes.GetValue("uid"),
+            UserPassword = attributes.GetValue("userPassword")
+        };
+    }
+
+    public static void Serialize(AttributeCollection attributes, InetOrgPerson entry)
+    {
+        attributes.Add("cn", entry.Cn);
+        attributes.Add("objectClass", entry.ObjectClass);
+        attributes.Add("sn", entry.Sn);
+        attributes.AddIfNotEmpty("displayName", entry.DisplayName);
+        attributes.AddIfNotEmpty("employeeNumber", entry.EmployeeNumber);
+        attributes.AddIfNotEmpty("givenName", entry.GivenName);
+        attributes.AddIfNotEmpty("mail", entry.Mail);
+        attributes.AddIfNotEmpty("uid", entry.Uid);
+        attributes.AddIfNotEmpty("userPassword", entry.UserPassword);
+    }
+    #endregion
 }

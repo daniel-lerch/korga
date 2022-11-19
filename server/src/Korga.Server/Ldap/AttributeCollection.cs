@@ -3,9 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.DirectoryServices.Protocols;
 
-namespace Korga.Server.Ldap.Internal;
+namespace Korga.Server.Ldap;
 
-internal class AttributeCollection
+public class AttributeCollection
 {
     private readonly Dictionary<string, DirectoryAttribute> attributes;
 

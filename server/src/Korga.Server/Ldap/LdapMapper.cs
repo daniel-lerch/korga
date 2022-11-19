@@ -1,5 +1,4 @@
-﻿using Korga.Server.Ldap.Internal;
-using System;
+﻿using System;
 using System.DirectoryServices.Protocols;
 
 namespace Korga.Server.Ldap;
@@ -13,11 +12,10 @@ public class LdapMapper : IDisposable
         this.connection = connection;
     }
 
-    public void Add<T>(string distinguishedName, T entry) where T : notnull
+    public void Add<T>(string distinguishedName, T entry) where T : IObjectClass<T>
     {
-        ILdapSerializer<T> serializer = CreateSerializer<T>();
-        var attributes = new AttributeCollection();
-        serializer.Serialize(attributes, entry);
+        AttributeCollection attributes = new();
+        T.Serialize(attributes, entry);
         var request = new AddRequest(distinguishedName, attributes.ToArray());
         var response = (AddResponse)connection.SendRequest(request);
     }
@@ -28,10 +26,9 @@ public class LdapMapper : IDisposable
         var response = (DeleteResponse)connection.SendRequest(request);
     }
 
-    public T[] Search<T>(string distinguishedName, string ldapFilter, SearchScope searchScope)
+    public T[] Search<T>(string distinguishedName, string ldapFilter, SearchScope searchScope) where T : IObjectClass<T>
     {
-        ILdapSerializer<T> serializer = CreateSerializer<T>();
-        var request = new SearchRequest(distinguishedName, ldapFilter, searchScope, serializer.Attributes);
+        var request = new SearchRequest(distinguishedName, ldapFilter, searchScope, T.Attributes);
         var response = (SearchResponse)connection.SendRequest(request);
 
         var result = new T[response.Entries.Count];
@@ -39,21 +36,10 @@ public class LdapMapper : IDisposable
         for (int i = 0; i < response.Entries.Count; i++)
         {
             var attributes = new AttributeCollection(response.Entries[i].Attributes);
-            result[i] = serializer.Deserialize(attributes);
+            result[i] = T.Deserialize(attributes);
         }
 
         return result;
-    }
-
-    private ILdapSerializer<T> CreateSerializer<T>()
-    {
-        const string @namespace = nameof(Korga) + "." + nameof(Server) + "." + nameof(Ldap) + "." + nameof(Internal);
-
-        Type serializerType = Type.GetType($"{@namespace}.{typeof(T).Name}Serializer")
-            ?? throw new NotSupportedException($"Object class {typeof(T).FullName} is not supported");
-
-        return (ILdapSerializer<T>)(Activator.CreateInstance(serializerType)
-            ?? throw new NotSupportedException($"The serializer for {typeof(T).FullName} is missing a parameterless constructor"));
     }
 
     public void Dispose()
