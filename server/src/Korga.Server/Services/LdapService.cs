@@ -6,75 +6,74 @@ using System;
 using System.DirectoryServices.Protocols;
 using System.Net;
 
-namespace Korga.Server.Services
+namespace Korga.Server.Services;
+
+public class LdapService : IDisposable
 {
-    public class LdapService : IDisposable
+    private readonly IOptions<LdapOptions> options;
+    private readonly LdapConnection connection;
+    private readonly LdapMapper mapper;
+    private bool disposed;
+
+    // LdapConnection provides only one APM async method which interally uses polling.
+    // In most cases the synchornous methods will be faster and more efficient.
+
+    public LdapService(IOptions<LdapOptions> options)
     {
-        private readonly IOptions<LdapOptions> options;
-        private readonly LdapConnection connection;
-        private readonly LdapMapper mapper;
-        private bool disposed;
+        this.options = options;
 
-        // LdapConnection provides only one APM async method which interally uses polling.
-        // In most cases the synchornous methods will be faster and more efficient.
+        connection = new LdapConnection(options.Value.Host);
+        connection.AuthType = AuthType.Basic;
+        connection.SessionOptions.ProtocolVersion = 3;
+        connection.Bind(new NetworkCredential(options.Value.BindDn, options.Value.BindPassword));
 
-        public LdapService(IOptions<LdapOptions> options)
+        mapper = new LdapMapper(connection);
+    }
+
+    public InetOrgPerson[] GetMembers()
+    {
+        if (disposed) throw new ObjectDisposedException(nameof(LdapService));
+
+        return mapper.Search<InetOrgPerson>(options.Value.BaseDn, "(objectClass=inetOrgPerson)", SearchScope.OneLevel);
+    }
+
+    public void AddOrganizationalUnit(string distinguishedName, string name)
+    {
+        if (disposed) throw new ObjectDisposedException(nameof(LdapService));
+
+        mapper.Add(distinguishedName, new OrganizationalUnit(name));
+    }
+
+    public void AddPerson(string distinguishedName, string givenName, string familyName, string mailAddress)
+    {
+        if (disposed) throw new ObjectDisposedException(nameof(LdapService));
+
+        string name = $"{givenName} {familyName}";
+
+        var person = new InetOrgPerson(cn: name, familyName)
         {
-            this.options = options;
+            GivenName = givenName,
+            DisplayName = name,
+            Mail = mailAddress
+        };
 
-            connection = new LdapConnection(options.Value.Host);
-            connection.AuthType = AuthType.Basic;
-            connection.SessionOptions.ProtocolVersion = 3;
-            connection.Bind(new NetworkCredential(options.Value.BindDn, options.Value.BindPassword));
+        mapper.Add(distinguishedName, person);
+    }
 
-            mapper = new LdapMapper(connection);
+    public void Delete(string distinguishedName)
+    {
+        if (disposed) throw new ObjectDisposedException(nameof(LdapService));
+
+        mapper.Delete(distinguishedName);
+    }
+
+    public void Dispose()
+    {
+        if (!disposed)
+        {
+            connection.Dispose();
         }
 
-        public InetOrgPerson[] GetMembers()
-        {
-            if (disposed) throw new ObjectDisposedException(nameof(LdapService));
-
-            return mapper.Search<InetOrgPerson>(options.Value.BaseDn, "(objectClass=inetOrgPerson)", SearchScope.OneLevel);
-        }
-
-        public void AddOrganizationalUnit(string distinguishedName, string name)
-        {
-            if (disposed) throw new ObjectDisposedException(nameof(LdapService));
-
-            mapper.Add(distinguishedName, new OrganizationalUnit(name));
-        }
-
-        public void AddPerson(string distinguishedName, string givenName, string familyName, string mailAddress)
-        {
-            if (disposed) throw new ObjectDisposedException(nameof(LdapService));
-
-            string name = $"{givenName} {familyName}";
-
-            var person = new InetOrgPerson(cn: name, familyName)
-            {
-                GivenName = givenName,
-                DisplayName = name,
-                Mail = mailAddress
-            };
-
-            mapper.Add(distinguishedName, person);
-        }
-
-        public void Delete(string distinguishedName)
-        {
-            if (disposed) throw new ObjectDisposedException(nameof(LdapService));
-
-            mapper.Delete(distinguishedName);
-        }
-
-        public void Dispose()
-        {
-            if (!disposed)
-            {
-                connection.Dispose();
-            }
-
-            disposed = true;
-        }
+        disposed = true;
     }
 }
