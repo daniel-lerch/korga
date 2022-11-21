@@ -6,6 +6,7 @@ using Korga.Server.Services;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
 using System;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 #pragma warning disable IDE0051 // Remove unused private members
@@ -15,6 +16,7 @@ namespace Korga.Server.Commands;
 [Command("ldap")]
 [Subcommand(typeof(Create))]
 [Subcommand(typeof(Edit))]
+[Subcommand(typeof(Passwd))]
 [Subcommand(typeof(Delete))]
 [Subcommand(typeof(List))]
 public class LdapCommand
@@ -87,12 +89,11 @@ public class LdapCommand
         [Argument(0)]
         public string? Uid { get; set; }
 
-        private int OnExecute(IOptions<LdapOptions> options, LdapService ldap)
+        private int OnExecute(LdapService ldap)
         {
             if (string.IsNullOrEmpty(Uid)) return 1;
 
             InetOrgPerson? person = ldap.GetMember(Uid);
-
             if (person == null) return 2;
 
             Console.Write("Given name [{0}]: ", person.GivenName);
@@ -111,6 +112,32 @@ public class LdapCommand
             if (mailAddress.Length > 0) person.Mail = mailAddress;
 
             ldap.SavePerson(Uid, person);
+            return 0;
+        }
+    }
+
+    [Command("passwd")]
+    public class Passwd
+    {
+        [Argument(0)]
+        public string? Uid { get; set; }
+
+        private async Task<int> OnExecuteAsync(LdapService ldap, DatabaseContext database)
+        {
+            if (string.IsNullOrEmpty(Uid)) return 1;
+
+            InetOrgPerson? person = ldap.GetMember(Uid);
+            if (person == null) return 2;
+
+            PasswordReset passwordReset = new(Uid)
+            {
+                Token = Guid.NewGuid(),
+                Expiry = DateTime.UtcNow.AddDays(1)
+            };
+            database.PasswordResets.Add(passwordReset);
+            await database.SaveChangesAsync();
+
+            Console.WriteLine("Password reset token: {0}", passwordReset.Token);
             return 0;
         }
     }
@@ -142,7 +169,7 @@ public class LdapCommand
             {
                 if (string.IsNullOrEmpty(Uid)) return 1;
 
-                ldap.Delete($"uid={Uid},{options.Value.BaseDn}");
+                ldap.DeletePerson(Uid);
                 return 0;
             }
         }

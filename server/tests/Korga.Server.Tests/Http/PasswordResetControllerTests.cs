@@ -50,9 +50,12 @@ namespace Korga.Server.Tests.Http
 
         public void Dispose()
         {
+            ldap.DeletePerson(testReset_Expired.Uid);
             PasswordReset? expired = database.PasswordResets.SingleOrDefault(r => r.Token == testReset_Expired.Token);
             if (expired != null)
                 database.PasswordResets.Remove(expired);
+
+            ldap.DeletePerson(testReset_Valid.Uid);
             PasswordReset? valid = database.PasswordResets.SingleOrDefault(r => r.Token == testReset_Valid.Token);
             if (valid != null)
                 database.PasswordResets.Remove(valid);

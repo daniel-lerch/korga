@@ -33,7 +33,7 @@ public class LdapServiceTests
         Assert.Equal("Mustermann", queried.Sn);
         Assert.Equal("max.mustermann@example.org", queried.Mail);
 
-        ldapService.Delete($"uid={uid},{options.Value.BaseDn}");
+        ldapService.DeletePerson(uid);
         queried = ldapService.GetMember(uid);
         Assert.Null(queried);
     }

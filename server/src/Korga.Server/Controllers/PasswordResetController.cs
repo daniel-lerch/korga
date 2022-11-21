@@ -27,6 +27,9 @@ public class PasswordResetController : ControllerBase
     }
 
     [HttpPost("~/api/password/reset")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status410Gone)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ResetPassword([FromBody] PasswordResetRequest request)
     {
         PasswordReset? passwordReset = await database.PasswordResets.SingleOrDefaultAsync(r => r.Token == request.Token);

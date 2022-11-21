@@ -70,7 +70,16 @@ public class LdapService : IDisposable
 
     public void SavePerson(string uid, InetOrgPerson person)
     {
+        if (disposed) throw new ObjectDisposedException(nameof(LdapService));
+
         mapper.SaveChanges($"uid={uid},{options.Value.BaseDn}", person);
+    }
+
+    public void DeletePerson(string uid)
+    {
+        if (disposed) throw new ObjectDisposedException(nameof(LdapService));
+
+        mapper.Delete($"uid={uid},{options.Value.BaseDn}");
     }
 
     public void Delete(string distinguishedName)
