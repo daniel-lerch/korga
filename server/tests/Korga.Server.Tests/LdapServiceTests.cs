@@ -4,7 +4,6 @@ using Korga.Server.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
-using System.DirectoryServices.Protocols;
 using Xunit;
 
 namespace Korga.Server.Tests;

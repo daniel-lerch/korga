@@ -16,128 +16,167 @@ using Korga.Server.Ldap.ObjectClasses;
 
 namespace Korga.Server.Tests.Http;
 
-public class PasswordResetControllerTests : IDisposable
+public class PasswordResetControllerTests
 {
-    private readonly TestServer server;
-    private readonly HttpClient client;
-    private readonly IServiceScope serviceScope;
-    private readonly DatabaseContext database;
-    private readonly LdapService ldap;
-
-    private readonly PasswordReset testReset_Expired;
-    private readonly PasswordReset testReset_Valid;
-
-    public PasswordResetControllerTests()
+    public class Fixture : IDisposable
     {
-        server = TestHost.CreateTestServer();
-        client = server.CreateClient();
-        serviceScope = server.Services.CreateScope();
-        database = serviceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
-        ldap = serviceScope.ServiceProvider.GetRequiredService<LdapService>();
+        public Fixture()
+        {
+            Server = TestHost.CreateTestServer();
+            Client = Server.CreateClient();
+            ServiceScope = Server.Services.CreateScope();
+            Database = ServiceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
+            Ldap = ServiceScope.ServiceProvider.GetRequiredService<LdapService>();
+        }
 
-        string uid_Expired = TestHost.RandomUid();
-        ldap.AddPerson(uid_Expired, "Max", "Mustermann", "max.mustermann@example.org");
-        testReset_Expired = new PasswordReset(uid_Expired) { Token = Guid.NewGuid(), Expiry = DateTime.UtcNow.AddSeconds(-1) };
-        database.PasswordResets.Add(testReset_Expired);
+        public TestServer Server { get; }
+        public HttpClient Client { get; }
+        public IServiceScope ServiceScope { get; }
+        public DatabaseContext Database { get; }
+        public LdapService Ldap { get; }
 
-        string uid_Valid = TestHost.RandomUid();
-        ldap.AddPerson(uid_Valid, "Max", "Mustermann", "max.mustermann@example.org");
-        testReset_Valid = new PasswordReset(uid_Valid) { Token = Guid.NewGuid(), Expiry = DateTime.UtcNow.AddDays(1) };
-        database.PasswordResets.Add(testReset_Valid);
-
-        database.SaveChanges();
+        public void Dispose()
+        {
+            ServiceScope.Dispose();
+            Client.Dispose();
+            Server.Dispose();
+        }
     }
 
-    public void Dispose()
+    public class InvalidToken : IClassFixture<Fixture>
     {
-        ldap.DeletePerson(testReset_Expired.Uid);
-        PasswordReset? expired = database.PasswordResets.SingleOrDefault(r => r.Token == testReset_Expired.Token);
-        if (expired != null)
-            database.PasswordResets.Remove(expired);
+        private readonly Fixture fixture;
 
-        ldap.DeletePerson(testReset_Valid.Uid);
-        PasswordReset? valid = database.PasswordResets.SingleOrDefault(r => r.Token == testReset_Valid.Token);
-        if (valid != null)
-            database.PasswordResets.Remove(valid);
+        public InvalidToken(Fixture fixture)
+        {
+            this.fixture = fixture;
+        }
 
-        database.SaveChanges();
-        serviceScope.Dispose();
-        server.Dispose();
-        client.Dispose();
+        [Fact]
+        public async Task TestPasswordResetInfo()
+        {
+            HttpResponseMessage response = await fixture.Client.GetAsync($"/api/password/reset?token={Guid.NewGuid()}");
+
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task TestResetPassword()
+        {
+            HttpResponseMessage response =
+                await fixture.Client.PostAsJsonAsync("/api/password/reset", new PasswordResetRequest(Guid.NewGuid(), "{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P"));
+
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
     }
 
-    [Fact]
-    public async Task TestPasswordResetInfo_InvalidToken()
+    public class ExpiredToken : IClassFixture<Fixture>, IDisposable
     {
-        HttpResponseMessage response = await client.GetAsync($"/api/password/reset?token={Guid.NewGuid()}");
+        private readonly Fixture fixture;
+        private readonly PasswordReset passwordReset;
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        public ExpiredToken(Fixture fixture)
+        {
+            this.fixture = fixture;
+
+            string uid = TestHost.RandomUid();
+            fixture.Ldap.AddPerson(uid, "Max", "Mustermann", "max.mustermann@example.org");
+            passwordReset = new PasswordReset(uid) { Token = Guid.NewGuid(), Expiry = DateTime.UtcNow.AddSeconds(-1) };
+            fixture.Database.PasswordResets.Add(passwordReset);
+            fixture.Database.SaveChanges();
+        }
+
+        public void Dispose()
+        {
+            fixture.Ldap.DeletePerson(passwordReset.Uid);
+            PasswordReset? expired = fixture.Database.PasswordResets.SingleOrDefault(r => r.Token == passwordReset.Token);
+            if (expired != null)
+                fixture.Database.PasswordResets.Remove(expired);
+            fixture.Database.SaveChanges();
+        }
+
+        [Fact]
+        public async Task TestPasswordResetInfo()
+        {
+            HttpResponseMessage response = await fixture.Client.GetAsync($"/api/password/reset?token={passwordReset.Token}");
+
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+            InetOrgPerson? person = fixture.Ldap.GetMember(passwordReset.Uid);
+            Assert.NotNull(person);
+            Assert.Null(person.UserPassword);
+        }
+
+        [Fact]
+        public async Task TestResetPassword()
+        {
+            HttpResponseMessage response =
+                await fixture.Client.PostAsJsonAsync("/api/password/reset", new PasswordResetRequest(passwordReset.Token, "{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P"));
+
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+            InetOrgPerson? person = fixture.Ldap.GetMember(passwordReset.Uid);
+            Assert.NotNull(person);
+            Assert.Null(person.UserPassword);
+        }
     }
 
-    [Fact]
-    public async Task TestPasswordResetInfo_Expired()
+    public class ValidToken : IClassFixture<Fixture>, IDisposable
     {
-        HttpResponseMessage response = await client.GetAsync($"/api/password/reset?token={testReset_Expired.Token}");
+        private readonly Fixture fixture;
+        private readonly PasswordReset passwordReset;
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        public ValidToken(Fixture fixture)
+        {
+            this.fixture = fixture;
 
-        InetOrgPerson? person = ldap.GetMember(testReset_Expired.Uid);
-        Assert.NotNull(person);
-        Assert.Null(person.UserPassword);
-    }
+            string uid = TestHost.RandomUid();
+            fixture.Ldap.AddPerson(uid, "Max", "Mustermann", "max.mustermann@example.org");
+            passwordReset = new PasswordReset(uid) { Token = Guid.NewGuid(), Expiry = DateTime.UtcNow.AddDays(1) };
+            fixture.Database.PasswordResets.Add(passwordReset);
+            fixture.Database.SaveChanges();
+        }
 
-    [Fact]
-    public async Task TestPasswordResetInfo_Valid()
-    {
-        HttpResponseMessage response = await client.GetAsync($"/api/password/reset?token={testReset_Valid.Token}");
+        public void Dispose()
+        {
+            fixture.Ldap.DeletePerson(passwordReset.Uid);
+            PasswordReset? valid = fixture.Database.PasswordResets.SingleOrDefault(r => r.Token == passwordReset.Token);
+            if (valid != null)
+                fixture.Database.PasswordResets.Remove(valid);
+            fixture.Database.SaveChanges();
+        }
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        [Fact]
+        public async Task TestPasswordResetInfo()
+        {
+            HttpResponseMessage response = await fixture.Client.GetAsync($"/api/password/reset?token={passwordReset.Token}");
 
-        InetOrgPerson? person = ldap.GetMember(testReset_Valid.Uid);
-        Assert.NotNull(person);
-        Assert.Null(person.UserPassword);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        PasswordResetInfo? body = await response.Content.ReadFromJsonAsync<PasswordResetInfo>();
-        Assert.NotNull(body);
-        Assert.Equal(person.Uid, body.Uid);
-        Assert.Equal(person.GivenName, body.GivenName);
-        Assert.Equal(person.Sn, body.FamilyName);
-    }
+            InetOrgPerson? person = fixture.Ldap.GetMember(passwordReset.Uid);
+            Assert.NotNull(person);
+            Assert.Null(person.UserPassword);
 
-    [Fact]
-    public async Task TestResetPassword_InvalidToken()
-    {
-        HttpResponseMessage response =
-            await client.PostAsJsonAsync("/api/password/reset", new PasswordResetRequest(Guid.NewGuid(), "{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P"));
+            PasswordResetInfo? body = await response.Content.ReadFromJsonAsync<PasswordResetInfo>();
+            Assert.NotNull(body);
+            Assert.Equal(person.Uid, body.Uid);
+            Assert.Equal(person.GivenName, body.GivenName);
+            Assert.Equal(person.Sn, body.FamilyName);
+        }
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-    }
+        [Fact]
+        public async Task TestResetPassword()
+        {
+            HttpResponseMessage response =
+                await fixture.Client.PostAsJsonAsync("/api/password/reset", new PasswordResetRequest(passwordReset.Token, "{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P"));
 
-    [Fact]
-    public async Task TestResetPassword_Expired()
-    {
-        HttpResponseMessage response =
-            await client.PostAsJsonAsync("/api/password/reset", new PasswordResetRequest(testReset_Expired.Token, "{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P"));
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+            InetOrgPerson? person = fixture.Ldap.GetMember(passwordReset.Uid);
+            Assert.NotNull(person);
+            Assert.Equal("{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P", person.UserPassword);
 
-        InetOrgPerson? person = ldap.GetMember(testReset_Expired.Uid);
-        Assert.NotNull(person);
-        Assert.Null(person.UserPassword);
-    }
-
-    [Fact]
-    public async Task TestResetPassword_Valid()
-    {
-        HttpResponseMessage response =
-            await client.PostAsJsonAsync("/api/password/reset", new PasswordResetRequest(testReset_Valid.Token, "{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P"));
-
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
-
-        InetOrgPerson? person = ldap.GetMember(testReset_Valid.Uid);
-        Assert.NotNull(person);
-        Assert.Equal("{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P", person.UserPassword);
-
-        Assert.False(await database.PasswordResets.AnyAsync(r => r.Token == testReset_Valid.Token));
+            Assert.False(await fixture.Database.PasswordResets.AnyAsync(r => r.Token == passwordReset.Token));
+        }
     }
 }
