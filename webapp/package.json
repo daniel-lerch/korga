@@ -37,6 +37,11 @@
     "sass-loader": "13.x",
     "typescript": "4.x"
   },
+  "babel": {
+    "presets": [
+      "@vue/cli-plugin-babel/preset"
+    ]
+  },
   "browserslist": [
     "> 1%",
     "last 2 versions",
