@@ -1,4 +1,4 @@
-FROM node:16 AS webapp
+FROM node:18 AS webapp
 WORKDIR /app
 
 # Copy package definition and restore node modules as distinct layers
