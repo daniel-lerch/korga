@@ -14,95 +14,130 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using Korga.Server.Ldap.ObjectClasses;
 
-namespace Korga.Server.Tests.Http
+namespace Korga.Server.Tests.Http;
+
+public class PasswordResetControllerTests : IDisposable
 {
-    public class PasswordResetControllerTests : IDisposable
+    private readonly TestServer server;
+    private readonly HttpClient client;
+    private readonly IServiceScope serviceScope;
+    private readonly DatabaseContext database;
+    private readonly LdapService ldap;
+
+    private readonly PasswordReset testReset_Expired;
+    private readonly PasswordReset testReset_Valid;
+
+    public PasswordResetControllerTests()
     {
-        private readonly TestServer server;
-        private readonly HttpClient client;
-        private readonly IServiceScope serviceScope;
-        private readonly DatabaseContext database;
-        private readonly LdapService ldap;
+        server = TestHost.CreateTestServer();
+        client = server.CreateClient();
+        serviceScope = server.Services.CreateScope();
+        database = serviceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
+        ldap = serviceScope.ServiceProvider.GetRequiredService<LdapService>();
 
-        private readonly PasswordReset testReset_Expired;
-        private readonly PasswordReset testReset_Valid;
+        string uid_Expired = TestHost.RandomUid();
+        ldap.AddPerson(uid_Expired, "Max", "Mustermann", "max.mustermann@example.org");
+        testReset_Expired = new PasswordReset(uid_Expired) { Token = Guid.NewGuid(), Expiry = DateTime.UtcNow.AddSeconds(-1) };
+        database.PasswordResets.Add(testReset_Expired);
 
-        public PasswordResetControllerTests()
-        {
-            server = TestHost.CreateTestServer();
-            client = server.CreateClient();
-            serviceScope = server.Services.CreateScope();
-            database = serviceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
-            ldap = serviceScope.ServiceProvider.GetRequiredService<LdapService>();
+        string uid_Valid = TestHost.RandomUid();
+        ldap.AddPerson(uid_Valid, "Max", "Mustermann", "max.mustermann@example.org");
+        testReset_Valid = new PasswordReset(uid_Valid) { Token = Guid.NewGuid(), Expiry = DateTime.UtcNow.AddDays(1) };
+        database.PasswordResets.Add(testReset_Valid);
 
-            string uid_Expired = TestHost.RandomUid();
-            ldap.AddPerson(uid_Expired, "Max", "Mustermann", "max.mustermann@example.org");
-            testReset_Expired = new PasswordReset(uid_Expired) { Token = Guid.NewGuid(), Expiry = DateTime.UtcNow.AddSeconds(-1) };
-            database.PasswordResets.Add(testReset_Expired);
+        database.SaveChanges();
+    }
 
-            string uid_Valid = TestHost.RandomUid();
-            ldap.AddPerson(uid_Valid, "Max", "Mustermann", "max.mustermann@example.org");
-            testReset_Valid = new PasswordReset(uid_Valid) { Token = Guid.NewGuid(), Expiry = DateTime.UtcNow.AddDays(1) };
-            database.PasswordResets.Add(testReset_Valid);
+    public void Dispose()
+    {
+        ldap.DeletePerson(testReset_Expired.Uid);
+        PasswordReset? expired = database.PasswordResets.SingleOrDefault(r => r.Token == testReset_Expired.Token);
+        if (expired != null)
+            database.PasswordResets.Remove(expired);
 
-            database.SaveChanges();
-        }
+        ldap.DeletePerson(testReset_Valid.Uid);
+        PasswordReset? valid = database.PasswordResets.SingleOrDefault(r => r.Token == testReset_Valid.Token);
+        if (valid != null)
+            database.PasswordResets.Remove(valid);
 
-        public void Dispose()
-        {
-            ldap.DeletePerson(testReset_Expired.Uid);
-            PasswordReset? expired = database.PasswordResets.SingleOrDefault(r => r.Token == testReset_Expired.Token);
-            if (expired != null)
-                database.PasswordResets.Remove(expired);
+        database.SaveChanges();
+        serviceScope.Dispose();
+        server.Dispose();
+        client.Dispose();
+    }
 
-            ldap.DeletePerson(testReset_Valid.Uid);
-            PasswordReset? valid = database.PasswordResets.SingleOrDefault(r => r.Token == testReset_Valid.Token);
-            if (valid != null)
-                database.PasswordResets.Remove(valid);
+    [Fact]
+    public async Task TestPasswordResetInfo_InvalidToken()
+    {
+        HttpResponseMessage response = await client.GetAsync($"/api/password/reset?token={Guid.NewGuid()}");
 
-            database.SaveChanges();
-            serviceScope.Dispose();
-            server.Dispose();
-            client.Dispose();
-        }
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 
-        [Fact]
-        public async Task TestResetPassword_InvalidToken()
-        {
-            HttpResponseMessage response =
-                await client.PostAsJsonAsync("/api/password/reset", new PasswordResetRequest(Guid.NewGuid(), "{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P"));
+    [Fact]
+    public async Task TestPasswordResetInfo_Expired()
+    {
+        HttpResponseMessage response = await client.GetAsync($"/api/password/reset?token={testReset_Expired.Token}");
 
-            Assert.Equal(HttpStatusCode.Gone, response.StatusCode);
-        }
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
-        [Fact]
-        public async Task TestResetPassword_Expired()
-        {
-            HttpResponseMessage response =
-                await client.PostAsJsonAsync("/api/password/reset", new PasswordResetRequest(testReset_Expired.Token, "{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P"));
+        InetOrgPerson? person = ldap.GetMember(testReset_Expired.Uid);
+        Assert.NotNull(person);
+        Assert.Null(person.UserPassword);
+    }
 
-            Assert.Equal(HttpStatusCode.Gone, response.StatusCode);
+    [Fact]
+    public async Task TestPasswordResetInfo_Valid()
+    {
+        HttpResponseMessage response = await client.GetAsync($"/api/password/reset?token={testReset_Valid.Token}");
 
-            InetOrgPerson? person = ldap.GetMember(testReset_Expired.Uid);
-            Assert.NotNull(person);
-            Assert.Null(person.UserPassword);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            Assert.False(await database.PasswordResets.AnyAsync(r => r.Token == testReset_Expired.Token));
-        }
+        InetOrgPerson? person = ldap.GetMember(testReset_Valid.Uid);
+        Assert.NotNull(person);
+        Assert.Null(person.UserPassword);
 
-        [Fact]
-        public async Task TestResetPassword_Valid()
-        {
-            HttpResponseMessage response =
-                await client.PostAsJsonAsync("/api/password/reset", new PasswordResetRequest(testReset_Valid.Token, "{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P"));
+        PasswordResetInfo? body = await response.Content.ReadFromJsonAsync<PasswordResetInfo>();
+        Assert.NotNull(body);
+        Assert.Equal(person.Uid, body.Uid);
+        Assert.Equal(person.GivenName, body.GivenName);
+        Assert.Equal(person.Sn, body.FamilyName);
+    }
 
-            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    [Fact]
+    public async Task TestResetPassword_InvalidToken()
+    {
+        HttpResponseMessage response =
+            await client.PostAsJsonAsync("/api/password/reset", new PasswordResetRequest(Guid.NewGuid(), "{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P"));
 
-            InetOrgPerson? person = ldap.GetMember(testReset_Valid.Uid);
-            Assert.NotNull(person);
-            Assert.Equal("{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P", person.UserPassword);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 
-            Assert.False(await database.PasswordResets.AnyAsync(r => r.Token == testReset_Valid.Token));
-        }
+    [Fact]
+    public async Task TestResetPassword_Expired()
+    {
+        HttpResponseMessage response =
+            await client.PostAsJsonAsync("/api/password/reset", new PasswordResetRequest(testReset_Expired.Token, "{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P"));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        InetOrgPerson? person = ldap.GetMember(testReset_Expired.Uid);
+        Assert.NotNull(person);
+        Assert.Null(person.UserPassword);
+    }
+
+    [Fact]
+    public async Task TestResetPassword_Valid()
+    {
+        HttpResponseMessage response =
+            await client.PostAsJsonAsync("/api/password/reset", new PasswordResetRequest(testReset_Valid.Token, "{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P"));
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        InetOrgPerson? person = ldap.GetMember(testReset_Valid.Uid);
+        Assert.NotNull(person);
+        Assert.Equal("{SSHA}HX69QAloGNlC4QyuKNE+HDAW7/yBkb2P", person.UserPassword);
+
+        Assert.False(await database.PasswordResets.AnyAsync(r => r.Token == testReset_Valid.Token));
     }
 }

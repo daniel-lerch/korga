@@ -26,25 +26,34 @@ public class PasswordResetController : ControllerBase
         this.logger = logger;
     }
 
+    [HttpGet("~/api/password/reset")]
+    [ProducesResponseType(typeof(PasswordResetInfo), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> PasswordResetInfo([FromQuery] Guid token)
+    {
+        PasswordReset? passwordReset = await database.PasswordResets.SingleOrDefaultAsync(r => r.Token == token);
+        if (passwordReset == null) return StatusCode(StatusCodes.Status404NotFound);
+
+        if (passwordReset.Expiry < DateTime.UtcNow) return StatusCode(StatusCodes.Status404NotFound);
+
+        InetOrgPerson? person = ldap.GetMember(passwordReset.Uid);
+        if (person == null) return StatusCode(StatusCodes.Status404NotFound);
+
+        return new JsonResult(new PasswordResetInfo(person.Uid ?? string.Empty, person.GivenName ?? string.Empty, person.Sn));
+    }
+
     [HttpPost("~/api/password/reset")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status410Gone)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ResetPassword([FromBody] PasswordResetRequest request)
     {
         PasswordReset? passwordReset = await database.PasswordResets.SingleOrDefaultAsync(r => r.Token == request.Token);
-        if (passwordReset == null) return StatusCode(StatusCodes.Status410Gone);
+        if (passwordReset == null) return StatusCode(StatusCodes.Status404NotFound);
 
-        if (passwordReset.Expiry < DateTime.UtcNow)
-        {
-            database.PasswordResets.Remove(passwordReset);
-            await database.SaveChangesAsync();
-
-            return StatusCode(StatusCodes.Status410Gone);
-        }
+        if (passwordReset.Expiry < DateTime.UtcNow) return StatusCode(StatusCodes.Status404NotFound);
 
         InetOrgPerson? person = ldap.GetMember(passwordReset.Uid);
-        if (person == null) return StatusCode(StatusCodes.Status500InternalServerError);
+        if (person == null) return StatusCode(StatusCodes.Status404NotFound);
 
         person.UserPassword = request.PasswordHash;
         ldap.SavePerson(passwordReset.Uid, person);

@@ -6,7 +6,6 @@ using Korga.Server.Services;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
 using System;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 #pragma warning disable IDE0051 // Remove unused private members
