@@ -68,8 +68,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
-import { computed } from "@vue/reactivity";
+import { computed, defineComponent, ref } from "vue";
 import { computedAsync } from "@vueuse/core";
 import entropy from "ideal-password";
 import { ssha } from "../services/hash";
