@@ -1,3 +1,4 @@
+using Korga.Server.ChurchTools;
 using Korga.Server.Extensions;
 using Korga.Server.Services;
 using Microsoft.AspNetCore.Builder;
@@ -27,6 +28,8 @@ public class Startup
 
         services.AddSingleton<LdapService>();
 
+        services.AddSingleton<ChurchToolsApiService>();
+
         services.AddKorgaMySqlDatabase();
 
         services.AddSpaStaticFiles(options => options.RootPath = environment.WebRootPath);
@@ -47,6 +50,14 @@ public class Startup
         services.AddControllers();
 
         services.AddOpenApiDocument();
+
+        // Use Configuration manually because options are not available in ConfigureService
+        // Instead of returning a fake service when disabled we don't register any hosted service at all
+        if (Configuration.GetValue<bool>("EmailRelay:Enable"))
+        {
+            services.AddScoped<DistributionListService>();
+            services.AddHostedService<EmailRelayHostedService>();
+        }
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

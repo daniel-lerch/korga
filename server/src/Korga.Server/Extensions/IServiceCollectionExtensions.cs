@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.ComponentModel.DataAnnotations;
 
 namespace Korga.Server.Extensions;
 
@@ -21,6 +22,14 @@ public static class IServiceCollectionExtensions
         services.AddOptions<LdapOptions>()
             .Bind(configuration.GetSection("Ldap"))
             .ValidateDataAnnotations();
+        services.AddOptions<EmailRelayOptions>()
+            .Bind(configuration.GetSection("EmailRelay"))
+            .Validate(options =>
+            {
+                if (!options.Enable) return true;
+                ValidationContext context = new(options);
+                return Validator.TryValidateObject(options, context, null);
+            });
 
         return services;
     }
