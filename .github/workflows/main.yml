@@ -23,7 +23,7 @@ jobs:
 
         # Launch and prepare MySQL server  
         sudo systemctl start mysql.service
-        dotnet run -c Release --no-build -p server/src/Korga.Server -- database create --populate
+        dotnet run -c Release --no-build --project server/src/Korga.Server -- database create --populate
 
         # Install and configure OpenLDAP server
         sudo apt-get update -yq
@@ -48,7 +48,7 @@ jobs:
 
         # Launch and prepare OpenLDAP server
         sudo systemctl start slapd.service
-        dotnet run -c Release --no-build -p server/src/Korga.Server -- ldap create --organizational-unit
+        dotnet run -c Release --no-build --project server/src/Korga.Server -- ldap create --organizational-unit
     - name: Test
       run: dotnet test -c Release --no-build --verbosity normal
 
@@ -60,7 +60,7 @@ jobs:
     - name: Setup NodeJS
       uses: actions/setup-node@v3
       with:
-        node-version: '16'
+        node-version: '18'
     - name: Restore NPM packages
       run: npm install
       working-directory: webapp
