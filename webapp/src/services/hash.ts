@@ -1,5 +1,5 @@
 import { encode } from "base64-arraybuffer";
-import client, { get, send } from "./client";
+import client from "./client";
 
 // OpenLDAP compatible SSHA (salted SHA-1) hash function
 // https://stackoverflow.com/a/42490862/7075733

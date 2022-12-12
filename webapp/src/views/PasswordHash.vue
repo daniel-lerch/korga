@@ -1,72 +1,58 @@
 <template>
-  <div v-if="loading">
-    <h1>Validiere Token</h1>
-  </div>
-  <div v-else>
-    <div class="container" v-if="userData">
-      <h1>Hallo {{ userData.givenName }}</h1>
-      <div class="card shadow">
-        <div class="card-body">
-          <form @submit.prevent>
-            <div class="mb-3">
-              <label for="newPassword" class="form-label">Neues Passwort</label>
-              <input
-                type="password"
-                id="newPassword"
-                v-model="newPassword"
-                class="form-control"
-                :disabled="savedSuccessfully"
-              />
-            </div>
-            <div v-if="!newPassword" class="alert alert-secondary">
-              Dein Passwort muss mindestens 8 Zeichen von mindestens zwei der
-              folgenden Kategorien enthalten Großbuchstaben, Kleinbuchstaben,
-              Zahlen und Sonderzeichen.
-            </div>
-            <div v-else-if="!passwordAcceptable" class="alert alert-warning">
-              Dein Passwort ist zu unsicher. Verwende ein längeres Passwort im
-              Idealfall mit Groß- und Kleinbuchstaben, Zahlen und Sonderzeichen.
-            </div>
-            <div class="mb-3">
-              <label for="passwordConfirmation" class="form-label">
-                Passwort bestätigen
-              </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                v-model="confirmPassword"
-                class="form-control"
-                :disabled="savedSuccessfully"
-              />
-            </div>
-            <div v-if="!passwordsMatch" class="alert alert-danger">
-              Passwörter stimmen nicht überein.
-            </div>
-            <div v-if="passwordAcceptable && passwordsMatch" class="mb-3">
-              <button
-                type="button"
-                class="btn btn-primary"
-                @click="sendHash"
-                :disabled="savedSuccessfully"
-              >
-                Save
-              </button>
-            </div>
-            <div v-if="savedSuccessfully" class="alert alert-success">
-              Das Passwort wurde erfolgreich geändert.
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-    <div v-else class="container">
-      <h1>Token ungültig</h1>
-      <div class="card shadow">
-        <div class="card-body">
-          <p>
-            Der Token ist ungültig oder abgelaufen. Bitte wende dich an den
-            Administrator.
-          </p>
+  <Loading v-if="state === 'LOADING'" :state="{ error }" />
+  <div v-else class="container page-loaded-container">
+    <h1>Hallo {{ userData?.givenName }}</h1>
+    <div class="card shadow">
+      <div class="card-body">
+        <form v-if="state !== 'SENT'" @submit.prevent="sendHash">
+          <div class="mb-3">
+            <label for="newPassword" class="form-label">Neues Passwort</label>
+            <input
+              type="password"
+              id="newPassword"
+              v-model="newPassword"
+              class="form-control"
+              :disabled="state === 'SENDING'"
+            />
+          </div>
+          <div v-if="!newPassword" class="alert alert-secondary">
+            Dein Passwort muss mindestens 8 Zeichen von mindestens zwei der
+            folgenden Kategorien enthalten Großbuchstaben, Kleinbuchstaben,
+            Zahlen und Sonderzeichen.
+          </div>
+          <div v-else-if="!passwordAcceptable" class="alert alert-warning">
+            Dein Passwort ist zu unsicher. Verwende ein längeres Passwort im
+            Idealfall mit Groß- und Kleinbuchstaben, Zahlen und Sonderzeichen.
+          </div>
+          <div class="mb-3">
+            <label for="passwordConfirmation" class="form-label">
+              Passwort bestätigen
+            </label>
+            <input
+              type="password"
+              id="confirmPassword"
+              v-model="confirmPassword"
+              class="form-control"
+              :disabled="state === 'SENDING'"
+            />
+          </div>
+          <div
+            v-if="confirmPassword.length > 0 && !passwordsMatch"
+            class="alert alert-danger"
+          >
+            Passwörter stimmen nicht überein.
+          </div>
+          <button
+            v-if="passwordAcceptable && passwordsMatch"
+            type="submit"
+            class="btn btn-primary mb-3"
+            :disabled="state === 'SENDING'"
+          >
+            Passwort setzen
+          </button>
+        </form>
+        <div v-if="state === 'SENT'" class="alert alert-success">
+          Das Passwort wurde erfolgreich geändert.
         </div>
       </div>
     </div>
@@ -75,89 +61,72 @@
 
 <script lang="ts">
 import { computed, defineComponent, onMounted, ref } from "vue";
-import { computedAsync } from "@vueuse/core";
 import entropy from "ideal-password";
 import { ssha, postHash, checkToken, TokenData } from "../services/hash";
 import { useRoute } from "vue-router";
+import Loading from "@/components/Loading.vue";
 
 export default defineComponent({
+  components: { Loading },
   setup() {
-    const newPassword = ref("");
-    const confirmPassword = ref("");
-    const copyToClipboardText = ref("📋");
+    const state = ref<"LOADING" | "LOADED" | "SENDING" | "SENT">("LOADING");
+    const error = ref<string | null>(null);
+
     const token = ref("");
     const userData = ref<TokenData | null>(null);
-    const loading = ref(true);
-    const savedSuccessfully = ref(false);
 
+    const newPassword = ref("");
+    const confirmPassword = ref("");
     const passwordAcceptable = computed(
       () => entropy(newPassword.value).acceptable
     );
-
     const passwordsMatch = computed(
       () => newPassword.value === confirmPassword.value
     );
 
-    const passwordHash = computedAsync(async () => {
-      const hash = await ssha(newPassword.value);
-      copyToClipboardText.value = "📋";
-      return hash;
+    onMounted(() => {
+      const route = useRoute();
+      token.value = route.query.token as string;
+      validateToken();
     });
 
-    async function copyToClipboard() {
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(passwordHash.value);
-        copyToClipboardText.value = "✔";
-      } else
-        alert(
-          "Dein Browser unterstützt die Zwischenablage nicht. Du musst den Text manuell kopieren."
-        );
+    async function validateToken() {
+      try {
+        const res = await checkToken(token.value);
+        userData.value = res;
+        state.value = "LOADED";
+      } catch (e) {
+        console.log("token invalid");
+        error.value =
+          "Dieser Link ist ungültig oder abgelaufen. Bitte wende dich an den Administrator.";
+      }
     }
 
     async function sendHash() {
+      state.value = "SENDING";
       try {
+        const hash = await ssha(newPassword.value);
         const res = await postHash({
           token: token.value,
-          passwordHash: passwordHash.value,
+          passwordHash: hash,
         });
         if (res) {
-          savedSuccessfully.value = true;
+          state.value = "SENT";
         }
       } catch (e) {
         console.log(e);
       }
     }
 
-    async function validateToken() {
-      try {
-        const res = await checkToken(token.value);
-        userData.value = res;
-        loading.value = false;
-      } catch (e) {
-        console.log("token invalid");
-        userData.value = null;
-        loading.value = false;
-      }
-    }
-
-    onMounted(async () => {
-      const route = useRoute();
-      token.value = route.query.token as string;
-      validateToken();
-    });
-
     return {
+      state,
+      error,
       newPassword,
       confirmPassword,
-      copyToClipboardText,
       passwordAcceptable,
       passwordsMatch,
-      passwordHash,
       token,
       userData,
-      loading,
-      savedSuccessfully,
-      copyToClipboard,
       sendHash,
       validateToken,
     };
