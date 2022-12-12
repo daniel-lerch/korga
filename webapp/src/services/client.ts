@@ -35,7 +35,7 @@ export async function send<T extends { conflict: boolean }>(
     init.body = JSON.stringify(body);
   }
   const response = await fetch(baseUrl + query, init);
-  if (![200, 409].includes(response.status)) {
+  if (![200, 204, 409].includes(response.status)) {
     throw new Error(
       "Unexpected status code " + response.status + " " + response.statusText
     );

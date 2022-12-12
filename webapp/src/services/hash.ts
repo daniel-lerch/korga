@@ -1,4 +1,5 @@
 import { encode } from "base64-arraybuffer";
+import client, { get, send } from "./client";
 
 // OpenLDAP compatible SSHA (salted SHA-1) hash function
 // https://stackoverflow.com/a/42490862/7075733
@@ -14,4 +15,26 @@ export async function ssha(password: string) {
   hashAndSalt.set(salt, hash.byteLength);
   const base64 = encode(hashAndSalt.buffer);
   return "{SSHA}" + base64;
+}
+
+export interface HashPostRequest {
+  token: string;
+  passwordHash: string;
+}
+
+export async function postHash(data: HashPostRequest): Promise<boolean> {
+  const response = await client.post("/api/password/reset", data);
+  return response.status === 204;
+}
+
+export interface TokenData {
+  uid: string;
+  givenName: string;
+  familyName: string;
+}
+
+export async function checkToken(token: string): Promise<TokenData> {
+  // return get(`/korga/api/password/reset?token=${token}`);
+  const response = await client.get(`/api/password/reset?token=${token}`);
+  return response.data ?? null;
 }
