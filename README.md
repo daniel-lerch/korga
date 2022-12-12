@@ -38,14 +38,14 @@ The following instructions are written for Windows but generally also apply to L
 
 ### Backend
 - Visual Studio 2022
-- .NET SDK 6.0
+- .NET SDK 7.0
 - MySQL or MariaDB _(e.g. from [PSModules](https://github.com/daniel-lerch/psmodules))_
 - OpenLDAP server
 
 ### Frontend
 - Visual Studio Code
 - Vue Language Features (Volar) Extension
-- NodeJS 16 LTS
+- NodeJS 18 LTS
 
 During development the frontend running on the Vue CLI development server will use _http://localhost:50805_ as API endpoint.
 That means the backend can be running in Visual Studio with Debugger attached.

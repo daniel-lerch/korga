@@ -74,8 +74,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from "vue";
-import { computed } from "@vue/reactivity";
+import { computed, defineComponent, onMounted, ref } from "vue";
 import { computedAsync } from "@vueuse/core";
 import entropy from "ideal-password";
 import { ssha, postHash, checkToken, TokenData } from "../services/hash";
