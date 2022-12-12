@@ -28,6 +28,7 @@ public class PasswordResetController : ControllerBase
 
     [HttpGet("~/api/password/reset")]
     [ProducesResponseType(typeof(PasswordResetInfo), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> PasswordResetInfo([FromQuery] Guid token)
     {
@@ -44,9 +45,12 @@ public class PasswordResetController : ControllerBase
 
     [HttpPost("~/api/password/reset")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+	[ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ResetPassword([FromBody] PasswordResetRequest request)
     {
+        if (!ModelState.IsValid) return StatusCode(400);
+
         PasswordReset? passwordReset = await database.PasswordResets.SingleOrDefaultAsync(r => r.Token == request.Token);
         if (passwordReset == null) return StatusCode(StatusCodes.Status404NotFound);
 
