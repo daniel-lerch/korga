@@ -17,7 +17,7 @@ public sealed class DatabaseContext : DbContext
     public DbSet<EventParticipant> EventParticipants => Set<EventParticipant>();
     public DbSet<Email> Emails => Set<Email>();
     public DbSet<EmailRecipient> EmailRecipients => Set<EmailRecipient>();
-
+    public DbSet<PasswordReset> PasswordResets => Set<PasswordReset>();
 
     public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
 
@@ -44,5 +44,8 @@ public sealed class DatabaseContext : DbContext
         var emailRecipient = modelBuilder.Entity<EmailRecipient>();
         emailRecipient.HasKey(e => e.Id);
         emailRecipient.HasOne(e => e.Email).WithMany(e => e.Recipients).HasForeignKey(e => e.EmailId);
+
+        var passwordReset = modelBuilder.Entity<PasswordReset>();
+        passwordReset.HasKey(r => r.Token);
     }
 }

@@ -1,9 +1,10 @@
 <template>
-  <div class="container">
-    <h1>Passwort erstellen</h1>
+  <Loading v-if="state === 'LOADING'" :state="{ error }" />
+  <div v-else class="container page-loaded-container">
+    <h1>Hallo {{ userData?.givenName }}</h1>
     <div class="card shadow">
       <div class="card-body">
-        <form @submit.prevent>
+        <form v-if="state !== 'SENT'" @submit.prevent="sendHash">
           <div class="mb-3">
             <label for="newPassword" class="form-label">Neues Passwort</label>
             <input
@@ -11,6 +12,7 @@
               id="newPassword"
               v-model="newPassword"
               class="form-control"
+              :disabled="state === 'SENDING'"
             />
           </div>
           <div v-if="!newPassword" class="alert alert-secondary">
@@ -31,86 +33,102 @@
               id="confirmPassword"
               v-model="confirmPassword"
               class="form-control"
+              :disabled="state === 'SENDING'"
             />
           </div>
-          <div v-if="!passwordsMatch" class="alert alert-danger">
+          <div
+            v-if="confirmPassword.length > 0 && !passwordsMatch"
+            class="alert alert-danger"
+          >
             Passwörter stimmen nicht überein.
           </div>
-          <div v-if="passwordAcceptable && passwordsMatch" class="mb-3">
-            <label for="passwordHash" class="form-label">Passwort Hash</label>
-            <div class="input-group">
-              <input
-                id="passwordHash"
-                class="form-control"
-                v-model="passwordHash"
-                disabled
-              />
-              <button
-                type="button"
-                class="btn btn-outline-secondary"
-                @click="copyToClipboard"
-              >
-                {{ copyToClipboardText }}
-              </button>
-            </div>
-          </div>
-          <div
+          <button
             v-if="passwordAcceptable && passwordsMatch"
-            class="alert alert-success"
+            type="submit"
+            class="btn btn-primary mb-3"
+            :disabled="state === 'SENDING'"
           >
-            Fast geschafft! Kopiere jetzt den Passwort Hash und sende ihn an den
-            Administrator.
-          </div>
+            Passwort setzen
+          </button>
         </form>
+        <div v-if="state === 'SENT'" class="alert alert-success">
+          Das Passwort wurde erfolgreich geändert.
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, ref } from "vue";
-import { computedAsync } from "@vueuse/core";
+import { computed, defineComponent, onMounted, ref } from "vue";
 import entropy from "ideal-password";
-import { ssha } from "../services/hash";
+import { ssha, postHash, checkToken, TokenData } from "../services/hash";
+import { useRoute } from "vue-router";
+import Loading from "@/components/Loading.vue";
 
 export default defineComponent({
+  components: { Loading },
   setup() {
+    const state = ref<"LOADING" | "LOADED" | "SENDING" | "SENT">("LOADING");
+    const error = ref<string | null>(null);
+
+    const token = ref("");
+    const userData = ref<TokenData | null>(null);
+
     const newPassword = ref("");
     const confirmPassword = ref("");
-    const copyToClipboardText = ref("📋");
-
     const passwordAcceptable = computed(
       () => entropy(newPassword.value).acceptable
     );
-
     const passwordsMatch = computed(
       () => newPassword.value === confirmPassword.value
     );
 
-    const passwordHash = computedAsync(async () => {
-      const hash = await ssha(newPassword.value);
-      copyToClipboardText.value = "📋";
-      return hash;
+    onMounted(() => {
+      const route = useRoute();
+      token.value = route.query.token as string;
+      validateToken();
     });
 
-    async function copyToClipboard() {
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(passwordHash.value);
-        copyToClipboardText.value = "✔";
-      } else
-        alert(
-          "Dein Browser unterstützt die Zwischenablage nicht. Du musst den Text manuell kopieren."
-        );
+    async function validateToken() {
+      try {
+        const res = await checkToken(token.value);
+        userData.value = res;
+        state.value = "LOADED";
+      } catch (e) {
+        console.log("token invalid");
+        error.value =
+          "Dieser Link ist ungültig oder abgelaufen. Bitte wende dich an den Administrator.";
+      }
+    }
+
+    async function sendHash() {
+      state.value = "SENDING";
+      try {
+        const hash = await ssha(newPassword.value);
+        const res = await postHash({
+          token: token.value,
+          passwordHash: hash,
+        });
+        if (res) {
+          state.value = "SENT";
+        }
+      } catch (e) {
+        console.log(e);
+      }
     }
 
     return {
+      state,
+      error,
       newPassword,
       confirmPassword,
-      copyToClipboardText,
       passwordAcceptable,
       passwordsMatch,
-      passwordHash,
-      copyToClipboard,
+      token,
+      userData,
+      sendHash,
+      validateToken,
     };
   },
 });

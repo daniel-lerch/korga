@@ -4,6 +4,7 @@ using Korga.Server.Ldap.ObjectClasses;
 using Microsoft.Extensions.Options;
 using System;
 using System.DirectoryServices.Protocols;
+using System.Linq;
 using System.Net;
 
 namespace Korga.Server.Services;
@@ -30,12 +31,18 @@ public class LdapService : IDisposable
         mapper = new LdapMapper(connection);
     }
 
-    public int GetMembers()
+    public InetOrgPerson[] GetMembers()
     {
         if (disposed) throw new ObjectDisposedException(nameof(LdapService));
 
-        InetOrgPerson[] result = mapper.Search<InetOrgPerson>(options.Value.BaseDn, "(objectClass=inetOrgPerson)", SearchScope.OneLevel);
-        return result.Length;
+        return mapper.Search<InetOrgPerson>(options.Value.BaseDn, "(objectClass=inetOrgPerson)", SearchScope.OneLevel);
+    }
+
+    public InetOrgPerson? GetMember(string uid)
+    {
+        if (disposed) throw new ObjectDisposedException(nameof(LdapService));
+
+        return mapper.Search<InetOrgPerson>(options.Value.BaseDn, $"(& (objectClass=inetOrgPerson) (uid={uid}))", SearchScope.OneLevel).SingleOrDefault();
     }
 
     public void AddOrganizationalUnit(string distinguishedName, string name)
@@ -45,7 +52,7 @@ public class LdapService : IDisposable
         mapper.Add(distinguishedName, new OrganizationalUnit(name));
     }
 
-    public void AddPerson(string distinguishedName, string givenName, string familyName)
+    public void AddPerson(string uid, string givenName, string familyName, string mailAddress)
     {
         if (disposed) throw new ObjectDisposedException(nameof(LdapService));
 
@@ -54,10 +61,32 @@ public class LdapService : IDisposable
         var person = new InetOrgPerson(cn: name, familyName)
         {
             GivenName = givenName,
-            DisplayName = name
+            DisplayName = name,
+            Mail = mailAddress
         };
 
-        mapper.Add(distinguishedName, person);
+        mapper.Add($"uid={uid},{options.Value.BaseDn}", person);
+    }
+
+    public void SavePerson(string uid, InetOrgPerson person)
+    {
+        if (disposed) throw new ObjectDisposedException(nameof(LdapService));
+
+        mapper.SaveChanges($"uid={uid},{options.Value.BaseDn}", person);
+    }
+
+    public void DeletePerson(string uid)
+    {
+        if (disposed) throw new ObjectDisposedException(nameof(LdapService));
+
+        mapper.Delete($"uid={uid},{options.Value.BaseDn}");
+    }
+
+    public void Delete(string distinguishedName)
+    {
+        if (disposed) throw new ObjectDisposedException(nameof(LdapService));
+
+        mapper.Delete(distinguishedName);
     }
 
     public void Dispose()

@@ -1,9 +1,9 @@
 ﻿using Korga.Server.Configuration;
+using Korga.Server.Ldap.ObjectClasses;
 using Korga.Server.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
-using System.DirectoryServices.Protocols;
 using Xunit;
 
 namespace Korga.Server.Tests;
@@ -18,19 +18,22 @@ public class LdapServiceTests
     }
 
     [Fact]
-    public void TestAddMember()
+    public void TestAddAndDeleteMember()
     {
         var options = serviceProvider.GetRequiredService<IOptions<LdapOptions>>();
         var ldapService = serviceProvider.GetRequiredService<LdapService>();
-        int count = ldapService.GetMembers();
-        try
-        {
-            ldapService.AddPerson($"uid=maxmust,{options.Value.BaseDn}", "Max", "Mustermann");
-            Assert.Equal(count + 1, ldapService.GetMembers());
-        }
-        catch (DirectoryOperationException ex) when (ex.Response.ResultCode == ResultCode.EntryAlreadyExists)
-        {
-            Assert.True(count > 0);
-        }
+
+        string uid = TestHost.RandomUid();
+
+        ldapService.AddPerson(uid, "Max", "Mustermann", "max.mustermann@example.org");
+        InetOrgPerson? queried = ldapService.GetMember(uid);
+        Assert.NotNull(queried);
+        Assert.Equal("Max", queried.GivenName);
+        Assert.Equal("Mustermann", queried.Sn);
+        Assert.Equal("max.mustermann@example.org", queried.Mail);
+
+        ldapService.DeletePerson(uid);
+        queried = ldapService.GetMember(uid);
+        Assert.Null(queried);
     }
 }

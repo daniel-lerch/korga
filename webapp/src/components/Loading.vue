@@ -1,5 +1,5 @@
 <template>
-  <div class="page-load-container">
+  <div class="page-load-container container">
     <div v-if="state.error === null" class="spinner-border" role="status"></div>
     <div v-else class="alert alert-danger" role="alert">
       {{ state.error.toString() }}
@@ -13,7 +13,7 @@ import { defineComponent, PropType } from "vue";
 export default defineComponent({
   props: {
     state: {
-      type: Object as PropType<{ error: Error | null }>,
+      type: Object as PropType<{ error: Error | string | null }>,
       required: true,
     },
   },

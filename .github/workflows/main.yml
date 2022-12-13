@@ -48,7 +48,7 @@ jobs:
 
         # Launch and prepare OpenLDAP server
         sudo systemctl start slapd.service
-        dotnet run -c Release --no-build --project server/src/Korga.Server -- ldap create
+        dotnet run -c Release --no-build --project server/src/Korga.Server -- ldap create --organizational-unit
     - name: Test
       run: dotnet test -c Release --no-build --verbosity normal
 
