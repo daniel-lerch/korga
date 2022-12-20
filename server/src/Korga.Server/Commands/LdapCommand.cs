@@ -33,7 +33,7 @@ public class LdapCommand
 		[Option(Description = "Creates an organizational unit which can have members")]
 		public bool OrganizationalUnit { get; set; }
 
-		private async Task<int> OnExecute(IOptions<LdapOptions> options, LdapService ldap, DatabaseContext database)
+		private async Task<int> OnExecute(IOptions<LdapOptions> options, LdapService ldap, LdapUidService ldapUid, DatabaseContext database)
 		{
 			if (OrganizationalUnit)
 			{
@@ -66,26 +66,14 @@ public class LdapCommand
 					return 1;
 				}
 
-				static string normalize(string input) => input
-					.Replace("ä", "ae", StringComparison.Ordinal)
-					.Replace("é", "e", StringComparison.Ordinal)
-					.Replace("è", "e", StringComparison.Ordinal)
-					.Replace("ë", "e", StringComparison.Ordinal)
-					.Replace("ö", "oe", StringComparison.Ordinal)
-					.Replace("ü", "ue", StringComparison.Ordinal)
-					.Replace("ß", "ss", StringComparison.Ordinal);
-
-				string normalizedGivenName = normalize(givenName.ToLowerInvariant());
-				string normalizedFamilyName = normalize(familyName.ToLowerInvariant());
-
-				string uid = normalizedGivenName.Take(3) + normalizedFamilyName.Take(4);
+				string uid = ldapUid.GetUid(givenName, familyName);
 
 				ldap.AddPerson(uid, givenName, familyName, mailAddress);
 
 				PasswordReset passwordReset = new(uid)
 				{
 					Token = Guid.NewGuid(),
-					Expiry = DateTime.UtcNow.AddDays(1)
+					Expiry = DateTime.UtcNow.AddHours(options.Value.PasswordResetExpiryHours)
 				};
 				database.PasswordResets.Add(passwordReset);
 				await database.SaveChangesAsync();
@@ -123,6 +111,8 @@ public class LdapCommand
 			string? mailAddress = Console.ReadLine();
 			if (mailAddress == null) return 1;
 			if (mailAddress.Length > 0) person.Mail = mailAddress;
+
+			person.Cn = person.DisplayName = $"{givenName} {familyName}";
 
 			ldap.SavePerson(Uid, person);
 			return 0;

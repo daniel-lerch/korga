@@ -78,5 +78,6 @@ public class Program
                 services.AddKorgaOptions(context.Configuration);
                 services.AddSingleton<LdapService>();
                 services.AddKorgaMySqlDatabase();
+                services.AddTransient<LdapUidService>();
             });
 }
