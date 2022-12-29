@@ -1,7 +1,6 @@
 ﻿using Korga.Server.Configuration;
 using Korga.Server.Database;
 using Korga.Server.Database.Entities;
-using Korga.Server.Extensions;
 using Korga.Server.Ldap.ObjectClasses;
 using Korga.Server.Services;
 using McMaster.Extensions.CommandLineUtils;
@@ -33,7 +32,14 @@ public class LdapCommand
 		[Option(Description = "Creates an organizational unit which can have members")]
 		public bool OrganizationalUnit { get; set; }
 
-		private async Task<int> OnExecute(IOptions<LdapOptions> options, LdapService ldap, LdapUidService ldapUid, DatabaseContext database)
+		[Option(Description = "Override generated default UID with a custom value")]
+		public string? Uid { get; set; }
+
+		[Argument(0)] public string? GivenName { get; set; }
+		[Argument(1)] public string? FamilyName { get; set; }
+		[Argument(2)] public string? MailAddress { get; set; }
+
+		private async Task<int> OnExecute(IConsole console, IOptions<LdapOptions> options, LdapService ldap, LdapUidService ldapUid, DatabaseContext database)
 		{
 			if (OrganizationalUnit)
 			{
@@ -42,35 +48,30 @@ public class LdapCommand
 			}
 			else
 			{
-				Console.Write("Given name: ");
-				string? givenName = Console.ReadLine();
-				if (givenName == null || givenName.Length == 0)
+				if (string.IsNullOrWhiteSpace(GivenName))
 				{
-					Console.WriteLine("Invalid given name");
+					console.Out.WriteLine("Invalid given name");
 					return 1;
 				}
 
-				Console.Write("Family name: ");
-				string? familyName = Console.ReadLine();
-				if (familyName == null || familyName.Length == 0)
+				if (string.IsNullOrWhiteSpace(FamilyName))
 				{
-					Console.WriteLine("Invalid family name");
+					console.Out.WriteLine("Invalid family name");
 					return 1;
 				}
 
-				Console.Write("Email address: ");
-				string? mailAddress = Console.ReadLine();
-				if (mailAddress == null || !mailAddress.Contains('@'))
+				if (MailAddress == null || !MailAddress.Contains('@'))
 				{
-					Console.WriteLine("Invalid email address");
+					console.Out.WriteLine("Invalid email address");
 					return 1;
 				}
 
-				string uid = ldapUid.GetUid(givenName, familyName);
+				if (string.IsNullOrWhiteSpace(Uid))
+					Uid = ldapUid.GetUid(GivenName, FamilyName);
 
-				ldap.AddPerson(uid, givenName, familyName, mailAddress);
+				ldap.AddPerson(Uid, GivenName, FamilyName, MailAddress);
 
-				PasswordReset passwordReset = new(uid)
+				PasswordReset passwordReset = new(Uid)
 				{
 					Token = Guid.NewGuid(),
 					Expiry = DateTime.UtcNow.AddHours(options.Value.PasswordResetExpiryHours)
@@ -78,7 +79,7 @@ public class LdapCommand
 				database.PasswordResets.Add(passwordReset);
 				await database.SaveChangesAsync();
 
-				Console.WriteLine("Password reset token: {0}", passwordReset.Token);
+				console.Out.WriteLine("Password reset token: {0}", passwordReset.Token);
 				return 0;
 			}
 		}
@@ -90,25 +91,25 @@ public class LdapCommand
 		[Argument(0)]
 		public string? Uid { get; set; }
 
-		private int OnExecute(LdapService ldap)
+		private int OnExecute(IConsole console, LdapService ldap)
 		{
 			if (string.IsNullOrEmpty(Uid)) return 1;
 
 			InetOrgPerson? person = ldap.GetMember(Uid);
 			if (person == null) return 2;
 
-			Console.Write("Given name [{0}]: ", person.GivenName);
-			string? givenName = Console.ReadLine();
+			console.Out.Write("Given name [{0}]: ", person.GivenName);
+			string? givenName = console.In.ReadLine();
 			if (givenName == null) return 1;
 			if (givenName.Length > 0) person.GivenName = givenName;
 
-			Console.Write("Family name [{0}]: ", person.Sn);
-			string? familyName = Console.ReadLine();
+			console.Out.Write("Family name [{0}]: ", person.Sn);
+			string? familyName = console.In.ReadLine();
 			if (familyName == null) return 1;
 			if (familyName.Length > 0) person.Sn = familyName;
 
-			Console.Write("Email address [{0}]: ", person.Mail);
-			string? mailAddress = Console.ReadLine();
+			console.Out.Write("Email address [{0}]: ", person.Mail);
+			string? mailAddress = console.In.ReadLine();
 			if (mailAddress == null) return 1;
 			if (mailAddress.Length > 0) person.Mail = mailAddress;
 
@@ -125,7 +126,7 @@ public class LdapCommand
 		[Argument(0)]
 		public string? Uid { get; set; }
 
-		private async Task<int> OnExecuteAsync(LdapService ldap, DatabaseContext database)
+		private async Task<int> OnExecuteAsync(IConsole console, IOptions<LdapOptions> options, LdapService ldap, DatabaseContext database)
 		{
 			if (string.IsNullOrEmpty(Uid)) return 1;
 
@@ -135,12 +136,12 @@ public class LdapCommand
 			PasswordReset passwordReset = new(Uid)
 			{
 				Token = Guid.NewGuid(),
-				Expiry = DateTime.UtcNow.AddDays(1)
+				Expiry = DateTime.UtcNow.AddHours(options.Value.PasswordResetExpiryHours)
 			};
 			database.PasswordResets.Add(passwordReset);
 			await database.SaveChangesAsync();
 
-			Console.WriteLine("Password reset token: {0}", passwordReset.Token);
+			console.Out.WriteLine("Password reset token: {0}", passwordReset.Token);
 			return 0;
 		}
 	}
@@ -181,17 +182,17 @@ public class LdapCommand
 	[Command("list")]
 	public class List
 	{
-		private void OnExecute(LdapService ldap)
+		private void OnExecute(IConsole console, LdapService ldap)
 		{
 			InetOrgPerson[] people = ldap.GetMembers();
 			foreach (InetOrgPerson person in people)
 			{
-				Console.WriteLine($"uid={person.Uid} ({person.Cn})");
-				Console.WriteLine("\tgivenName: {0}", person.GivenName);
-				Console.WriteLine("\tsn: {0}", person.Sn);
-				Console.WriteLine("\tdisplayName: {0}", person.DisplayName);
-				Console.WriteLine("\tmail: {0}", person.Mail);
-				Console.WriteLine("\tuserPassword: {0}", person.UserPassword);
+				console.Out.WriteLine($"uid={person.Uid} ({person.Cn})");
+				console.Out.WriteLine("\tgivenName: {0}", person.GivenName);
+				console.Out.WriteLine("\tsn: {0}", person.Sn);
+				console.Out.WriteLine("\tdisplayName: {0}", person.DisplayName);
+				console.Out.WriteLine("\tmail: {0}", person.Mail);
+				console.Out.WriteLine("\tuserPassword: {0}", person.UserPassword);
 			}
 		}
 	}
