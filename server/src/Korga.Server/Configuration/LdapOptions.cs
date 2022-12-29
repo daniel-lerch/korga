@@ -9,4 +9,5 @@ public class LdapOptions
     [Required] public string BindDn { get; set; } = null!;
     [Required] public string BindPassword { get; set; } = null!;
     [Required] public string BaseDn { get; set; } = null!;
+    [Range(0.25, 744.0)] public double PasswordResetExpiryHours { get; set; }
 }
