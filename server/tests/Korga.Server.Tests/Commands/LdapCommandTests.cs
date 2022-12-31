@@ -13,69 +13,89 @@ using Xunit;
 
 namespace Korga.Server.Tests.Commands;
 
-public class LdapCommandTests
+public class LdapCommandTests : IClassFixture<LdapCommandTests.Fixture>
 {
-	[Fact]
-	public async Task TestCreateUser()
+	public class Fixture : IDisposable
 	{
-		string uid = TestHost.RandomUid();
-
-		string[] args = new[] { "ldap", "create", $"--uid={uid}", "Max", "Mustermann", "mustermann@example.org" };
-
-		int returnCode = await TestHost.CreateCliHostBuilder().RunCommandLineApplicationAsync<KorgaCommand>(args, app =>
+		public Fixture()
 		{
-			// This method disposes the host after shutdown. Therefore, it might be dangerous to dispose the scope after that.
-			var scope = app.CreateScope();
-			app.Conventions.UseConstructorInjection(scope.ServiceProvider);
-		});
+			ServiceProvider serviceProvider = TestHost.CreateServiceCollection().BuildServiceProvider();
+			ServiceScope = serviceProvider.CreateScope();
+			LdapOptions = ServiceScope.ServiceProvider.GetRequiredService<IOptions<LdapOptions>>();
+			Database = ServiceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
+			Ldap = ServiceScope.ServiceProvider.GetRequiredService<LdapService>();
+		}
 
-		Assert.Equal(0, returnCode);
+		public IServiceScope ServiceScope { get; }
+		public IOptions<LdapOptions> LdapOptions { get; }
+		public DatabaseContext Database { get; }
+		public LdapService Ldap { get; }
 
-		ServiceProvider serviceProvider = TestHost.CreateServiceCollection().BuildServiceProvider();
-		using IServiceScope serviceScope = serviceProvider.CreateScope();
-		IOptions<LdapOptions> options = serviceScope.ServiceProvider.GetRequiredService<IOptions<LdapOptions>>();
-		LdapService ldap = serviceScope.ServiceProvider.GetRequiredService<LdapService>();
-		DatabaseContext database = serviceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
-
-		Assert.NotNull(ldap.GetMember(uid));
-
-		DateTime earliest = DateTime.UtcNow.AddHours(options.Value.PasswordResetExpiryHours).AddSeconds(-30);
-		DateTime latest = DateTime.UtcNow.AddHours(options.Value.PasswordResetExpiryHours).AddSeconds(30);
-		
-		Assert.True(await database.PasswordResets.AnyAsync(r => r.Uid == uid && r.Expiry > earliest && r.Expiry < latest));
-
-		ldap.DeletePerson(uid);
+		public void Dispose()
+		{
+			ServiceScope.Dispose();
+		}
 	}
 
-	[Fact]
-	public async Task TestPasswd()
+	public class ValidUser : IClassFixture<Fixture>
 	{
-		string uid = TestHost.RandomUid();
+		private readonly Fixture fixture;
 
-		ServiceProvider serviceProvider = TestHost.CreateServiceCollection().BuildServiceProvider();
-		using IServiceScope serviceScope = serviceProvider.CreateScope();
-		IOptions<LdapOptions> options = serviceScope.ServiceProvider.GetRequiredService<IOptions<LdapOptions>>();
-		LdapService ldap = serviceScope.ServiceProvider.GetRequiredService<LdapService>();
-		DatabaseContext database = serviceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
-
-		ldap.AddPerson(uid, "Max", "Mustermann", "mustermann@example.org");
-
-		string[] args = new[] { "ldap", "passwd", uid };
-
-		int returnCode = await TestHost.CreateCliHostBuilder().RunCommandLineApplicationAsync<KorgaCommand>(args, app =>
+		public ValidUser(Fixture fixture)
 		{
-			// This method disposes the host after shutdown. Therefore, it might be dangerous to dispose the scope after that.
-			var scope = app.CreateScope();
-			app.Conventions.UseConstructorInjection(scope.ServiceProvider);
-		});
+			this.fixture = fixture;
+		}
 
-		Assert.Equal(0, returnCode);
+		[Fact]
+		public async Task TestCreateUser()
+		{
+			string uid = TestHost.RandomUid();
 
-		DateTime earliest = DateTime.UtcNow.AddHours(options.Value.PasswordResetExpiryHours).AddSeconds(-30);
-		DateTime latest = DateTime.UtcNow.AddHours(options.Value.PasswordResetExpiryHours).AddSeconds(30);
+			string[] args = new[] { "ldap", "create", $"--uid={uid}", "Max", "Mustermann", "mustermann@example.org" };
 
-		Assert.True(await database.PasswordResets.AnyAsync(r => r.Uid == uid && r.Expiry > earliest && r.Expiry < latest));
+			int returnCode = await TestHost.CreateCliHostBuilder().RunCommandLineApplicationAsync<KorgaCommand>(args, app =>
+			{
+				// This method disposes the host after shutdown. Therefore, it might be dangerous to dispose the scope after that.
+				var scope = app.CreateScope();
+				app.Conventions.UseConstructorInjection(scope.ServiceProvider);
+			});
 
-		ldap.DeletePerson(uid);
+			Assert.Equal(0, returnCode);
+
+			Assert.NotNull(fixture.Ldap.GetMember(uid));
+
+			DateTime earliest = DateTime.UtcNow.AddHours(fixture.LdapOptions.Value.PasswordResetExpiryHours).AddSeconds(-30);
+			DateTime latest = DateTime.UtcNow.AddHours(fixture.LdapOptions.Value.PasswordResetExpiryHours).AddSeconds(30);
+
+			Assert.True(await fixture.Database.PasswordResets.AnyAsync(r => r.Uid == uid && r.Expiry > earliest && r.Expiry < latest));
+
+			fixture.Ldap.DeletePerson(uid);
+		}
+
+		[Fact]
+		public async Task TestPasswd()
+		{
+			string uid = TestHost.RandomUid();
+
+			fixture.Ldap.AddPerson(uid, "Max", "Mustermann", "mustermann@example.org");
+
+			string[] args = new[] { "ldap", "passwd", uid };
+
+			int returnCode = await TestHost.CreateCliHostBuilder().RunCommandLineApplicationAsync<KorgaCommand>(args, app =>
+			{
+				// This method disposes the host after shutdown. Therefore, it might be dangerous to dispose the scope after that.
+				var scope = app.CreateScope();
+				app.Conventions.UseConstructorInjection(scope.ServiceProvider);
+			});
+
+			Assert.Equal(0, returnCode);
+
+			DateTime earliest = DateTime.UtcNow.AddHours(fixture.LdapOptions.Value.PasswordResetExpiryHours).AddSeconds(-30);
+			DateTime latest = DateTime.UtcNow.AddHours(fixture.LdapOptions.Value.PasswordResetExpiryHours).AddSeconds(30);
+
+			Assert.True(await fixture.Database.PasswordResets.AnyAsync(r => r.Uid == uid && r.Expiry > earliest && r.Expiry < latest));
+
+			fixture.Ldap.DeletePerson(uid);
+		}
 	}
 }
