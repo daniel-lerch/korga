@@ -17,6 +17,7 @@ public class LdapCommandTests : IClassFixture<LdapCommandTests.Fixture>
 {
 	public class Fixture : IDisposable
 	{
+		// This fixture instance will be used for all tests in this class: https://xunit.net/docs/shared-context
 		public Fixture()
 		{
 			ServiceProvider serviceProvider = TestHost.CreateServiceCollection().BuildServiceProvider();
@@ -96,6 +97,25 @@ public class LdapCommandTests : IClassFixture<LdapCommandTests.Fixture>
 			Assert.True(await fixture.Database.PasswordResets.AnyAsync(r => r.Uid == uid && r.Expiry > earliest && r.Expiry < latest));
 
 			fixture.Ldap.DeletePerson(uid);
+		}
+
+		[Fact]
+		public async Task TestDelete()
+		{
+			string uid = TestHost.RandomUid();
+
+			fixture.Ldap.AddPerson(uid, "Max", "Mustermann", "mustermann@example.org");
+
+			string[] args = new[] { "ldap", "delete", uid };
+
+			int returnCode = await TestHost.CreateCliHostBuilder().RunCommandLineApplicationAsync<KorgaCommand>(args, app =>
+			{
+				// This method disposes the host after shutdown. Therefore, it might be dangerous to dispose the scope after that.
+				var scope = app.CreateScope();
+				app.Conventions.UseConstructorInjection(scope.ServiceProvider);
+			});
+
+			Assert.Null(fixture.Ldap.GetMember(uid));
 		}
 	}
 }
