@@ -1,7 +1,7 @@
 ﻿using Korga.Server.ChurchTools;
 using Korga.Server.Configuration;
 using Korga.Server.Database;
-using Korga.Server.Database.Entities;
+using Korga.Server.Database.EmailRelay;
 using Korga.Server.Extensions;
 using Korga.Server.Models;
 using Korga.Server.Utilities;

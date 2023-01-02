@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Korga.Server.Database.Entities;
+namespace Korga.Server.Database.EmailRelay;
 
 public class Email
 {

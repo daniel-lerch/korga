@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using Korga.Server.ChurchTools;
 using Korga.Server.Configuration;
-using Korga.Server.Database.Entities;
+using Korga.Server.Database.EmailRelay;
 using System.Linq;
 using System;
 

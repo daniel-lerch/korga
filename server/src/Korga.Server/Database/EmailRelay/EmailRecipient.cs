@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Korga.Server.Database.Entities;
+namespace Korga.Server.Database.EmailRelay;
 
 public class EmailRecipient
 {

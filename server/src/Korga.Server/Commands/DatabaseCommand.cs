@@ -1,5 +1,5 @@
 ﻿using Korga.Server.Database;
-using Korga.Server.Database.Entities;
+using Korga.Server.Database.EventRegistration;
 using McMaster.Extensions.CommandLineUtils;
 using System.Threading.Tasks;
 
