@@ -18,7 +18,8 @@ namespace Korga.Server.Tests.Http;
 
 public class PasswordResetControllerTests
 {
-    public class Fixture : IDisposable
+	// This fixture instance will be used for all tests in this class: https://xunit.net/docs/shared-context
+	public class Fixture : IDisposable
     {
         public Fixture()
         {

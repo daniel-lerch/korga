@@ -43,7 +43,8 @@ public class Program
         {
             return await CreateCliHostBuilder().RunCommandLineApplicationAsync<KorgaCommand>(args, app =>
             {
-                scope = app.CreateScope();
+                // This method disposes the host after shutdown. Therefore, it might be dangerous to dispose the scope after that.
+                var scope = app.CreateScope();
                 app.Conventions.UseConstructorInjection(scope.ServiceProvider);
             });
         }
@@ -76,7 +77,8 @@ public class Program
             .ConfigureServices((context, services) =>
             {
                 services.AddKorgaOptions(context.Configuration);
-                services.AddSingleton<LdapService>();
+				services.AddSingleton(PhysicalConsole.Singleton);
+				services.AddSingleton<LdapService>();
                 services.AddKorgaMySqlDatabase();
                 services.AddTransient<LdapUidService>();
             });
