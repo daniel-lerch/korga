@@ -1,5 +1,4 @@
-﻿using Korga.Server.Database;
-using Korga.Server.Database.EventRegistration;
+﻿using Korga.EventRegistration.Entities;
 using Korga.Server.Models.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

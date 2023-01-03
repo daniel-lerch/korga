@@ -1,4 +1,4 @@
-﻿namespace Korga.Server.Models;
+﻿namespace Korga.EmailRelay;
 
 public enum DistributionListType
 {

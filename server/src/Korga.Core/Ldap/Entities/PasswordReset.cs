@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Korga.Server.Database.Ldap
+namespace Korga.Ldap.Entities
 {
     public class PasswordReset
     {

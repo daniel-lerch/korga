@@ -1,9 +1,8 @@
-﻿using Korga.Server.ChurchTools;
+﻿using Korga.EmailRelay;
+using Korga.EmailRelay.Entities;
+using Korga.Server.ChurchTools;
 using Korga.Server.Configuration;
-using Korga.Server.Database;
-using Korga.Server.Database.EmailRelay;
 using Korga.Server.Extensions;
-using Korga.Server.Models;
 using Korga.Server.Utilities;
 using MailKit;
 using MailKit.Net.Imap;

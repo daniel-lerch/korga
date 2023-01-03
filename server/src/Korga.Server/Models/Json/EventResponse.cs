@@ -1,4 +1,4 @@
-﻿using Korga.Server.Database.EventRegistration;
+﻿using Korga.EventRegistration.Entities;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 

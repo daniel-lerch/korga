@@ -22,6 +22,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2ED6D7FB-8
 		docs\docker-compose.yml = docs\docker-compose.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Korga.Core", "server\src\Korga.Core\Korga.Core.csproj", "{D1CEB029-9AFB-4464-BF93-DBA6216B4128}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +38,10 @@ Global
 		{2A484A88-F6BD-4B36-92C8-0675ADDD8CDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A484A88-F6BD-4B36-92C8-0675ADDD8CDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A484A88-F6BD-4B36-92C8-0675ADDD8CDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D1CEB029-9AFB-4464-BF93-DBA6216B4128}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1CEB029-9AFB-4464-BF93-DBA6216B4128}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1CEB029-9AFB-4464-BF93-DBA6216B4128}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1CEB029-9AFB-4464-BF93-DBA6216B4128}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -43,6 +49,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{E1C5CDEB-C3D5-4BE1-B823-5FD650AB1D08} = {565B1C55-E3A4-4B7E-9F8E-EF14AA917618}
 		{2A484A88-F6BD-4B36-92C8-0675ADDD8CDB} = {86DB2784-54F6-43CC-8F86-94E059B7DE59}
+		{D1CEB029-9AFB-4464-BF93-DBA6216B4128} = {565B1C55-E3A4-4B7E-9F8E-EF14AA917618}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {638049AA-35BE-4FFE-8370-373448555D24}

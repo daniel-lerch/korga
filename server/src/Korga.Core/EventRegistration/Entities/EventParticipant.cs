@@ -1,4 +1,4 @@
-﻿namespace Korga.Server.Database.EventRegistration;
+﻿namespace Korga.EventRegistration.Entities;
 
 public class EventParticipant
 {

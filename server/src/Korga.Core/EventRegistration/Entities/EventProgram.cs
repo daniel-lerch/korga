@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Korga.Server.Database.EventRegistration;
+namespace Korga.EventRegistration.Entities;
 
 public class EventProgram
 {

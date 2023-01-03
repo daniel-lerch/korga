@@ -1,14 +1,14 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using System.Collections.Generic;
-using System.Text.Json;
-using System.Threading.Tasks;
-using System.Threading;
+﻿using Korga.EmailRelay.Entities;
 using Korga.Server.ChurchTools;
 using Korga.Server.Configuration;
-using Korga.Server.Database.EmailRelay;
-using System.Linq;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Korga.Server.Services;
 

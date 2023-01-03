@@ -1,5 +1,4 @@
 ﻿using Korga.Server.Configuration;
-using Korga.Server.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

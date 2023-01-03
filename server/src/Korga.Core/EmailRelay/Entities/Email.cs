@@ -1,8 +1,7 @@
-﻿using Korga.Server.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace Korga.Server.Database.EmailRelay;
+namespace Korga.EmailRelay.Entities;
 
 public class Email
 {
