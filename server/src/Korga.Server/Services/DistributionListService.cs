@@ -1,5 +1,6 @@
 ﻿using Korga.EmailRelay.Entities;
 using Korga.Server.ChurchTools;
+using Korga.Server.ChurchTools.Api;
 using Korga.Server.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

@@ -1,6 +1,6 @@
 ﻿using Korga.EmailRelay;
 using Korga.EmailRelay.Entities;
-using Korga.Server.ChurchTools;
+using Korga.Server.ChurchTools.Api;
 using Korga.Server.Configuration;
 using Korga.Server.Extensions;
 using Korga.Server.Utilities;

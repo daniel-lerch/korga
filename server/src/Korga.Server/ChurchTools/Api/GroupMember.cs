@@ -1,4 +1,4 @@
-﻿namespace Korga.Server.ChurchTools;
+﻿namespace Korga.Server.ChurchTools.Api;
 
 public class GroupMember
 {

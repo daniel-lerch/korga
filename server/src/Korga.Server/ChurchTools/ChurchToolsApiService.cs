@@ -1,4 +1,5 @@
-﻿using Korga.Server.Configuration;
+﻿using Korga.Server.ChurchTools.Api;
+using Korga.Server.Configuration;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -22,56 +23,54 @@ public class ChurchToolsApiService : IDisposable
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Login", options.Value.ChurchToolsLoginToken);
     }
 
-    public async ValueTask<List<Group>> GetGroups(CancellationToken cancellationToken)
+    public ValueTask<List<Group>> GetGroups(CancellationToken cancellationToken)
     {
-        List<Group> groups = new();
-        ChurchToolsResponse<Group[]>? response;
-        int page = 0;
-
-        do
-        {
-            response = await httpClient.GetFromJsonAsync<ChurchToolsResponse<Group[]>>($"/api/groups?page={++page}&limit=100", cancellationToken);
-            
-            if (response == null || response.Meta == null)
-                throw new InvalidDataException();
-
-            groups.AddRange(response.Data);
-
-        } while (response.Meta.Pagination.Current < response.Meta.Pagination.LastPage);
-
-        return groups;
+        return InternalGetAllPages<Group>("/api/groups", cancellationToken);
     }
 
-    public async ValueTask<List<GroupMember>> GetGroupMembers(int groupId, CancellationToken cancellationToken)
+    public ValueTask<List<GroupMember>> GetGroupMembers(int groupId, CancellationToken cancellationToken)
     {
-        List<GroupMember> members = new();
-        ChurchToolsResponse<GroupMember[]>? response;
-        int page = 0;
-
-        do
-        {
-            response = await httpClient.GetFromJsonAsync<ChurchToolsResponse<GroupMember[]>>($"/api/groups/{groupId}/members?page={++page}&limit=100", cancellationToken);
-            
-            if (response == null || response.Meta == null)
-                throw new InvalidDataException();
-
-            members.AddRange(response.Data);
-
-        } while (response.Meta.Pagination.Current < response.Meta.Pagination.LastPage);
-
-        return members;
+        return InternalGetAllPages<GroupMember>($"/api/groups/{groupId}/members", cancellationToken);
     }
 
     public async ValueTask<Person> GetPerson(int personId, CancellationToken cancellationToken)
     {
-        ChurchToolsResponse<Person> person = await httpClient.GetFromJsonAsync<ChurchToolsResponse<Person>>($"/api/persons/{personId}", cancellationToken)
+        Response<Person> person = await httpClient.GetFromJsonAsync<Response<Person>>($"/api/persons/{personId}", cancellationToken)
             ?? throw new InvalidDataException();
 
         return person.Data;
+    }
+
+    public async ValueTask<PersonMasterdata> GetPersonMasterdata(CancellationToken cancellationToken)
+    {
+        Response<PersonMasterdata> personMasterdata = await httpClient.GetFromJsonAsync<Response<PersonMasterdata>>("/api/person/masterdata", cancellationToken)
+            ?? throw new InvalidDataException();
+
+        return personMasterdata.Data;
     }
 
     public void Dispose()
     {
         httpClient.Dispose();
     }
+
+    private async ValueTask<List<T>> InternalGetAllPages<T>(string url, CancellationToken cancellationToken)
+    {
+		List<T> items = new();
+		PaginatedResponse<T[]>? response;
+		int page = 0;
+
+		do
+		{
+			response = await httpClient.GetFromJsonAsync<PaginatedResponse<T[]>>($"{url}?page={++page}&limit=100", cancellationToken);
+
+			if (response == null || response.Meta == null)
+				throw new InvalidDataException();
+
+			items.AddRange(response.Data);
+
+		} while (response.Meta.Pagination.Current < response.Meta.Pagination.LastPage);
+
+		return items;
+	}
 }
