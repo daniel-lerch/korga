@@ -17,11 +17,11 @@ public class DistributionListService
 {
     private readonly IOptions<EmailRelayOptions> options;
     private readonly ILogger<DistributionListService> logger;
-    private readonly ChurchToolsApiService churchTools;
+    private readonly IChurchToolsApiService churchTools;
 
     private Dictionary<string, Group>? groupForAlias;
 
-    public DistributionListService(IOptions<EmailRelayOptions> options, ILogger<DistributionListService> logger, ChurchToolsApiService churchTools)
+    public DistributionListService(IOptions<EmailRelayOptions> options, ILogger<DistributionListService> logger, IChurchToolsApiService churchTools)
     {
         this.options = options;
         this.logger = logger;

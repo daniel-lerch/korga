@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Korga.Server.ChurchTools;
 
-public class ChurchToolsApiService : IDisposable
+public class ChurchToolsApiService : IChurchToolsApiService
 {
     private readonly HttpClient httpClient;
 

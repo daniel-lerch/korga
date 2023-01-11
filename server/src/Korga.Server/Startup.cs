@@ -28,7 +28,7 @@ public class Startup
 
         services.AddSingleton<LdapService>();
 
-        services.AddSingleton<ChurchToolsApiService>();
+        services.AddSingleton<IChurchToolsApiService, ChurchToolsApiService>();
 
         services.AddKorgaMySqlDatabase();
 

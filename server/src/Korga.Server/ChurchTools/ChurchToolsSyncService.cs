@@ -1,7 +1,7 @@
 ﻿using Korga.ChurchTools.Entities;
 using Korga.Server.ChurchTools.Api;
+using Korga.Server.Utilities;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -11,10 +11,10 @@ namespace Korga.Server.ChurchTools;
 
 public class ChurchToolsSyncService
 {
-	private readonly ChurchToolsApiService churchTools;
+	private readonly IChurchToolsApiService churchTools;
 	private readonly DatabaseContext database;
 
-	public ChurchToolsSyncService(ChurchToolsApiService churchTools, DatabaseContext database)
+	public ChurchToolsSyncService(IChurchToolsApiService churchTools, DatabaseContext database)
 	{
 		this.churchTools = churchTools;
 		this.database = database;
@@ -31,75 +31,36 @@ public class ChurchToolsSyncService
 		groupTypes.Sort((x, y) => x.Id.CompareTo(y.Id));
 		List<GroupType> dbGroupTypes = await database.GroupTypes.OrderBy(x => x.Id).ToListAsync(cancellationToken);
 
-		Sync(groupTypes, x => x.Id, dbGroupTypes, x => x.Id, x => database.GroupTypes.Add(new GroupType(x.Id, x.Name)), (x, y) => throw new NotImplementedException(), x => database.GroupTypes.Remove(x));
+		new GroupTypeSynchronizer(database).Sync(groupTypes, dbGroupTypes);
+		await database.SaveChangesAsync(cancellationToken);
 	}
 
-	private void Sync<TItem, TEntity>(IReadOnlyList<TItem> items, Func<TItem, int> getItemId, IReadOnlyList<TEntity> entities, Func<TEntity, int> getEntityId,
-		Action<TItem> add, Action<TItem, TEntity> update, Action<TEntity> delete)
+	private class GroupTypeSynchronizer : CollectionSynchronizer<PersonMasterdata.GroupType, GroupType, int>
 	{
-		if (items.Count == 0)
+		private readonly DatabaseContext database;
+
+		public GroupTypeSynchronizer(DatabaseContext database)
 		{
-			// Remove all entities
-			foreach (TEntity entity in entities) delete(entity);
+			this.database = database;
 		}
-		else if (entities.Count == 0)
+
+		protected override void Add(PersonMasterdata.GroupType src)
 		{
-			// Add all items
-			foreach (TItem item in items) add(item);
+			database.GroupTypes.Add(new GroupType(src.Id, src.Name));
 		}
-		else
+
+		protected override int GetDstKey(GroupType dest) => dest.Id;
+
+		protected override int GetSrcKey(PersonMasterdata.GroupType src) => src.Id;
+
+		protected override void Remove(GroupType dest)
 		{
-			for (int itemIdx = 0, entityIdx = 0; ;)
-			{
-				int itemId = getItemId(items[itemIdx]);
-				int entityId = getEntityId(entities[entityIdx]);
-				if (itemId < entityId)
-				{
-					// Add item
-					add(items[itemIdx]);
+			database.GroupTypes.Remove(dest);
+		}
 
-					itemIdx++;
-					if (itemIdx >= items.Count)
-					{
-						// Last item reached -> Remove all following entities
-						for (int i = entityIdx + 1; i < entities.Count; i++) delete(entities[i]);
-						break;
-					}
-				}
-				else if (itemId > entityId)
-				{
-					// Remove entity
-					delete(entities[entityIdx]);
-
-					entityIdx++;
-					if (entityIdx >= entities.Count)
-					{
-						// Last entity reached -> Add all following items
-						for (int i = itemIdx + 1; i < items.Count; i++) add(items[i]);
-						break;
-					}
-				}
-				else
-				{
-					// Update item
-					update(items[itemIdx], entities[entityIdx]);
-
-					itemIdx++;
-					entityIdx++;
-					if (itemIdx >= items.Count)
-					{
-						// Last item reached -> Remove all following entities
-						for (int i = entityIdx + 1; i < entities.Count; i++) delete(entities[i]);
-						break;
-					}
-					else if (entityIdx >= entities.Count)
-					{
-						// Last entity reached -> Add all following items
-						for (int i = itemIdx + 1; i < items.Count; i++) add(items[i]);
-						break;
-					}
-				}
-			}
+		protected override void Update(PersonMasterdata.GroupType src, GroupType dest)
+		{
+			dest.Name = src.Name;
 		}
 	}
 }
