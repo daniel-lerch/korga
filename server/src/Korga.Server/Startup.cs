@@ -51,6 +51,8 @@ public class Startup
 
         services.AddOpenApiDocument();
 
+        services.AddHostedService<ChurchToolsSyncHostedService>();
+
         // Use Configuration manually because options are not available in ConfigureService
         // Instead of returning a fake service when disabled we don't register any hosted service at all
         if (Configuration.GetValue<bool>("EmailRelay:Enable"))
