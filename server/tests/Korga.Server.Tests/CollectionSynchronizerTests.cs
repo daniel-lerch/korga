@@ -53,13 +53,13 @@ public class CollectionSynchronizerTests
 		Assert.Equal(5, destination[1].SortKey);
 	}
 
-	private class Source
+	private class Source : IIdentifiable<int>
 	{
 		public int Id { get; set; }
 		public int SortKey { get; set; }
 	}
 
-	private class Destination
+	private class Destination : IIdentifiable<int>
 	{
 		public int Id { get; set; }
 		public int SortKey { get; set; }
@@ -75,10 +75,6 @@ public class CollectionSynchronizerTests
 		{
 			Added.Add(new() { Id = src.Id, SortKey = src.SortKey });
 		}
-
-		protected override int GetDstKey(Destination dest) => dest.Id;
-
-		protected override int GetSrcKey(Source src) => src.Id;
 
 		protected override void Remove(Destination dest)
 		{

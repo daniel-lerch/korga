@@ -1,6 +1,6 @@
 ﻿namespace Korga.ChurchTools.Entities;
 
-public class GroupRole
+public class GroupRole : IIdentifiable<int>
 {
     public GroupRole(int id, int groupTypeId, string name)
     {

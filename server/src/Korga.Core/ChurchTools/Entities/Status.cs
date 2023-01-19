@@ -1,6 +1,6 @@
 ﻿namespace Korga.ChurchTools.Entities;
 
-public class Status
+public class Status : IIdentifiable<int>
 {
     public Status(int id, string name)
     {

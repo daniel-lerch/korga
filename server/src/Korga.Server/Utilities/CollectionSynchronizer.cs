@@ -3,7 +3,10 @@ using System;
 
 namespace Korga.Server.Utilities;
 
-public abstract class CollectionSynchronizer<TSrc, TDest, TKey> where TKey : IComparable<TKey>
+public abstract class CollectionSynchronizer<TSrc, TDest, TKey> 
+	where TSrc : IIdentifiable<TKey> 
+	where TDest : IIdentifiable<TKey>
+	where TKey : IComparable<TKey>
 {
 	public void Sync(IReadOnlyCollection<TSrc> source, IReadOnlyCollection<TDest> destination)
 	{
@@ -26,8 +29,8 @@ public abstract class CollectionSynchronizer<TSrc, TDest, TKey> where TKey : ICo
 
 			while (true)
 			{
-				TKey itemId = GetSrcKey(sourceEnumerator.Current);
-				TKey entityId = GetDstKey(destinationEnumerator.Current);
+				TKey itemId = sourceEnumerator.Current.Id;
+				TKey entityId = destinationEnumerator.Current.Id;
 				if (itemId.CompareTo(entityId) < 0)
 				{
 					// Add item
@@ -73,9 +76,6 @@ public abstract class CollectionSynchronizer<TSrc, TDest, TKey> where TKey : ICo
 			}
 		}
 	}
-
-	protected abstract TKey GetSrcKey(TSrc src);
-	protected abstract TKey GetDstKey(TDest dest);
 
 	protected abstract void Add(TSrc src);
 	protected abstract void Update(TSrc src, TDest dest);

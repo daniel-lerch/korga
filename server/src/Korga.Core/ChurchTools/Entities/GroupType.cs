@@ -1,6 +1,6 @@
 ﻿namespace Korga.ChurchTools.Entities;
 
-public class GroupType
+public class GroupType : IIdentifiable<int>
 {
     public GroupType(int id, string name)
     {

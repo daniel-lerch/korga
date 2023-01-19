@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Korga.Server.Utilities;
+using System.Collections.Generic;
 
 namespace Korga.Server.ChurchTools.Api;
 
@@ -15,7 +16,7 @@ public class PersonMasterdata
 	public List<GroupType> GroupTypes { get; set; }
 	public List<Status> Statuses { get; set; }
 
-	public record Role(int Id, int GroupTypeId, string Name, int SortKey) { }
-	public record GroupType(int Id, string Name, int SortKey) { }
-	public record Status(int Id, string Name, int SortKey) { }
+	public record Role(int Id, int GroupTypeId, string Name, int SortKey) : IIdentifiable<int> { }
+	public record GroupType(int Id, string Name, int SortKey) : IIdentifiable<int> { }
+	public record Status(int Id, string Name, int SortKey) : IIdentifiable<int> { }
 }

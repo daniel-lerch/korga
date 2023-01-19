@@ -40,7 +40,7 @@ public class ChurchToolsSyncHostedService : RepeatedExecutionService
 		groupTypes.Sort((x, y) => x.Id.CompareTo(y.Id));
 		List<GroupType> dbGroupTypes = await database.GroupTypes.OrderBy(x => x.Id).ToListAsync(cancellationToken);
 
-		new GroupTypeSynchronizer(database).Sync(groupTypes, dbGroupTypes);
+		new GroupTypeSynchronizer(database.GroupTypes).Sync(groupTypes, dbGroupTypes);
 		await database.SaveChangesAsync(cancellationToken);
 	}
 
@@ -49,7 +49,7 @@ public class ChurchToolsSyncHostedService : RepeatedExecutionService
 		groupRoles.Sort((x, y) => x.Id.CompareTo(y.Id));
 		List<GroupRole> dbGroupRoles = await database.GroupRoles.OrderBy(x => x.Id).ToListAsync(cancellationToken);
 
-		new GroupRoleSynchronizer(database).Sync(groupRoles, dbGroupRoles);
+		new GroupRoleSynchronizer(database.GroupRoles).Sync(groupRoles, dbGroupRoles);
 		await database.SaveChangesAsync(cancellationToken);
 	}
 
@@ -58,32 +58,18 @@ public class ChurchToolsSyncHostedService : RepeatedExecutionService
 		statuses.Sort((x, y) => x.Id.CompareTo(y.Id));
 		List<Status> dbStatuses = await database.Status.OrderBy(x => x.Id).ToListAsync(cancellationToken);
 
-		new StatusSynchronizer(database).Sync(statuses, dbStatuses);
+		new StatusSynchronizer(database.Status).Sync(statuses, dbStatuses);
 		await database.SaveChangesAsync(cancellationToken);
 	}
 
 
-	private class GroupTypeSynchronizer : CollectionSynchronizer<PersonMasterdata.GroupType, GroupType, int>
+	private class GroupTypeSynchronizer : CollectionToDbSetSynchronizer<PersonMasterdata.GroupType, GroupType, int>
 	{
-		private readonly DatabaseContext database;
+		public GroupTypeSynchronizer(DbSet<GroupType> destinationSet) : base(destinationSet) { }
 
-		public GroupTypeSynchronizer(DatabaseContext database)
+		protected override GroupType Convert(PersonMasterdata.GroupType src)
 		{
-			this.database = database;
-		}
-
-		protected override void Add(PersonMasterdata.GroupType src)
-		{
-			database.GroupTypes.Add(new GroupType(src.Id, src.Name));
-		}
-
-		protected override int GetDstKey(GroupType dest) => dest.Id;
-
-		protected override int GetSrcKey(PersonMasterdata.GroupType src) => src.Id;
-
-		protected override void Remove(GroupType dest)
-		{
-			database.GroupTypes.Remove(dest);
+			return new(src.Id, src.Name);
 		}
 
 		protected override void Update(PersonMasterdata.GroupType src, GroupType dest)
@@ -92,27 +78,13 @@ public class ChurchToolsSyncHostedService : RepeatedExecutionService
 		}
 	}
 
-	private class GroupRoleSynchronizer : CollectionSynchronizer<PersonMasterdata.Role, GroupRole, int>
+	private class GroupRoleSynchronizer : CollectionToDbSetSynchronizer<PersonMasterdata.Role, GroupRole, int>
 	{
-		private readonly DatabaseContext database;
+		public GroupRoleSynchronizer(DbSet<GroupRole> destinationSet) : base(destinationSet) { }
 
-		public GroupRoleSynchronizer(DatabaseContext database)
+		protected override GroupRole Convert(PersonMasterdata.Role src)
 		{
-			this.database = database;
-		}
-
-		protected override void Add(PersonMasterdata.Role src)
-		{
-			database.GroupRoles.Add(new(src.Id, src.GroupTypeId, src.Name));
-		}
-
-		protected override int GetDstKey(GroupRole dest) => dest.Id;
-
-		protected override int GetSrcKey(PersonMasterdata.Role src) => src.Id;
-
-		protected override void Remove(GroupRole dest)
-		{
-			database.GroupRoles.Remove(dest);
+			return new(src.Id, src.GroupTypeId, src.Name);
 		}
 
 		protected override void Update(PersonMasterdata.Role src, GroupRole dest)
@@ -122,27 +94,13 @@ public class ChurchToolsSyncHostedService : RepeatedExecutionService
 		}
 	}
 
-	private class StatusSynchronizer : CollectionSynchronizer<PersonMasterdata.Status, Status, int>
+	private class StatusSynchronizer : CollectionToDbSetSynchronizer<PersonMasterdata.Status, Status, int>
 	{
-		private readonly DatabaseContext database;
+		public StatusSynchronizer(DbSet<Status> destinationSet) : base(destinationSet) { }
 
-		public StatusSynchronizer(DatabaseContext database)
+		protected override Status Convert(PersonMasterdata.Status src)
 		{
-			this.database = database;
-		}
-
-		protected override void Add(PersonMasterdata.Status src)
-		{
-			database.Status.Add(new(src.Id, src.Name));
-		}
-
-		protected override int GetDstKey(Status dest) => dest.Id;
-
-		protected override int GetSrcKey(PersonMasterdata.Status src) => src.Id;
-
-		protected override void Remove(Status dest)
-		{
-			database.Status.Remove(dest);
+			return new(src.Id, src.Name);
 		}
 
 		protected override void Update(PersonMasterdata.Status src, Status dest)
