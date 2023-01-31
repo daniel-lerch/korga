@@ -1,4 +1,5 @@
-﻿using Korga.Server.Configuration;
+﻿using Korga.Server.ChurchTools;
+using Korga.Server.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +22,15 @@ public static class IServiceCollectionExtensions
         services.AddOptions<LdapOptions>()
             .Bind(configuration.GetSection("Ldap"))
             .ValidateDataAnnotations();
-        services.AddOptions<EmailRelayOptions>()
+		services.AddOptions<ChurchToolsOptions>()
+			.Bind(configuration.GetSection("ChurchTools"))
+			.Validate(options =>
+			{
+				if (!options.EnableSync) return true;
+				ValidationContext context = new(options);
+				return Validator.TryValidateObject(options, context, null);
+			});
+		services.AddOptions<EmailRelayOptions>()
             .Bind(configuration.GetSection("EmailRelay"))
             .Validate(options =>
             {

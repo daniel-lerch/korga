@@ -1,5 +1,4 @@
 ﻿using Korga.Server.ChurchTools.Api;
-using Korga.Server.Configuration;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -16,11 +15,11 @@ public class ChurchToolsApiService : IChurchToolsApiService
 {
     private readonly HttpClient httpClient;
 
-    public ChurchToolsApiService(IOptions<EmailRelayOptions> options)
+    public ChurchToolsApiService(IOptions<ChurchToolsOptions> options)
     {
         httpClient = new();
-        httpClient.BaseAddress = new UriBuilder("https", options.Value.ChurchToolsHost).Uri;
-        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Login", options.Value.ChurchToolsLoginToken);
+        httpClient.BaseAddress = new UriBuilder("https", options.Value.Host).Uri;
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Login", options.Value.LoginToken);
     }
 
     public ValueTask<List<Group>> GetGroups(CancellationToken cancellationToken)
