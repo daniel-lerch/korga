@@ -1,5 +1,5 @@
-﻿using Korga.ChurchTools.Entities;
-using Korga.Server.ChurchTools.Api;
+﻿using Korga.Server.ChurchTools.Api;
+using Korga.Server.Extensions;
 using Korga.Server.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,82 +30,31 @@ public class ChurchToolsSyncHostedService : RepeatedExecutionService
 		IChurchToolsApiService churchTools = serviceScope.ServiceProvider.GetRequiredService<IChurchToolsApiService>();
 
 		PersonMasterdata personMasterdata = await churchTools.GetPersonMasterdata(stoppingToken);
-		await SyncGroupTypes(database, personMasterdata.GroupTypes, stoppingToken);
-		await SyncGroupRoles(database, personMasterdata.Roles, stoppingToken);
-		await SyncStatuses(database, personMasterdata.Statuses, stoppingToken);
+
+		await Synchronize(database, personMasterdata.GroupTypes, database.GroupTypes, x => new(x.Id, x.Name), (x, y) => y.Name = x.Name, stoppingToken);
+
+		await Synchronize(database, personMasterdata.Roles, database.GroupRoles, x => new(x.Id, x.GroupTypeId, x.Name), (x, y) => { y.GroupTypeId = x.GroupTypeId; y.Name = x.Name; }, stoppingToken);
+
+		await Synchronize(database, personMasterdata.Statuses, database.Status, x => new(x.Id, x.Name), (x, y) => y.Name = x.Name, stoppingToken);
 	}
 
-	private async ValueTask SyncGroupTypes(DatabaseContext database, List<PersonMasterdata.GroupType> groupTypes, CancellationToken cancellationToken)
+	private async ValueTask Synchronize<TSrc, TDest>(DatabaseContext database, List<TSrc> apiResponses, DbSet<TDest> cachedSet, Func<TSrc, TDest> convert, Action<TSrc, TDest> update, CancellationToken cancellationToken)
+		where TSrc : IIdentifiable<int>
+		where TDest : class, IIdentifiable<int>
 	{
-		groupTypes.Sort((x, y) => x.Id.CompareTo(y.Id));
-		List<GroupType> dbGroupTypes = await database.GroupTypes.OrderBy(x => x.Id).ToListAsync(cancellationToken);
+		apiResponses.Sort((x, y) => x.Id.CompareTo(y.Id));
+		List<TDest> cachedValues = await cachedSet.OrderBy(x => x.Id).ToListAsync(cancellationToken);
 
-		new GroupTypeSynchronizer(database.GroupTypes).Sync(groupTypes, dbGroupTypes);
+		foreach ((TSrc? response, TDest? entity) in apiResponses.ContrastWith<TSrc, TDest, int>(cachedValues))
+		{
+			if (response == null)
+				cachedSet.Remove(entity!);
+			else if (entity == null)
+				cachedSet.Add(convert(response));
+			else
+				update(response, entity);
+		}
+
 		await database.SaveChangesAsync(cancellationToken);
-	}
-
-	private async ValueTask SyncGroupRoles(DatabaseContext database, List<PersonMasterdata.Role> groupRoles, CancellationToken cancellationToken)
-	{
-		groupRoles.Sort((x, y) => x.Id.CompareTo(y.Id));
-		List<GroupRole> dbGroupRoles = await database.GroupRoles.OrderBy(x => x.Id).ToListAsync(cancellationToken);
-
-		new GroupRoleSynchronizer(database.GroupRoles).Sync(groupRoles, dbGroupRoles);
-		await database.SaveChangesAsync(cancellationToken);
-	}
-
-	private async ValueTask SyncStatuses(DatabaseContext database, List<PersonMasterdata.Status> statuses, CancellationToken cancellationToken)
-	{
-		statuses.Sort((x, y) => x.Id.CompareTo(y.Id));
-		List<Status> dbStatuses = await database.Status.OrderBy(x => x.Id).ToListAsync(cancellationToken);
-
-		new StatusSynchronizer(database.Status).Sync(statuses, dbStatuses);
-		await database.SaveChangesAsync(cancellationToken);
-	}
-
-
-	private class GroupTypeSynchronizer : CollectionToDbSetSynchronizer<PersonMasterdata.GroupType, GroupType, int>
-	{
-		public GroupTypeSynchronizer(DbSet<GroupType> destinationSet) : base(destinationSet) { }
-
-		protected override GroupType Convert(PersonMasterdata.GroupType src)
-		{
-			return new(src.Id, src.Name);
-		}
-
-		protected override void Update(PersonMasterdata.GroupType src, GroupType dest)
-		{
-			dest.Name = src.Name;
-		}
-	}
-
-	private class GroupRoleSynchronizer : CollectionToDbSetSynchronizer<PersonMasterdata.Role, GroupRole, int>
-	{
-		public GroupRoleSynchronizer(DbSet<GroupRole> destinationSet) : base(destinationSet) { }
-
-		protected override GroupRole Convert(PersonMasterdata.Role src)
-		{
-			return new(src.Id, src.GroupTypeId, src.Name);
-		}
-
-		protected override void Update(PersonMasterdata.Role src, GroupRole dest)
-		{
-			dest.Name = src.Name;
-			dest.GroupTypeId = src.GroupTypeId;
-		}
-	}
-
-	private class StatusSynchronizer : CollectionToDbSetSynchronizer<PersonMasterdata.Status, Status, int>
-	{
-		public StatusSynchronizer(DbSet<Status> destinationSet) : base(destinationSet) { }
-
-		protected override Status Convert(PersonMasterdata.Status src)
-		{
-			return new(src.Id, src.Name);
-		}
-
-		protected override void Update(PersonMasterdata.Status src, Status dest)
-		{
-			dest.Name = src.Name;
-		}
 	}
 }
