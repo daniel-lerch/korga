@@ -69,6 +69,9 @@ public static class CollectionExtensions
 				}
 				if (!destinationEnumerator.MoveNext())
 				{
+					// Add item retrieved before when checking whether source is depleted
+					yield return (sourceEnumerator.Current, default);
+
 					// Last entity reached -> Add all following items
 					while (sourceEnumerator.MoveNext()) yield return (sourceEnumerator.Current, default);
 					break;
