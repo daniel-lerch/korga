@@ -55,6 +55,7 @@ public class Startup
         // Instead of returning a fake service when disabled we don't register any hosted service at all
         if (Configuration.GetValue<bool>("ChurchTools:EnableSync"))
         {
+            services.AddTransient<ChurchToolsSyncService>();
             services.AddHostedService<ChurchToolsSyncHostedService>();
         }
 

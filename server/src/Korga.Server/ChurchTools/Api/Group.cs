@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Korga.Server.ChurchTools.Api;
 
-public class Group
+public class Group : IIdentifiable<int>
 {
 	public Group(int id, Guid guid, string name, Dictionary<string, JsonElement> information)
 	{
