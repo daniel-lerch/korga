@@ -19,6 +19,7 @@ public sealed class DatabaseContext : DbContext
 	public DbSet<EventProgram> EventPrograms => Set<EventProgram>();
 	public DbSet<EventParticipant> EventParticipants => Set<EventParticipant>();
 
+	public DbSet<Person> People => Set<Person>();
 	public DbSet<Group> Groups => Set<Group>();
 	public DbSet<GroupRole> GroupRoles => Set<GroupRole>();
 	public DbSet<GroupType> GroupTypes => Set<GroupType>();
@@ -63,6 +64,11 @@ public sealed class DatabaseContext : DbContext
 
 	private void CreateChurchTools(ModelBuilder modelBuilder)
 	{
+		var person = modelBuilder.Entity<Person>();
+		person.HasKey(p => p.Id);
+		person.HasOne(p => p.Status).WithMany().HasForeignKey(p => p.StatusId);
+		person.Property(p => p.Id).ValueGeneratedNever();
+
 		var group = modelBuilder.Entity<Group>();
 		group.HasKey(x => x.Id);
 		group.HasOne(x => x.GroupType).WithMany().HasForeignKey(x => x.GroupTypeId);

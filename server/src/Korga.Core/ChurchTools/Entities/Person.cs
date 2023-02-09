@@ -1,4 +1,4 @@
-﻿namespace Korga.Server.ChurchTools.Api;
+﻿namespace Korga.ChurchTools.Entities;
 
 public class Person : IIdentifiable<int>
 {
@@ -12,8 +12,12 @@ public class Person : IIdentifiable<int>
 	}
 
 	public int Id { get; set; }
+
 	public int StatusId { get; set; }
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public string Email { get; set; }
+	public Status? Status { get; set; }
+
+
+	public string FirstName { get; set; }
+	public string LastName { get; set; }
+	public string Email { get; set; }
 }

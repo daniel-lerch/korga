@@ -32,6 +32,11 @@ public class ChurchToolsApiService : IChurchToolsApiService
         return InternalGetAllPages<GroupMember>($"/api/groups/{groupId}/members", cancellationToken);
     }
 
+    public ValueTask<List<Person>> GetPeople(CancellationToken cancellationToken)
+    {
+        return InternalGetAllPages<Person>("/api/persons", cancellationToken);
+    }
+
     public async ValueTask<Person> GetPerson(int personId, CancellationToken cancellationToken)
     {
         Response<Person> person = await httpClient.GetFromJsonAsync<Response<Person>>($"/api/persons/{personId}", cancellationToken)
