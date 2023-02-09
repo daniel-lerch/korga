@@ -24,17 +24,20 @@ public class ChurchToolsApiService : IChurchToolsApiService
 
     public ValueTask<List<Group>> GetGroups(CancellationToken cancellationToken)
     {
-        return InternalGetAllPages<Group>("/api/groups", cancellationToken);
+        return InternalGetAllPages<Group>("/api/groups", "&show_overdue_groups=true&show_inactive_groups=true", cancellationToken);
     }
 
-    public ValueTask<List<GroupMember>> GetGroupMembers(int groupId, CancellationToken cancellationToken)
+    public async ValueTask<List<GroupMember>> GetGroupMembers(CancellationToken cancellationToken)
     {
-        return InternalGetAllPages<GroupMember>($"/api/groups/{groupId}/members", cancellationToken);
+        Response<List<GroupMember>> groupMembers = await httpClient.GetFromJsonAsync<Response<List<GroupMember>>>("/api/groups/members", cancellationToken)
+            ?? throw new InvalidDataException();
+
+        return groupMembers.Data;
     }
 
     public ValueTask<List<Person>> GetPeople(CancellationToken cancellationToken)
     {
-        return InternalGetAllPages<Person>("/api/persons", cancellationToken);
+        return InternalGetAllPages<Person>("/api/persons", null, cancellationToken);
     }
 
     public async ValueTask<Person> GetPerson(int personId, CancellationToken cancellationToken)
@@ -58,7 +61,7 @@ public class ChurchToolsApiService : IChurchToolsApiService
         httpClient.Dispose();
     }
 
-    private async ValueTask<List<T>> InternalGetAllPages<T>(string url, CancellationToken cancellationToken)
+    private async ValueTask<List<T>> InternalGetAllPages<T>(string path, string? query, CancellationToken cancellationToken)
     {
 		List<T> items = new();
 		PaginatedResponse<T[]>? response;
@@ -66,7 +69,7 @@ public class ChurchToolsApiService : IChurchToolsApiService
 
 		do
 		{
-			response = await httpClient.GetFromJsonAsync<PaginatedResponse<T[]>>($"{url}?page={++page}&limit=100", cancellationToken);
+			response = await httpClient.GetFromJsonAsync<PaginatedResponse<T[]>>($"{path}?page={++page}&limit=100{query}", cancellationToken);
 
 			if (response == null || response.Meta == null)
 				throw new InvalidDataException();

@@ -37,11 +37,11 @@ public class DistributionListService
 
     public async ValueTask<EmailRecipient[]> GetRecipientsForGroup(Group group, long emailId, CancellationToken cancellationToken)
     {
-        var groupMembers = await churchTools.GetGroupMembers(group.Id, cancellationToken);
+        var groupMembers = await churchTools.GetGroupMembers(cancellationToken);
 
         List<(string EmailAddress, string GivenName, string FamilyName)> recipients = new();
 
-        foreach (GroupMember member in groupMembers)
+        foreach (GroupMember member in groupMembers.Where(x => x.GroupId == group.Id))
         {
             var person = await churchTools.GetPerson(member.PersonId, cancellationToken);
 

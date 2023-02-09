@@ -18,4 +18,5 @@ public class Group : IIdentifiable<int>
     public Guid Guid { get; set; }
     public string Name { get; set; }
     public Dictionary<string, JsonElement> Information { get; set; }
+	public int GroupTypeId => Information["groupTypeId"].GetInt32();
 }
