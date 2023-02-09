@@ -1,5 +1,6 @@
 ﻿using Korga.Server.ChurchTools;
 using Korga.Server.Configuration;
+using Korga.Server.EmailRelay;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

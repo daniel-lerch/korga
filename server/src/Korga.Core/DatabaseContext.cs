@@ -28,8 +28,8 @@ public sealed class DatabaseContext : DbContext
 
 	public DbSet<Email> Emails => Set<Email>();
 	public DbSet<EmailRecipient> EmailRecipients => Set<EmailRecipient>();
+	public DbSet<DistributionList> DistributionLists => Set<DistributionList>();
 	public DbSet<PersonFilter> PersonFilters => Set<PersonFilter>();
-	public DbSet<StatusFilterStatus> StatusFilterStatuses => Set<StatusFilterStatus>();
 
 	public DbSet<PasswordReset> PasswordResets => Set<PasswordReset>();
 
@@ -99,12 +99,16 @@ public sealed class DatabaseContext : DbContext
 	{
 		var email = modelBuilder.Entity<Email>();
 		email.HasKey(e => e.Id);
+		email.HasOne(e => e.DistributionList).WithMany().HasForeignKey(e => e.DistributionListId);
 		email.Property(e => e.DownloadTime).HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
-		email.Property(e => e.DistributionListType).HasConversion<string>();
 
 		var emailRecipient = modelBuilder.Entity<EmailRecipient>();
 		emailRecipient.HasKey(e => e.Id);
 		emailRecipient.HasOne(e => e.Email).WithMany(e => e.Recipients).HasForeignKey(e => e.EmailId);
+
+		var distributionList = modelBuilder.Entity<DistributionList>();
+		distributionList.HasKey(dl => dl.Id);
+		distributionList.HasAlternateKey(dl => dl.Alias);
 
 		var personFilter = modelBuilder.Entity<PersonFilter>();
 		personFilter.HasKey(f => f.Id);
@@ -114,11 +118,7 @@ public sealed class DatabaseContext : DbContext
 		groupFilter.HasOne(f => f.GroupRole).WithMany().HasForeignKey(f => f.GroupRoleId);
 
 		var statusFilter = modelBuilder.Entity<StatusFilter>();
-
-		var statusFilterStatus = modelBuilder.Entity<StatusFilterStatus>();
-		statusFilterStatus.HasKey(s => new { s.StatusFilterId, s.StatusId });
-		statusFilterStatus.HasOne(s => s.StatusFilter).WithMany().HasForeignKey(s => s.StatusFilterId);
-		statusFilterStatus.HasOne(s => s.Status).WithMany().HasForeignKey(s => s.StatusId);
+		statusFilter.HasOne(s => s.Status).WithMany().HasForeignKey(s => s.StatusId);
 	}
 
 	private void CreateLdap(ModelBuilder modelBuilder)

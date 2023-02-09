@@ -1,14 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Korga.Server.Configuration;
+namespace Korga.Server.EmailRelay;
 
 public class EmailRelayOptions
 {
     // Validation ensures that required values cannot be null
     public bool Enable { get; set; }
-    [Required] public string ChurchToolsHost { get; set; } = null!;
-    [Required] public string ChurchToolsLoginToken { get; set; } = null!;
-    [Required] public string ChurchToolsEmailAliasGroupField { get; set; } = null!;
 
     [Required] public string ImapHost { get; set; } = null!;
     [Range(1, 65535)] public int ImapPort { get; set; }

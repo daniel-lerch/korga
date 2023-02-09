@@ -1,7 +1,4 @@
-﻿using Korga.EmailRelay;
-using Korga.EmailRelay.Entities;
-using Korga.Server.ChurchTools.Api;
-using Korga.Server.Configuration;
+﻿using Korga.EmailRelay.Entities;
 using Korga.Server.Extensions;
 using Korga.Server.Utilities;
 using MailKit;
@@ -18,7 +15,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Korga.Server.Services;
+namespace Korga.Server.EmailRelay;
 
 public class EmailRelayHostedService : RepeatedExecutionService
 {
@@ -113,7 +110,7 @@ public class EmailRelayHostedService : RepeatedExecutionService
         await imap.DisconnectAsync(quit: true, stoppingToken);
     }
 
-    private async ValueTask FetchRecipients(DatabaseContext database, DistributionListService distributionList, CancellationToken stoppingToken)
+    private async ValueTask FetchRecipients(DatabaseContext database, DistributionListService distributionListService, CancellationToken stoppingToken)
     {
         List<Email> retrieved =
             await database.Emails.Where(m => m.Receiver != null && m.RecipientsFetchTime == default).ToListAsync(stoppingToken);
@@ -123,13 +120,13 @@ public class EmailRelayHostedService : RepeatedExecutionService
             int atIdx = email.Receiver!.IndexOf('@');
             string emailAlias = email.Receiver!.Remove(atIdx);
 
-            Group? group = await distributionList.GetGroupForAlias(emailAlias, stoppingToken);
+            DistributionList? distributionList = await database.DistributionLists.SingleOrDefaultAsync(x => x.Alias == emailAlias, stoppingToken);
 
-            if (group != null)
+            if (distributionList != null)
             {
-                EmailRecipient[] recipients = await distributionList.GetRecipientsForGroup(group, email.Id, stoppingToken);
+                EmailRecipient[] recipients = await distributionListService.GetRecipients(distributionList, email.Id, stoppingToken);
                 database.EmailRecipients.AddRange(recipients);
-                email.DistributionListType = DistributionListType.CTGroup;
+                email.DistributionListId = distributionList.Id;
                 email.RecipientsFetchTime = DateTime.UtcNow;
                 await database.SaveChangesAsync(stoppingToken);
 

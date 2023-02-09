@@ -16,6 +16,10 @@ public class Email
     }
 
     public long Id { get; set; }
+
+    public long? DistributionListId { get; set; }
+    public DistributionList? DistributionList { get; set; }
+
     public string Subject { get; set; }
     public string From { get; set; }
     public string? Sender { get; set; }
@@ -24,7 +28,6 @@ public class Email
     public byte[] Body { get; set; }
     public DateTime DownloadTime { get; set; }
     public DateTime RecipientsFetchTime { get; set; }
-    public DistributionListType DistributionListType { get; set; }
 
     public IEnumerable<EmailRecipient>? Recipients { get; set; }
 }
