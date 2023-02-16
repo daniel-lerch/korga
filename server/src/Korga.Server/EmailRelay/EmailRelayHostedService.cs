@@ -191,7 +191,7 @@ public class EmailRelayHostedService : RepeatedExecutionService
                 }
                 else
                 {
-                    mimeMessage.From.Add(new MailboxAddress(options.Value.SenderName, options.Value.SenderName));
+                    mimeMessage.From.Add(new MailboxAddress(options.Value.SenderName, options.Value.SenderAddress));
                     mimeMessage.Subject = "Unzustellbar: " + pending.Subject;
                     mimeMessage.Body = new TextPart(MimeKit.Text.TextFormat.Plain) { Text = recipient.ErrorMessage };
                 }
