@@ -1,5 +1,7 @@
 ﻿using Korga.EmailRelay.Entities;
 using McMaster.Extensions.CommandLineUtils;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 #pragma warning disable CA1822 // Mark members as static
@@ -8,7 +10,7 @@ using System.Threading.Tasks;
 namespace Korga.Server.Commands;
 
 [Command("distribution-list")]
-[Subcommand(typeof(Create))]
+[Subcommand(typeof(Create), typeof(List))]
 public class DistributionListCommand
 {
 	private int OnExecute(CommandLineApplication app)
@@ -51,6 +53,33 @@ public class DistributionListCommand
 			{
 				console.Out.WriteLine("Invalid alias");
 				return 1;
+			}
+		}
+	}
+
+	[Command("list")]
+	public class List
+	{
+		private async Task OnExecute(IConsole console, DatabaseContext database)
+		{
+			List<DistributionList> distributionLists = await database.DistributionLists.Include(dl => dl.Filters).ToListAsync();
+			foreach (DistributionList distributionList in distributionLists)
+			{
+				console.Out.WriteLine("#{0} Alias: {1}", distributionList.Id, distributionList.Alias);
+
+				foreach (PersonFilter filter in distributionList.Filters!)
+				{
+					if (filter is GroupFilter groupFilter)
+					{
+						console.Out.WriteLine("- Group Filter Id:{0} Role:{1}", groupFilter.GroupId, groupFilter.GroupRoleId);
+					}
+					else if (filter is StatusFilter statusFilter)
+					{
+						console.Out.WriteLine("- Status Filter Id:{0}", statusFilter.StatusId);
+					}
+				}
+
+				console.Out.WriteLine();
 			}
 		}
 	}

@@ -112,6 +112,7 @@ public sealed class DatabaseContext : DbContext
 
 		var personFilter = modelBuilder.Entity<PersonFilter>();
 		personFilter.HasKey(f => f.Id);
+		personFilter.HasOne(f => f.DistributionList).WithMany(dl => dl.Filters).HasForeignKey(f => f.DistributionListId);
 
 		var groupFilter = modelBuilder.Entity<GroupFilter>();
 		groupFilter.HasOne(f => f.Group).WithMany().HasForeignKey(f => f.GroupId);

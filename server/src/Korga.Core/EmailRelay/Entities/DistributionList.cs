@@ -9,4 +9,6 @@ public class DistributionList
 
 	public long Id { get; set; }
 	public string Alias { get; set; }
+
+	public IEnumerable<PersonFilter>? Filters { get; set; }
 }
