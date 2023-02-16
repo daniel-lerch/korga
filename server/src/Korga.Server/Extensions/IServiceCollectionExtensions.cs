@@ -50,7 +50,10 @@ public static class IServiceCollectionExtensions
             var options = services.GetRequiredService<IOptions<DatabaseOptions>>();
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
             optionsBuilder.UseLoggerFactory(loggerFactory);
-            optionsBuilder.UseMySql(options.Value.ConnectionString, ServerVersion.AutoDetect(options.Value.ConnectionString));
+            optionsBuilder.UseMySql(
+                options.Value.ConnectionString,
+                ServerVersion.AutoDetect(options.Value.ConnectionString),
+                builder => builder.MigrationsAssembly($"{nameof(Korga)}.{nameof(Server)}"));
         });
 
         return services;

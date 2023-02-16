@@ -1,5 +1,6 @@
 ﻿using Korga.EventRegistration.Entities;
 using McMaster.Extensions.CommandLineUtils;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
 #pragma warning disable CA1822 // Mark members as static
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 namespace Korga.Server.Commands;
 
 [Command("database")]
-[Subcommand(typeof(Create), typeof(Delete), typeof(Populate))]
+[Subcommand(typeof(Migrate), typeof(Create), typeof(Delete), typeof(Populate))]
 public class DatabaseCommand
 {
     private const string populateDescription = "Fills an existing database with example data for testing.";
@@ -17,6 +18,15 @@ public class DatabaseCommand
     {
         app.ShowHint();
         return 1;
+    }
+
+    [Command("migrate")]
+    public class Migrate
+    {
+        private async Task OnExecute(DatabaseContext database)
+        {
+            await database.Database.MigrateAsync();
+        }
     }
 
     [Command("create")]
