@@ -24,17 +24,11 @@ public abstract class RepeatedExecutionService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
+			stopwatch.Start();
+			
             try
-            {
-                stopwatch.Start();
-
+			{
                 await ExecuteOnce(stoppingToken);
-
-                stopwatch.Stop();
-                TimeSpan timeout = Interval - stopwatch.Elapsed;
-                stopwatch.Reset();
-
-                if (timeout.Ticks > 0) await Task.Delay(timeout, stoppingToken);
             }
             catch (OperationCanceledException)
             {
@@ -44,8 +38,14 @@ public abstract class RepeatedExecutionService : BackgroundService
             {
                 logger.LogCritical(ex, "An unhandled exception occurred in a background service");
             }
-        }
-    }
+
+			stopwatch.Stop();
+			TimeSpan timeout = Interval - stopwatch.Elapsed;
+			stopwatch.Reset();
+
+			if (timeout.Ticks > 0) await Task.Delay(timeout, stoppingToken);
+		}
+	}
 
     protected abstract ValueTask ExecuteOnce(CancellationToken stoppingToken);
 }
