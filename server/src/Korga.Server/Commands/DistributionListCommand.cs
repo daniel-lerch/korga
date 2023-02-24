@@ -26,6 +26,7 @@ public class DistributionListCommand
 		[Option] public int? StatusId { get; set; }
 		[Option] public int? GroupId { get; set; }
 		[Option("--group-role-id")] public int? GroupRoleId { get; set; }
+		[Option] public int? PersonId { get; set; }
 
 		private async Task<int> OnExecute(IConsole console, DatabaseContext database)
 		{
@@ -44,6 +45,12 @@ public class DistributionListCommand
 				if (GroupId.HasValue)
 				{
 					database.PersonFilters.Add(new GroupFilter() { DistributionListId = distributionList.Id, GroupId = GroupId.Value, GroupRoleId = GroupRoleId });
+					await database.SaveChangesAsync();
+				}
+
+				if (PersonId.HasValue)
+				{
+					database.PersonFilters.Add(new SinglePerson() { DistributionListId = distributionList.Id, PersonId = PersonId.Value });
 					await database.SaveChangesAsync();
 				}
 
@@ -71,11 +78,15 @@ public class DistributionListCommand
 				{
 					if (filter is GroupFilter groupFilter)
 					{
-						console.Out.WriteLine("- Group Filter Id:{0} Role:{1}", groupFilter.GroupId, groupFilter.GroupRoleId);
+						console.Out.WriteLine("- Group Filter Id: {0} Role :{1}", groupFilter.GroupId, groupFilter.GroupRoleId);
 					}
 					else if (filter is StatusFilter statusFilter)
 					{
-						console.Out.WriteLine("- Status Filter Id:{0}", statusFilter.StatusId);
+						console.Out.WriteLine("- Status Filter Id: {0}", statusFilter.StatusId);
+					}
+					else if (filter is SinglePerson singlePerson)
+					{
+						console.Out.WriteLine("- Single Person Id: {0}", singlePerson.PersonId);
 					}
 				}
 

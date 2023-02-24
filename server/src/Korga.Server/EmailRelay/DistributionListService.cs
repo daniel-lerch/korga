@@ -1,5 +1,6 @@
 ﻿using Korga.ChurchTools.Entities;
 using Korga.EmailRelay.Entities;
+using Korga.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,15 +20,27 @@ public class DistributionListService
 
 	public async ValueTask<EmailRecipient[]> GetRecipients(DistributionList distributionList, long emailId, CancellationToken cancellationToken)
 	{
-		List<PersonFilter> personFilters = await database.PersonFilters.Where(pf => pf.DistributionListId == distributionList.Id).ToListAsync(cancellationToken);
+		return (await GetPeople(distributionList, cancellationToken))
+		// Avoid duplicate emails for married couples with a shared email address
+			.GroupBy(p => p.Email)
+			.Select(grouping => new EmailRecipient(
+				emailAddress: grouping.Key,
+				fullName: string.Join(", ", grouping.Select(r => r.FirstName)) + ' ' + grouping.First().LastName)
+			{ EmailId = emailId })
+			.ToArray();
+	}
 
-		List<Person> recipients = new();
+	public async ValueTask<IEnumerable<Person>> GetPeople(DistributionList distributionList, CancellationToken cancellationToken)
+	{
+		List<PersonFilter> personFilters = await database.PersonFilters.Where(f => f.DistributionListId == distributionList.Id).ToListAsync(cancellationToken);
+		
+		HashSet<Person> people = new();
 
 		foreach (PersonFilter personFilter in personFilters)
 		{
 			if (personFilter is GroupFilter groupFilter)
 			{
-				recipients.AddRange(
+				people.AddRange(
 					await database.GroupMembers
 						.Where(m => m.GroupId == groupFilter.GroupId && (groupFilter.GroupRoleId == null || m.GroupRoleId == groupFilter.GroupRoleId))
 						.Join(database.People, m => m.PersonId, p => p.Id, (m, p) => p)
@@ -35,20 +48,18 @@ public class DistributionListService
 			}
 			else if (personFilter is StatusFilter statusFilter)
 			{
-				recipients.AddRange(
+				people.AddRange(
 					await database.People
 						.Where(p => p.StatusId == statusFilter.StatusId && !string.IsNullOrEmpty(p.Email))
 						.ToListAsync(cancellationToken));
 			}
+			else if (personFilter is SinglePerson singlePerson)
+			{
+				people.Add(
+					await database.People.SingleAsync(p => p.Id == singlePerson.PersonId, cancellationToken));
+			}
 		}
 
-		// Avoid duplicate emails for married couples with a shared email address
-		return recipients
-			.GroupBy(p => p.Email)
-			.Select(grouping => new EmailRecipient(
-				emailAddress: grouping.Key,
-				fullName: string.Join(", ", grouping.Select(r => r.FirstName)) + ' ' + grouping.First().LastName)
-			{ EmailId = emailId })
-			.ToArray();
+		return people;
 	}
 }

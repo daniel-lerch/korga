@@ -120,6 +120,9 @@ public sealed class DatabaseContext : DbContext
 
 		var statusFilter = modelBuilder.Entity<StatusFilter>();
 		statusFilter.HasOne(s => s.Status).WithMany().HasForeignKey(s => s.StatusId);
+
+		var singlePerson = modelBuilder.Entity<SinglePerson>();
+		singlePerson.HasOne(p => p.Person).WithMany().HasForeignKey(p => p.PersonId);
 	}
 
 	private void CreateLdap(ModelBuilder modelBuilder)

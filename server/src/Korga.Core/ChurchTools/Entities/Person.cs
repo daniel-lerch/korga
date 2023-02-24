@@ -20,4 +20,19 @@ public class Person : IIdentifiable<int>
 	public string FirstName { get; set; }
 	public string LastName { get; set; }
 	public string Email { get; set; }
+
+	public override bool Equals(object? obj)
+	{
+		return obj is Person person &&
+			   Id == person.Id &&
+			   StatusId == person.StatusId &&
+			   FirstName == person.FirstName &&
+			   LastName == person.LastName &&
+			   Email == person.Email;
+	}
+
+	public override int GetHashCode()
+	{
+		return HashCode.Combine(Id, StatusId, FirstName, LastName, Email);
+	}
 }
