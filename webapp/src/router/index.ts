@@ -37,6 +37,14 @@ const routes: Array<RouteRecordRaw> = [
     component: () =>
       import(/* webpackChunkName: "password" */ "../views/PasswordHash.vue"),
   },
+  {
+    path: "/distribution-lists",
+    name: "DistributionLists",
+    component: () =>
+      import(
+        /* webpackChunkName: "distribution-list" */ "../views/DistributionLists.vue"
+      ),
+  },
 ];
 
 const router = createRouter({

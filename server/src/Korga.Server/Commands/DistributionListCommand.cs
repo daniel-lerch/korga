@@ -78,7 +78,10 @@ public class DistributionListCommand
 				{
 					if (filter is GroupFilter groupFilter)
 					{
-						console.Out.WriteLine("- Group Filter Id: {0} Role :{1}", groupFilter.GroupId, groupFilter.GroupRoleId);
+						if (groupFilter.GroupRoleId.HasValue)
+							console.Out.WriteLine("- Group Filter Id: {0} Role: {1}", groupFilter.GroupId, groupFilter.GroupRoleId);
+						else
+							console.Out.WriteLine("- Group Filter Id: {0}", groupFilter.GroupId);
 					}
 					else if (filter is StatusFilter statusFilter)
 					{
