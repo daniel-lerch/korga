@@ -1,6 +1,5 @@
 ﻿using Korga.Server.Commands;
 using Korga.Server.Configuration;
-using Korga.Server.Database;
 using Korga.Server.Services;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.EntityFrameworkCore;

@@ -1,6 +1,5 @@
-﻿using Korga.Server.Configuration;
-using Korga.Server.Database;
-using Korga.Server.Database.Entities;
+﻿using Korga.Ldap.Entities;
+using Korga.Server.Configuration;
 using Korga.Server.Ldap.ObjectClasses;
 using Korga.Server.Services;
 using McMaster.Extensions.CommandLineUtils;

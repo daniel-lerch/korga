@@ -1,5 +1,4 @@
-﻿using Korga.Server.Database;
-using Korga.Server.Database.Entities;
+﻿using Korga.Ldap.Entities;
 using Korga.Server.Ldap.ObjectClasses;
 using Korga.Server.Models.Json;
 using Korga.Server.Services;

@@ -1,18 +1,17 @@
-﻿using Korga.Server.Database.Entities;
-using Korga.Server.Database;
+﻿using Korga.Ldap.Entities;
+using Korga.Server.Ldap.ObjectClasses;
 using Korga.Server.Models.Json;
+using Korga.Server.Services;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Net.Http;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Xunit;
-using Korga.Server.Services;
-using System.Net.Http.Json;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using Korga.Server.Ldap.ObjectClasses;
 
 namespace Korga.Server.Tests.Http;
 

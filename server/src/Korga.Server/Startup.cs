@@ -1,4 +1,5 @@
 using Korga.Server.ChurchTools;
+using Korga.Server.EmailRelay;
 using Korga.Server.Extensions;
 using Korga.Server.Services;
 using Microsoft.AspNetCore.Builder;
@@ -28,7 +29,7 @@ public class Startup
 
         services.AddSingleton<LdapService>();
 
-        services.AddSingleton<ChurchToolsApiService>();
+        services.AddSingleton<IChurchToolsApiService, ChurchToolsApiService>();
 
         services.AddKorgaMySqlDatabase();
 
@@ -53,6 +54,12 @@ public class Startup
 
         // Use Configuration manually because options are not available in ConfigureService
         // Instead of returning a fake service when disabled we don't register any hosted service at all
+        if (Configuration.GetValue<bool>("ChurchTools:EnableSync"))
+        {
+            services.AddTransient<ChurchToolsSyncService>();
+            services.AddHostedService<ChurchToolsSyncHostedService>();
+        }
+
         if (Configuration.GetValue<bool>("EmailRelay:Enable"))
         {
             services.AddScoped<DistributionListService>();
