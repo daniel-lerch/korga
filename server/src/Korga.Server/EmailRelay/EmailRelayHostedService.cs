@@ -41,7 +41,7 @@ public class EmailRelayHostedService : RepeatedExecutionService
 
         await FetchRecipients(database, distributionList, stoppingToken);
 
-        await DeliverToRecipients(database, stoppingToken);
+        await ConnectAndDeliverToRecipients(database, stoppingToken);
     }
 
     private async ValueTask RetrieveAndSaveMessages(DatabaseContext database, CancellationToken stoppingToken)
@@ -150,84 +150,105 @@ public class EmailRelayHostedService : RepeatedExecutionService
         }
     }
 
-    private async ValueTask DeliverToRecipients(DatabaseContext database, CancellationToken stoppingToken)
-    {
-        using SmtpClient smtpClient = new();
-        await smtpClient.ConnectAsync(options.Value.SmtpHost, options.Value.SmtpPort, options.Value.SmtpUseSsl, stoppingToken);
-        await smtpClient.AuthenticateAsync(options.Value.SmtpUsername, options.Value.SmtpPassword, stoppingToken);
+    private async ValueTask ConnectAndDeliverToRecipients(DatabaseContext database, CancellationToken stoppingToken)
+	{
+		using SmtpClient smtpClient = new();
+		await smtpClient.ConnectAsync(options.Value.SmtpHost, options.Value.SmtpPort, options.Value.SmtpUseSsl, stoppingToken);
+		await smtpClient.AuthenticateAsync(options.Value.SmtpUsername, options.Value.SmtpPassword, stoppingToken);
 
-        // Get emails one by one for lower memory usage
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            Email? pending = await
-                (from m in database.Emails.Where(m => m.RecipientsFetchTime != default)
-                 join r in database.EmailRecipients.Where(r => r.DeliveryTime == default) on m.Id equals r.EmailId
-                 orderby m.Id
-                 select m)
-                 .FirstOrDefaultAsync(stoppingToken);
+		await DeliverToRecipients(database, smtpClient, stoppingToken);
 
-            if (pending == null) break;
+		await smtpClient.DisconnectAsync(quit: true, stoppingToken);
+	}
 
-            MimeEntity body;
-            using (System.IO.MemoryStream memoryStream = new(pending.Body))
-                body = MimeEntity.Load(memoryStream);
+	private async ValueTask DeliverToRecipients(DatabaseContext database, SmtpClient smtpClient, CancellationToken stoppingToken)
+	{
+		// Get emails one by one for lower memory usage
+		while (!stoppingToken.IsCancellationRequested)
+		{
+			Email? pending = await
+				(from m in database.Emails.Where(m => m.RecipientsFetchTime != default)
+				 join r in database.EmailRecipients.Where(r => r.DeliveryTime == default) on m.Id equals r.EmailId
+				 orderby m.Id
+				 select m)
+				 .FirstOrDefaultAsync(stoppingToken);
 
-            List<EmailRecipient> recipients = await
-                database.EmailRecipients.Where(r => r.EmailId == pending.Id && r.DeliveryTime == default).ToListAsync(stoppingToken);
+			if (pending == null) break;
 
-            logger.LogInformation("Delivering email #{Id} to {RecipientsCount} recipients", pending.Id, recipients.Count);
+			MimeEntity body;
+			using (System.IO.MemoryStream memoryStream = new(pending.Body))
+				body = MimeEntity.Load(memoryStream);
 
-            foreach (EmailRecipient recipient in recipients)
-            {
-                MimeMessage mimeMessage = new();
-                mimeMessage.To.Add(new MailboxAddress(recipient.FullName, recipient.EmailAddress));
+			List<EmailRecipient> recipients = await
+				database.EmailRecipients.Where(r => r.EmailId == pending.Id && r.DeliveryTime == default).ToListAsync(stoppingToken);
 
-                if (recipient.ErrorMessage == null)
+			logger.LogInformation("Delivering email #{Id} to {RecipientsCount} recipients", pending.Id, recipients.Count);
+
+			foreach (EmailRecipient recipient in recipients)
+			{
+				MimeMessage mimeMessage = new();
+				mimeMessage.To.Add(new MailboxAddress(recipient.FullName, recipient.EmailAddress));
+
+				if (recipient.ErrorMessage == null)
+				{
+					mimeMessage.From.Add(MailboxAddress.Parse(pending.From));
+					mimeMessage.Sender = new MailboxAddress(options.Value.SenderName, options.Value.SenderAddress);
+					mimeMessage.Subject = pending.Subject;
+					mimeMessage.Body = body;
+				}
+				else
+				{
+					mimeMessage.From.Add(new MailboxAddress(options.Value.SenderName, options.Value.SenderAddress));
+					mimeMessage.Subject = "Unzustellbar: " + pending.Subject;
+					mimeMessage.Body = new TextPart(MimeKit.Text.TextFormat.Plain) { Text = recipient.ErrorMessage };
+				}
+
+				try
+				{
+					await smtpClient.SendAsync(mimeMessage, stoppingToken);
+
+					recipient.DeliveryTime = DateTime.UtcNow;
+
+					// Don't cancel this operation because messages would sent twice otherwise
+					await database.SaveChangesAsync(CancellationToken.None);
+
+					logger.LogInformation("Delivered email #{Id} to {FullName} <{EmailAddress}>",
+						pending.Id, recipient.FullName, recipient.EmailAddress);
+				}
+				catch (SmtpCommandException ex) when (ex.StatusCode == SmtpStatusCode.MailboxBusy)
+				{
+					// We have to handle the case of an SMTP rate limit when multiple customers are supposed to receive a mail at the same time
+					// Strato for reference only allows you to send 50 emails without delay (September 2021)
+					//
+					// RFC 821 defines common status code as 450 mailbox unavailable (busy or blocked for policy reasons)
+					// RFC 3463 defines enhanced status code as 4.7.X for persistent transient failures caused by security or policy status
+
+					logger.LogInformation("Mailbox busy. This is most likely caused by a temporary rate limit.");
+					return;
+				}
+                catch (SmtpCommandException ex) when (ex.StatusCode == SmtpStatusCode.MailboxUnavailable && ex.Message.Contains("5.7.26"))
                 {
-                    mimeMessage.From.Add(MailboxAddress.Parse(pending.From));
-                    mimeMessage.Sender = new MailboxAddress(options.Value.SenderName, options.Value.SenderAddress);
-                    mimeMessage.Subject = pending.Subject;
-                    mimeMessage.Body = body;
-                }
-                else
-                {
-                    mimeMessage.From.Add(new MailboxAddress(options.Value.SenderName, options.Value.SenderAddress));
-                    mimeMessage.Subject = "Unzustellbar: " + pending.Subject;
-                    mimeMessage.Body = new TextPart(MimeKit.Text.TextFormat.Plain) { Text = recipient.ErrorMessage };
-                }
-
-                try
-                {
-                    await smtpClient.SendAsync(mimeMessage, stoppingToken);
-                }
-                catch (SmtpCommandException ex) when (ex.StatusCode == SmtpStatusCode.MailboxBusy)
-                {
-                    // We have to handle the case of an SMTP rate limit when multiple customers are supposed to receive a mail at the same time
-                    // Strato for reference only allows you to send 50 emails without delay (September 2021)
+                    // We have to handle emails being rejected permanently for policy violations like From headers violating DMARC policies
                     //
-                    // RFC 821 defines common status code as 450 mailbox unavailable (busy or blocked for policy reasons)
-                    // RFC 3463 defines enhanced status code as 4.7.X for persistent transient failures caused by security or policy status
+                    // RFC 7372 defines enhanced status code X.7.26 for multiple authentication failures associated to common status code 550
 
-                    logger.LogInformation("Mailbox busy. This is most likely caused by a temporary rate limit.");
-                    break;
+                    logger.LogWarning("Email #{Id} has been rejected by our SMTP server for multiple authentication failures: {ErrorMessage}",
+                        pending.Id, ex.Message);
+
+                    // Set delivery time to prevent this email from being attempted again
+                    recipient.DeliveryTime = DateTime.UtcNow;
+                    recipient.ErrorMessage = ex.Message;
+
+                    await database.SaveChangesAsync(stoppingToken);
+                    return;
                 }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Sending email #{Id} to {FullName} <{EmailAddress}> failed",
-                        pending.Id, recipient.FullName, recipient.EmailAddress);
-                    break;
-                }
-
-                recipient.DeliveryTime = DateTime.UtcNow;
-
-                // Don't cancel this operation because messages would sent twice otherwise
-                await database.SaveChangesAsync(CancellationToken.None);
-
-                logger.LogInformation("Delivered email #{Id} to {FullName} <{EmailAddress}>",
-                    pending.Id, recipient.FullName, recipient.EmailAddress);
-            }
-        }
-
-        await smtpClient.DisconnectAsync(quit: true, stoppingToken);
-    }
+				catch (Exception ex)
+				{
+					logger.LogError(ex, "Sending email #{Id} to {FullName} <{EmailAddress}> failed",
+						pending.Id, recipient.FullName, recipient.EmailAddress);
+					return;
+				}
+			}
+		}
+	}
 }
