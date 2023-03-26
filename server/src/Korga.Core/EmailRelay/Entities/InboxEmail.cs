@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using Korga.EmailDelivery.Entities;
 
 namespace Korga.EmailRelay.Entities;
 
-public class Email
+public class InboxEmail
 {
-    public Email(string subject, string from, string? sender, string to, string? receiver, byte[] body)
+    public InboxEmail(uint uniqueId, string subject, string from, string? sender, string to, string? receiver, byte[] header, byte[] body)
     {
+        UniqueId = uniqueId;
         Subject = subject;
         From = from;
         Sender = sender;
         To = to;
         Receiver = receiver;
+        Header = header;
         Body = body;
     }
 
@@ -20,14 +23,16 @@ public class Email
     public long? DistributionListId { get; set; }
     public DistributionList? DistributionList { get; set; }
 
+    public uint UniqueId { get; set; }
     public string Subject { get; set; }
     public string From { get; set; }
     public string? Sender { get; set; }
     public string To { get; set; }
     public string? Receiver { get; set; }
+    public byte[] Header { get; set; }
     public byte[] Body { get; set; }
     public DateTime DownloadTime { get; set; }
-    public DateTime RecipientsFetchTime { get; set; }
+    public DateTime ProcessingCompletedTime { get; set; }
 
-    public IEnumerable<EmailRecipient>? Recipients { get; set; }
+    public IEnumerable<OutboxEmail>? Recipients { get; set; }
 }

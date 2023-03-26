@@ -1,5 +1,6 @@
 ﻿using Korga.Server.ChurchTools;
 using Korga.Server.Configuration;
+using Korga.Server.EmailDelivery;
 using Korga.Server.EmailRelay;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -31,7 +32,15 @@ public static class IServiceCollectionExtensions
 				ValidationContext context = new(options);
 				return Validator.TryValidateObject(options, context, null);
 			});
-		services.AddOptions<EmailRelayOptions>()
+        services.AddOptions<EmailDeliveryOptions>()
+            .Bind(configuration.GetSection("EmailDelivery"))
+            .Validate(options =>
+            {
+                if (!options.Enable) return true;
+                ValidationContext context = new(options);
+                return Validator.TryValidateObject(options, context, null);
+            });
+        services.AddOptions<EmailRelayOptions>()
             .Bind(configuration.GetSection("EmailRelay"))
             .Validate(options =>
             {

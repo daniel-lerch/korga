@@ -1,4 +1,6 @@
-﻿namespace Korga.EmailRelay.Entities;
+﻿using System.Collections.Generic;
+
+namespace Korga.EmailRelay.Entities;
 
 public class DistributionList
 {

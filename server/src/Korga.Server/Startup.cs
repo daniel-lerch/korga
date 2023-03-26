@@ -1,4 +1,5 @@
 using Korga.Server.ChurchTools;
+using Korga.Server.EmailDelivery;
 using Korga.Server.EmailRelay;
 using Korga.Server.Extensions;
 using Korga.Server.Services;
@@ -33,6 +34,8 @@ public class Startup
 
         services.AddKorgaMySqlDatabase();
 
+        services.AddScoped<EmailDeliveryService>();
+
         services.AddSpaStaticFiles(options => options.RootPath = environment.WebRootPath);
 
         if (environment.IsDevelopment())
@@ -62,8 +65,15 @@ public class Startup
 
         if (Configuration.GetValue<bool>("EmailRelay:Enable"))
         {
+            services.AddScoped<ImapReceiverService>();
             services.AddScoped<DistributionListService>();
             services.AddHostedService<EmailRelayHostedService>();
+        }
+
+        if (Configuration.GetValue<bool>("EmailDelivery:Enable"))
+        {
+            services.AddScoped<SmtpDeliveryService>();
+            services.AddHostedService<EmailDeliveryHostedService>();
         }
     }
 
