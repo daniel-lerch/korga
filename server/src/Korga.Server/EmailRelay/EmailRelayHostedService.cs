@@ -38,12 +38,25 @@ public class EmailRelayHostedService : RepeatedExecutionService
         await imapService.FetchAsync(stoppingToken);
 
         List<InboxEmail> retrieved =
-            await database.InboxEmails.Where(m => m.Receiver != null && m.ProcessingCompletedTime == default).ToListAsync(stoppingToken);
+            await database.InboxEmails.Where(m => m.ProcessingCompletedTime == default).ToListAsync(stoppingToken);
 
         foreach (InboxEmail email in retrieved)
         {
-            int atIdx = email.Receiver!.IndexOf('@');
-            string emailAlias = email.Receiver!.Remove(atIdx);
+            if (email.Receiver == null)
+            {
+                // TODO: Enqueue response to sender that their email could not be delivered and they should inform an admin
+                
+                logger.LogWarning("Could not determine receiver for message #{Id} from {From} to {To}. This message will not be forwarded." +
+                    "Please make sure your email provider specifies the receiver in the Received, Envelope-To, or X-Envelope-To header", email.Id, email.From, email.To);
+
+                email.ProcessingCompletedTime = DateTime.UtcNow;
+                await database.SaveChangesAsync(stoppingToken);
+
+                continue;
+            }
+
+            int atIdx = email.Receiver.IndexOf('@');
+            string emailAlias = email.Receiver.Remove(atIdx);
 
             DistributionList? distributionList = await database.DistributionLists.SingleOrDefaultAsync(x => x.Alias == emailAlias, stoppingToken);
 
@@ -73,6 +86,5 @@ public class EmailRelayHostedService : RepeatedExecutionService
                 logger.LogInformation("No group found with alias {Receiver} for email #{Id} from {From}", email.Receiver, email.Id, email.From);
             }
         }
-
     }
 }

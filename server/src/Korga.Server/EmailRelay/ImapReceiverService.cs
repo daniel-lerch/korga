@@ -2,10 +2,10 @@
 using Korga.Server.Extensions;
 using MailKit;
 using MailKit.Net.Imap;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,8 +42,14 @@ public class ImapReceiverService
         {
             logger.LogInformation("UniqueId: {UniqueId}", message.UniqueId);
 
-            bool messageAlreadyDownloaded = message.Flags.GetValueOrDefault().HasFlag(MessageFlags.Seen);
-            if (messageAlreadyDownloaded) continue;
+            if (message.Flags.GetValueOrDefault().HasFlag(MessageFlags.Seen)) continue;
+
+            // Check if message has been downloaded but not marked as seen
+            if (await database.InboxEmails.AnyAsync(email => email.UniqueId == message.UniqueId.Id, stoppingToken))
+            {
+                await imap.Inbox.AddFlagsAsync(message.UniqueId, MessageFlags.Seen, silent: true, stoppingToken);
+                continue;
+            }
 
             byte[] headerContent;
 
@@ -79,26 +85,13 @@ public class ImapReceiverService
                 header: headerContent,
                 body: bodyContent);
 
-            // Skip next stage if receiver could not be determined
-            if (receiver == null)
-                emailEntity.ProcessingCompletedTime = DateTime.UtcNow;
-
             database.InboxEmails.Add(emailEntity);
 
             await database.SaveChangesAsync(stoppingToken);
 
-            // Don't cancel this operation because messages would sent twice otherwise
-            await imap.Inbox.AddFlagsAsync(message.UniqueId, MessageFlags.Seen, silent: true, CancellationToken.None);
+            await imap.Inbox.AddFlagsAsync(message.UniqueId, MessageFlags.Seen, silent: true, stoppingToken);
 
-            if (receiver != null)
-            {
-                logger.LogInformation("Downloaded and stored message #{Id} from {From} for {Receiver}", emailEntity.Id, from, receiver);
-            }
-            else
-            {
-                logger.LogWarning("Could not determine receiver for message #{Id} from {From} to {To}. This message will not be forwarded." +
-                    "Please make sure your email provider specifies the receiver in the Received, Envelope-To, or X-Envelope-To header", emailEntity.Id, from, to);
-            }
+            logger.LogInformation("Downloaded and stored message #{Id} from {From} for {Receiver}", emailEntity.Id, from, receiver ?? "an unkown receiver");
         }
 
         await imap.DisconnectAsync(quit: true, stoppingToken);
