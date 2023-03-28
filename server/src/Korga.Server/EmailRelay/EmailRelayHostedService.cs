@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MimeKit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,13 +16,11 @@ namespace Korga.Server.EmailRelay;
 
 public class EmailRelayHostedService : RepeatedExecutionService
 {
-    private readonly IOptions<EmailRelayOptions> options;
     private readonly IServiceProvider serviceProvider;
 
     public EmailRelayHostedService(IOptions<EmailRelayOptions> options, ILogger<EmailRelayHostedService> logger, IServiceProvider serviceProvider)
         : base(logger)
     {
-        this.options = options;
         this.serviceProvider = serviceProvider;
 
         Interval = TimeSpan.FromMinutes(options.Value.RetrievalIntervalInMinutes);
@@ -33,6 +32,7 @@ public class EmailRelayHostedService : RepeatedExecutionService
         DatabaseContext database = serviceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
         ImapReceiverService imapService = serviceScope.ServiceProvider.GetRequiredService<ImapReceiverService>();
         DistributionListService distributionListService = serviceScope.ServiceProvider.GetRequiredService<DistributionListService>();
+        EmailRelayService emailRelay = serviceScope.ServiceProvider.GetRequiredService<EmailRelayService>();
         EmailDeliveryService emailDelivery = serviceScope.ServiceProvider.GetRequiredService<EmailDeliveryService>();
 
         await imapService.FetchAsync(stoppingToken);
@@ -44,8 +44,10 @@ public class EmailRelayHostedService : RepeatedExecutionService
         {
             if (email.Receiver == null)
             {
-                // TODO: Enqueue response to sender that their email could not be delivered and they should inform an admin
-                
+                MimeMessage? errorMessage = emailRelay.InvalidServerConfiguration(email);
+                if (errorMessage != null)
+                    await emailDelivery.Enqueue(((MailboxAddress)errorMessage.To[0]).Address, errorMessage, email.Id, stoppingToken);
+
                 logger.LogWarning("Could not determine receiver for message #{Id} from {From} to {To}. This message will not be forwarded." +
                     "Please make sure your email provider specifies the receiver in the Received, Envelope-To, or X-Envelope-To header", email.Id, email.From, email.To);
 
@@ -60,31 +62,31 @@ public class EmailRelayHostedService : RepeatedExecutionService
 
             DistributionList? distributionList = await database.DistributionLists.SingleOrDefaultAsync(x => x.Alias == emailAlias, stoppingToken);
 
-            if (distributionList != null)
+            if (distributionList == null)
             {
-                string[] recipients = await distributionListService.GetRecipients(distributionList, stoppingToken);
-                // TODO: Prepare and enqueue message for every recipient
-                email.DistributionListId = distributionList.Id;
-                email.ProcessingCompletedTime = DateTime.UtcNow;
-                await database.SaveChangesAsync(stoppingToken);
-
-                logger.LogInformation("Fetched {RecipientsCount} recipients for email #{Id} to {Receiver}", recipients.Length, email.Id, email.Receiver);
-            }
-            else // In case of an invalid alias DistributionListType is None. An error email will be sent to the sender at the next stage.
-            {
-                //if (MailboxAddress.TryParse(email.From, out MailboxAddress fromAddress))
-                //{
-                //    string errorMessage = $"Hallo {fromAddress.Name},\r\ndeine E-Mail mit dem Betreff {email.Subject} an {email.Receiver} konnte nicht zugestellt werden. " +
-                //        "Die E-Mail-Adresse ist ungültig.";
-
-                //    database.OutboxEmails.Add(new(fromAddress.Address, fromAddress.Name) { InboxEmailId = email.Id, ErrorMessage = errorMessage });
-                //}
-
-                email.ProcessingCompletedTime = DateTime.UtcNow;
-                await database.SaveChangesAsync(stoppingToken);
+                MimeMessage? errorMessage = emailRelay.InvalidAlias(email);
+                if (errorMessage != null)
+                    await emailDelivery.Enqueue(((MailboxAddress)errorMessage.To[0]).Address, errorMessage, email.Id, stoppingToken);
 
                 logger.LogInformation("No group found with alias {Receiver} for email #{Id} from {From}", email.Receiver, email.Id, email.From);
+
+                email.ProcessingCompletedTime = DateTime.UtcNow;
+                await database.SaveChangesAsync(stoppingToken);
+
+                continue;
             }
+
+            string[] recipients = await distributionListService.GetRecipients(distributionList, stoppingToken);
+            foreach (string address in recipients)
+            {
+                MimeMessage preparedMessage = emailRelay.PrepareForResentTo(email, MailboxAddress.Parse(address));
+                await emailDelivery.Enqueue(address, preparedMessage, email.Id, stoppingToken);
+            }
+            email.DistributionListId = distributionList.Id;
+            email.ProcessingCompletedTime = DateTime.UtcNow;
+            await database.SaveChangesAsync(stoppingToken);
+
+            logger.LogInformation("Fetched {RecipientsCount} recipients for email #{Id} to {Receiver}", recipients.Length, email.Id, email.Receiver);
         }
     }
 }

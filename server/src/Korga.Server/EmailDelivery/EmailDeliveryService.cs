@@ -1,4 +1,5 @@
-﻿using MimeKit;
+﻿using Microsoft.EntityFrameworkCore;
+using MimeKit;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,8 +15,12 @@ public class EmailDeliveryService
         this.database = database;
     }
 
-    public async ValueTask Enqueue(string emailAddress, MimeMessage mimeMessage, CancellationToken cancellationToken)
+    public async ValueTask<bool> Enqueue(string emailAddress, MimeMessage mimeMessage, long? inboxEmailId, CancellationToken cancellationToken)
     {
+        if (inboxEmailId.HasValue && await database.OutboxEmails
+                .AnyAsync(email => email.EmailAddress == emailAddress && email.InboxEmailId == inboxEmailId, cancellationToken))
+            return false;
+
         byte[] content;
 
         using (MemoryStream memoryStream = new())
@@ -26,5 +31,6 @@ public class EmailDeliveryService
 
         database.OutboxEmails.Add(new(emailAddress, content));
         await database.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }
