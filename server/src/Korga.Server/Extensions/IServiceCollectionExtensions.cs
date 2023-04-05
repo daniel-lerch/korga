@@ -54,7 +54,7 @@ public static class IServiceCollectionExtensions
 
     public static IServiceCollection AddKorgaMySqlDatabase(this IServiceCollection services)
     {
-        services.AddDbContext<DatabaseContext>((services, optionsBuilder) =>
+        services.AddDbContextPool<DatabaseContext>((services, optionsBuilder) =>
         {
             var options = services.GetRequiredService<IOptions<DatabaseOptions>>();
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
@@ -62,7 +62,11 @@ public static class IServiceCollectionExtensions
             optionsBuilder.UseMySql(
                 options.Value.ConnectionString,
                 ServerVersion.AutoDetect(options.Value.ConnectionString),
-                builder => builder.MigrationsAssembly($"{nameof(Korga)}.{nameof(Server)}"));
+                builder =>
+                {
+                    builder.MigrationsAssembly($"{nameof(Korga)}.{nameof(Server)}");
+                    builder.EnableRetryOnFailure();
+                });
         });
 
         return services;
