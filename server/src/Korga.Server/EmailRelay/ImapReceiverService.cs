@@ -1,5 +1,6 @@
 ﻿using Korga.EmailRelay.Entities;
 using Korga.Server.Extensions;
+using Korga.Server.Utilities;
 using MailKit;
 using MailKit.Net.Imap;
 using Microsoft.EntityFrameworkCore;
@@ -17,12 +18,14 @@ public class ImapReceiverService
     private readonly ILogger<ImapReceiverService> logger;
     private readonly IOptions<EmailRelayOptions> options;
     private readonly DatabaseContext database;
+    private readonly JobQueue<EmailRelayJobController, InboxEmail> jobQueue;
 
-    public ImapReceiverService(ILogger<ImapReceiverService> logger, IOptions<EmailRelayOptions> options, DatabaseContext database)
+    public ImapReceiverService(ILogger<ImapReceiverService> logger, IOptions<EmailRelayOptions> options, DatabaseContext database, JobQueue<EmailRelayJobController, InboxEmail> jobQueue)
     {
         this.logger = logger;
         this.options = options;
         this.database = database;
+        this.jobQueue = jobQueue;
     }
 
     public async ValueTask FetchAsync(CancellationToken stoppingToken)
@@ -88,6 +91,8 @@ public class ImapReceiverService
             database.InboxEmails.Add(emailEntity);
 
             await database.SaveChangesAsync(stoppingToken);
+
+            jobQueue.EnsureRunning();
 
             await imap.Inbox.AddFlagsAsync(message.UniqueId, MessageFlags.Seen, silent: true, stoppingToken);
 

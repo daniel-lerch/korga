@@ -1,8 +1,11 @@
+using Korga.EmailDelivery.Entities;
+using Korga.EmailRelay.Entities;
 using Korga.Server.ChurchTools;
 using Korga.Server.EmailDelivery;
 using Korga.Server.EmailRelay;
 using Korga.Server.Extensions;
 using Korga.Server.Services;
+using Korga.Server.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -65,6 +68,8 @@ public class Startup
 
         if (Configuration.GetValue<bool>("EmailRelay:Enable"))
         {
+            services.AddSingleton<JobQueue<EmailRelayJobController, InboxEmail>>();
+            services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<JobQueue<EmailRelayJobController, InboxEmail>>());
             services.AddScoped<ImapReceiverService>();
             services.AddScoped<DistributionListService>();
             services.AddHostedService<EmailRelayHostedService>();
@@ -72,8 +77,9 @@ public class Startup
 
         if (Configuration.GetValue<bool>("EmailDelivery:Enable"))
         {
-            services.AddScoped<SmtpDeliveryService>();
-            services.AddHostedService<EmailDeliveryHostedService>();
+            services.AddSingleton<JobQueue<EmailDeliveryJobController, OutboxEmail>>();
+            services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<JobQueue<EmailDeliveryJobController, OutboxEmail>>());
+            services.AddScoped<EmailDeliveryService>();
         }
     }
 

@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Korga.EmailDelivery.Entities;
+using Korga.Server.Utilities;
+using Microsoft.EntityFrameworkCore;
 using MimeKit;
 using System.IO;
 using System.Threading;
@@ -9,10 +11,12 @@ namespace Korga.Server.EmailDelivery;
 public class EmailDeliveryService
 {
     private readonly DatabaseContext database;
+    private readonly JobQueue<EmailDeliveryJobController, OutboxEmail> jobQueue;
 
-    public EmailDeliveryService(DatabaseContext database)
+    public EmailDeliveryService(DatabaseContext database, JobQueue<EmailDeliveryJobController, OutboxEmail> jobQueue)
     {
         this.database = database;
+        this.jobQueue = jobQueue;
     }
 
     public async ValueTask<bool> Enqueue(string emailAddress, MimeMessage mimeMessage, long? inboxEmailId, CancellationToken cancellationToken)
@@ -31,6 +35,7 @@ public class EmailDeliveryService
 
         database.OutboxEmails.Add(new(emailAddress, content));
         await database.SaveChangesAsync(cancellationToken);
+        jobQueue.EnsureRunning();
         return true;
     }
 }

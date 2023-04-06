@@ -14,8 +14,4 @@ public class EmailDeliveryOptions
     public bool SmtpUseSsl { get; set; }
     [Required] public string SmtpUsername { get; set; } = null!;
     [Required] public string SmtpPassword { get; set; } = null!;
-
-    [Range(0.0, 1440.0)] public double DeliveryIntervalInMinutes { get; set; }
-    [Range(0, int.MaxValue)] public int BatchSize { get; set; }
-
 }

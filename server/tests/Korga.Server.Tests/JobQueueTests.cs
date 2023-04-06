@@ -56,27 +56,27 @@ public class JobQueueTests : IDisposable
     [Fact]
     public async Task TestRetry()
     {
-        jobQueue.RetryInterval = TimeSpan.FromMilliseconds(100);
+        jobQueue.RetryInterval = TimeSpan.FromMilliseconds(200);
         await jobQueue.StartAsync(CancellationToken.None);
         storage.Data.Enqueue(transientFailure);
         storage.Data.Enqueue("Hello");
         storage.Data.Enqueue("World");
         jobQueue.EnsureRunning();
-        await Task.Delay(50);
-        Assert.Equal(0, storage.Executed);
         await Task.Delay(100);
+        Assert.Equal(0, storage.Executed);
+        await Task.Delay(200);
         Assert.Equal(2, storage.Executed);
     }
 
     [Fact]
     public async Task TestPolling()
     {
-        jobQueue.RetryInterval = TimeSpan.FromMilliseconds(100);
+        jobQueue.RetryInterval = TimeSpan.FromMilliseconds(200);
         await jobQueue.StartAsync(CancellationToken.None);
-        await Task.Delay(50);
+        await Task.Delay(100);
         storage.Data.Enqueue("Hello");
         storage.Data.Enqueue("World");
-        await Task.Delay(100);
+        await Task.Delay(200);
         Assert.Equal(2, storage.Executed);
     }
 

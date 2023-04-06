@@ -1,30 +1,37 @@
-﻿using MailKit.Net.Smtp;
+﻿using Korga.EmailDelivery.Entities;
+using Korga.Server.Utilities;
+using MailKit.Net.Smtp;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using MimeKit;
-using System.Threading;
-using System;
-using System.Threading.Tasks;
-using Korga.EmailDelivery.Entities;
-using System.IO;
 using Microsoft.Extensions.Options;
+using MimeKit;
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Korga.Server.EmailDelivery;
 
-public class SmtpDeliveryService : IAsyncDisposable
+public class EmailDeliveryJobController : IJobController<OutboxEmail>, IAsyncDisposable
 {
     private readonly ILogger logger;
     private readonly IOptions<EmailDeliveryOptions> options;
     private readonly DatabaseContext database;
     private SmtpClient? smtpClient;
 
-    public SmtpDeliveryService(ILogger logger, IOptions<EmailDeliveryOptions> options, DatabaseContext database)
+    public EmailDeliveryJobController(ILogger logger, IOptions<EmailDeliveryOptions> options, DatabaseContext database)
     {
         this.logger = logger;
         this.options = options;
         this.database = database;
     }
 
-    public async ValueTask<bool> Send(OutboxEmail outboxEmail, CancellationToken cancellationToken)
+    public async ValueTask<OutboxEmail?> NextPendingOrDefault(CancellationToken cancellationToken)
+    {
+        return await database.OutboxEmails.FirstOrDefaultAsync(email => email.DeliveryTime == default, cancellationToken);
+    }
+
+    public async ValueTask<bool> ExecuteJob(OutboxEmail outboxEmail, CancellationToken cancellationToken)
     {
         SmtpClient smtp = await GetConnection(cancellationToken);
         

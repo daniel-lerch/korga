@@ -6,11 +6,11 @@ using System.IO;
 
 namespace Korga.Server.EmailRelay;
 
-public class EmailRelayService
+public class MimeMessageCreationService
 {
     private readonly IOptions<EmailDeliveryOptions> options;
 
-    public EmailRelayService(IOptions<EmailDeliveryOptions> options)
+    public MimeMessageCreationService(IOptions<EmailDeliveryOptions> options)
     {
         this.options = options;
     }
