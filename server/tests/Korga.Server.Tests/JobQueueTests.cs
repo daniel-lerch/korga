@@ -15,7 +15,7 @@ public class JobQueueTests : IDisposable
 
     private readonly JobStorage<string> storage;
     private readonly ServiceProvider serviceProvider;
-    private readonly JobQueue<StringJobController, string> jobQueue;
+    private readonly JobQueue<StringJobController> jobQueue;
 
     public JobQueueTests()
     {
@@ -23,7 +23,7 @@ public class JobQueueTests : IDisposable
         ServiceCollection services = new();
         services.AddSingleton(storage);
         serviceProvider = services.BuildServiceProvider();
-        jobQueue = new(serviceProvider, NullLogger<JobQueue<StringJobController, string>>.Instance);
+        jobQueue = new(serviceProvider, NullLogger<JobQueue<StringJobController>>.Instance);
     }
 
     public void Dispose()
@@ -87,7 +87,7 @@ public class JobQueueTests : IDisposable
         public int Executed { get; set; }
     }
 
-    private class StringJobController : IJobController<string>
+    private class StringJobController : OneAtATimeJobController<string>
     {
         private readonly JobStorage<string> storage;
 
@@ -96,15 +96,15 @@ public class JobQueueTests : IDisposable
             this.storage = storage;
         }
 
-        public ValueTask<bool> ExecuteJob(string data, CancellationToken cancellationToken)
+        protected override ValueTask ExecuteJob(string data, CancellationToken cancellationToken)
         {
             if (data == transientFailure)
-                return ValueTask.FromResult(false);
+                return ValueTask.FromException(new TransientFailureException(transientFailure));
             storage.Executed++;
-            return ValueTask.FromResult(true);
+            return ValueTask.CompletedTask;
         }
 
-        public ValueTask<string?> NextPendingOrDefault(CancellationToken cancellationToken)
+        protected override ValueTask<string?> NextPendingOrDefault(CancellationToken cancellationToken)
         {
             return ValueTask.FromResult(storage.Data.TryDequeue(out string? data) ? data : null);
         }

@@ -3,8 +3,7 @@ using System.Threading.Tasks;
 
 namespace Korga.Server.Utilities;
 
-public interface IJobController<T>
+public interface IJobController
 {
-    ValueTask<T?> NextPendingOrDefault(CancellationToken cancellationToken);
-    ValueTask<bool> ExecuteJob(T data, CancellationToken cancellationToken);
+    ValueTask<bool> FetchAndExecute(CancellationToken cancellationToken);
 }

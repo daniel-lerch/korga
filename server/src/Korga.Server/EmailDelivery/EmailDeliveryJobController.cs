@@ -12,26 +12,26 @@ using System.Threading.Tasks;
 
 namespace Korga.Server.EmailDelivery;
 
-public class EmailDeliveryJobController : IJobController<OutboxEmail>, IAsyncDisposable
+public class EmailDeliveryJobController : OneAtATimeJobController<OutboxEmail>, IAsyncDisposable
 {
-    private readonly ILogger logger;
+    private readonly ILogger<EmailDeliveryJobController> logger;
     private readonly IOptions<EmailDeliveryOptions> options;
     private readonly DatabaseContext database;
     private SmtpClient? smtpClient;
 
-    public EmailDeliveryJobController(ILogger logger, IOptions<EmailDeliveryOptions> options, DatabaseContext database)
+    public EmailDeliveryJobController(ILogger<EmailDeliveryJobController> logger, IOptions<EmailDeliveryOptions> options, DatabaseContext database)
     {
         this.logger = logger;
         this.options = options;
         this.database = database;
     }
 
-    public async ValueTask<OutboxEmail?> NextPendingOrDefault(CancellationToken cancellationToken)
+    protected override async ValueTask<OutboxEmail?> NextPendingOrDefault(CancellationToken cancellationToken)
     {
         return await database.OutboxEmails.FirstOrDefaultAsync(email => email.DeliveryTime == default, cancellationToken);
     }
 
-    public async ValueTask<bool> ExecuteJob(OutboxEmail outboxEmail, CancellationToken cancellationToken)
+    protected override async ValueTask ExecuteJob(OutboxEmail outboxEmail, CancellationToken cancellationToken)
     {
         SmtpClient smtp = await GetConnection(cancellationToken);
         
@@ -50,7 +50,6 @@ public class EmailDeliveryJobController : IJobController<OutboxEmail>, IAsyncDis
             await database.SaveChangesAsync(CancellationToken.None);
             logger.LogInformation("Delivered email #{Id} to {EmailAddress}",
                 outboxEmail.Id, outboxEmail.EmailAddress);
-            return true;
         }
         catch (SmtpCommandException ex) when (ex.StatusCode == SmtpStatusCode.MailboxBusy)
         {
@@ -61,7 +60,7 @@ public class EmailDeliveryJobController : IJobController<OutboxEmail>, IAsyncDis
             // RFC 3463 defines enhanced status code as 4.7.X for persistent transient failures caused by security or policy status
 
             logger.LogInformation("Mailbox busy. This is most likely caused by a temporary rate limit.");
-            return false;
+            throw new TransientFailureException("Mailbox busy. This is most likely caused by a temporary rate limit.", ex);
         }
         catch (SmtpCommandException ex) when (ex.StatusCode == SmtpStatusCode.MailboxUnavailable && ex.Message.Contains("5.7.26"))
         {
@@ -77,13 +76,12 @@ public class EmailDeliveryJobController : IJobController<OutboxEmail>, IAsyncDis
             outboxEmail.ErrorMessage = ex.Message;
 
             await database.SaveChangesAsync(cancellationToken);
-            return false;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Sending email #{Id} to {EmailAddress} failed",
                 outboxEmail.Id, outboxEmail.EmailAddress);
-            return false;
+            throw new TransientFailureException($"Sending email #{outboxEmail.Id} to {outboxEmail.EmailAddress} failed", ex);
         }
     }
 

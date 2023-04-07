@@ -9,13 +9,13 @@ using System.Threading.Tasks;
 
 namespace Korga.Server.Utilities;
 
-public class JobQueue<TController, TData> : BackgroundService where TController : IJobController<TData>
+public class JobQueue<TController> : BackgroundService where TController : IJobController
 {
     private readonly IServiceProvider serviceProvider;
-    private readonly ILogger<JobQueue<TController, TData>> logger;
+    private readonly ILogger<JobQueue<TController>> logger;
     private readonly AsyncAutoResetEvent @event;
 
-    public JobQueue(IServiceProvider serviceProvider, ILogger<JobQueue<TController, TData>> logger)
+    public JobQueue(IServiceProvider serviceProvider, ILogger<JobQueue<TController>> logger)
     {
         this.serviceProvider = serviceProvider;
         this.logger = logger;
@@ -48,13 +48,16 @@ public class JobQueue<TController, TData> : BackgroundService where TController 
         {
             try
             {
-                var pending = await jobController.NextPendingOrDefault(cancellationToken);
-                if (pending == null) return true;
-                if (!await jobController.ExecuteJob(pending, cancellationToken)) return false;
+                if (!await jobController.FetchAndExecute(cancellationToken)) return true;
+            }
+            catch (TransientFailureException)
+            {
+                return false;
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 logger.LogCritical(ex, "An unhandled exception occurred in a background job");
+                return false;
             }
         }
         return true;

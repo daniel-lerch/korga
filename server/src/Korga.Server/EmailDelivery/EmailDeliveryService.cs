@@ -11,9 +11,9 @@ namespace Korga.Server.EmailDelivery;
 public class EmailDeliveryService
 {
     private readonly DatabaseContext database;
-    private readonly JobQueue<EmailDeliveryJobController, OutboxEmail> jobQueue;
+    private readonly JobQueue<EmailDeliveryJobController> jobQueue;
 
-    public EmailDeliveryService(DatabaseContext database, JobQueue<EmailDeliveryJobController, OutboxEmail> jobQueue)
+    public EmailDeliveryService(DatabaseContext database, JobQueue<EmailDeliveryJobController> jobQueue)
     {
         this.database = database;
         this.jobQueue = jobQueue;

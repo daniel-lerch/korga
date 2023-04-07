@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Korga.Server.EmailRelay;
 
-public class EmailRelayJobController : IJobController<InboxEmail>
+public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
 {
     private readonly DatabaseContext database;
     private readonly ILogger<EmailRelayJobController> logger;
@@ -27,12 +27,12 @@ public class EmailRelayJobController : IJobController<InboxEmail>
         this.emailDelivery = emailDelivery;
     }
 
-    public async ValueTask<InboxEmail?> NextPendingOrDefault(CancellationToken cancellationToken)
+    protected override async ValueTask<InboxEmail?> NextPendingOrDefault(CancellationToken cancellationToken)
     {
         return await database.InboxEmails.FirstOrDefaultAsync(email => email.ProcessingCompletedTime == default, cancellationToken);
     }
 
-    public async ValueTask<bool> ExecuteJob(InboxEmail email, CancellationToken cancellationToken)
+    protected override async ValueTask ExecuteJob(InboxEmail email, CancellationToken cancellationToken)
     {
         if (email.Receiver == null)
         {

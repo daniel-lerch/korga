@@ -18,9 +18,9 @@ public class ImapReceiverService
     private readonly ILogger<ImapReceiverService> logger;
     private readonly IOptions<EmailRelayOptions> options;
     private readonly DatabaseContext database;
-    private readonly JobQueue<EmailRelayJobController, InboxEmail> jobQueue;
+    private readonly JobQueue<EmailRelayJobController> jobQueue;
 
-    public ImapReceiverService(ILogger<ImapReceiverService> logger, IOptions<EmailRelayOptions> options, DatabaseContext database, JobQueue<EmailRelayJobController, InboxEmail> jobQueue)
+    public ImapReceiverService(ILogger<ImapReceiverService> logger, IOptions<EmailRelayOptions> options, DatabaseContext database, JobQueue<EmailRelayJobController> jobQueue)
     {
         this.logger = logger;
         this.options = options;
@@ -43,8 +43,6 @@ public class ImapReceiverService
 
         foreach (IMessageSummary message in messages)
         {
-            logger.LogInformation("UniqueId: {UniqueId}", message.UniqueId);
-
             if (message.Flags.GetValueOrDefault().HasFlag(MessageFlags.Seen)) continue;
 
             // Check if message has been downloaded but not marked as seen
