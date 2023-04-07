@@ -10,10 +10,10 @@ public class OutboxEmail
         EmailAddress = emailAddress;
         Content = content;
     }
-
+    
     public long Id { get; set; }
 
-    public long InboxEmailId { get; set; }
+    public long? InboxEmailId { get; set; }
     public InboxEmail? InboxEmail { get; set; }
 
     public string EmailAddress { get; set; }

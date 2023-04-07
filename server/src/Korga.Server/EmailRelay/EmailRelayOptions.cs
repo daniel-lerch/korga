@@ -14,4 +14,6 @@ public class EmailRelayOptions
     [Required] public string ImapPassword { get; set; } = null!;
 
     [Range(0.0, 1440.0)] public double RetrievalIntervalInMinutes { get; set; }
+    [Range(16, 1024)] public int MaxHeaderSizeInKilobytes { get; set; }
+    [Range(64, 131072)] public int MaxBodySizeInKilobytes { get; set; }
 }

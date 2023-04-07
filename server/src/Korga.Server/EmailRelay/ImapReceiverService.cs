@@ -52,16 +52,17 @@ public class ImapReceiverService
                 continue;
             }
 
-            byte[] headerContent;
+            byte[]? headerContent = null;
 
             using (System.IO.MemoryStream memoryStream = new())
             {
                 // Writing to a MemoryStream is a synchronous operation that won't be cancelled anyhow
                 message.Headers.WriteTo(memoryStream, CancellationToken.None);
-                headerContent = memoryStream.ToArray();
+                if (memoryStream.Length <= options.Value.MaxHeaderSizeInKilobytes * 1024)
+                    headerContent = memoryStream.ToArray();
             }
 
-            byte[] bodyContent;
+            byte[]? bodyContent = null;
 
             // Dispose body and memoryStream directly after use to limit memory consumption
             using (MimeEntity body = await imap.Inbox.GetBodyPartAsync(message.UniqueId, message.Body, stoppingToken))
@@ -69,7 +70,8 @@ public class ImapReceiverService
             {
                 // Writing to a MemoryStream is a synchronous operation that won't be cancelled anyhow
                 body.WriteTo(memoryStream, CancellationToken.None);
-                bodyContent = memoryStream.ToArray();
+                if (memoryStream.Length <= options.Value.MaxBodySizeInKilobytes * 1024)
+                    bodyContent = memoryStream.ToArray();
             }
 
             string from = message.Headers[HeaderId.From];
@@ -81,6 +83,7 @@ public class ImapReceiverService
                 subject: message.Headers[HeaderId.Subject],
                 from: from,
                 sender: message.Headers[HeaderId.Sender],
+                replyTo: message.Headers[HeaderId.ReplyTo],
                 to: to,
                 receiver: receiver,
                 header: headerContent,

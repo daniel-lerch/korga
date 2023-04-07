@@ -36,17 +36,11 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
     {
         if (email.Receiver == null)
         {
-            MimeMessage? errorMessage = emailRelay.InvalidServerConfiguration(email);
-            if (errorMessage != null)
-                await emailDelivery.Enqueue(((MailboxAddress)errorMessage.To[0]).Address, errorMessage, email.Id, cancellationToken);
+            await SendErrorMessage(email, emailRelay.InvalidServerConfiguration(email), cancellationToken);
 
             logger.LogWarning("Could not determine receiver for message #{Id} from {From} to {To}. This message will not be forwarded." +
                 "Please make sure your email provider specifies the receiver in the Received, Envelope-To, or X-Envelope-To header", email.Id, email.From, email.To);
-
-            email.ProcessingCompletedTime = DateTime.UtcNow;
-            await database.SaveChangesAsync(cancellationToken);
-
-            return true;
+            return;
         }
 
         int atIdx = email.Receiver.IndexOf('@');
@@ -56,16 +50,26 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
 
         if (distributionList == null)
         {
-            MimeMessage? errorMessage = emailRelay.InvalidAlias(email);
-            if (errorMessage != null)
-                await emailDelivery.Enqueue(((MailboxAddress)errorMessage.To[0]).Address, errorMessage, email.Id, cancellationToken);
+            await SendErrorMessage(email, emailRelay.InvalidAlias(email), cancellationToken);
 
             logger.LogInformation("No group found with alias {Receiver} for email #{Id} from {From}", email.Receiver, email.Id, email.From);
+            return;
+        }
 
-            email.ProcessingCompletedTime = DateTime.UtcNow;
-            await database.SaveChangesAsync(cancellationToken);
+        if (email.Header == null)
+        {
+            await SendErrorMessage(email, emailRelay.TooManyHeaders(email), cancellationToken);
 
-            return true;
+            logger.LogInformation("Email #{Id} from {From} to {Receiver} exceeded the header size limit", email.Id, email.From, email.Receiver);
+            return;
+        }
+
+        if (email.Body == null)
+        {
+            await SendErrorMessage(email, emailRelay.TooBigMessage(email), cancellationToken);
+
+            logger.LogInformation("Email #{Id} from {From} to {Receiver} exceeded the body size limit", email.Id, email.From, email.Receiver);
+            return;
         }
 
         string[] recipients = await distributionListService.GetRecipients(distributionList, cancellationToken);
@@ -79,6 +83,15 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
         await database.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("Fetched {RecipientsCount} recipients for email #{Id} to {Receiver}", recipients.Length, email.Id, email.Receiver);
-        return true;
+        return;
+    }
+
+    private async ValueTask SendErrorMessage(InboxEmail email, MimeMessage? errorMessage, CancellationToken cancellationToken)
+    {
+        if (errorMessage != null)
+            await emailDelivery.Enqueue(((MailboxAddress)errorMessage.To[0]).Address, errorMessage, email.Id, cancellationToken);
+
+        email.ProcessingCompletedTime = DateTime.UtcNow;
+        await database.SaveChangesAsync(cancellationToken);
     }
 }

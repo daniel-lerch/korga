@@ -1,5 +1,4 @@
-﻿using Korga.EmailDelivery.Entities;
-using Korga.Server.Utilities;
+﻿using Korga.Server.Utilities;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
 using System.IO;
@@ -33,7 +32,7 @@ public class EmailDeliveryService
             content = memoryStream.ToArray();
         }
 
-        database.OutboxEmails.Add(new(emailAddress, content));
+        database.OutboxEmails.Add(new(emailAddress, content) { InboxEmailId = inboxEmailId});
         await database.SaveChangesAsync(cancellationToken);
         jobQueue.EnsureRunning();
         return true;

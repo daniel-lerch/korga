@@ -35,9 +35,6 @@ public class Startup
 
         services.AddKorgaMySqlDatabase();
 
-        services.AddScoped<MimeMessageCreationService>();
-        services.AddScoped<EmailDeliveryService>();
-
         services.AddSpaStaticFiles(options => options.RootPath = environment.WebRootPath);
 
         if (environment.IsDevelopment())
@@ -65,20 +62,21 @@ public class Startup
             services.AddHostedService<ChurchToolsSyncHostedService>();
         }
 
-        if (Configuration.GetValue<bool>("EmailRelay:Enable"))
-        {
-            services.AddSingleton<JobQueue<EmailRelayJobController>>();
-            services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<JobQueue<EmailRelayJobController>>());
-            services.AddScoped<ImapReceiverService>();
-            services.AddScoped<DistributionListService>();
-            services.AddHostedService<EmailRelayHostedService>();
-        }
-
         if (Configuration.GetValue<bool>("EmailDelivery:Enable"))
         {
             services.AddSingleton<JobQueue<EmailDeliveryJobController>>();
             services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<JobQueue<EmailDeliveryJobController>>());
             services.AddScoped<EmailDeliveryService>();
+
+            if (Configuration.GetValue<bool>("EmailRelay:Enable"))
+            {
+                services.AddSingleton<JobQueue<EmailRelayJobController>>();
+                services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<JobQueue<EmailRelayJobController>>());
+                services.AddScoped<ImapReceiverService>();
+                services.AddScoped<DistributionListService>();
+                services.AddScoped<MimeMessageCreationService>();
+                services.AddHostedService<EmailRelayHostedService>();
+            }
         }
     }
 
