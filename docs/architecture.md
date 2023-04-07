@@ -38,7 +38,7 @@ Applies to: `InboxEmails.Where(email => email.ProcessingCompletedTime == default
 
 #### Responsibility: Prepare email for delivery (Resent headers)
 
-`EmailRelayService.PrepareForResentTo(long emailId, string mailAddress)`
+`MimeMessageCreationService.PrepareForResentTo(long emailId, string mailAddress)`
 - Adds `Resent` headers and returns a `MimeMessage`
 
 `EmailDeliveryService.Enqueue(MimeMessage message, long? emailId)`
@@ -51,10 +51,8 @@ Applies to: `OutboxEmails.Where(email => email.DeliveryTime == default)`
 
 #### Responsibility: Deliver emails (not idempotent on abort)
 
-`EmailDeliveryHostedService.ExecuteOnce`
+`EmailDeliveryJobController.ExecuteJob`
 - Fetch mailqueue and send
-- Decreasing priority with every error
-
-`SmtpDeliveryService.SendAsync(MimeMessage)`
+- Might use a decreasing priority with every error in the future
 - Could be replaced by other services for MailChimp, MailJet, MailGun, etc.
 - Resent headers might work with SMTP but especially marketing APIs work with templates and batch processing instead of inidividual emails

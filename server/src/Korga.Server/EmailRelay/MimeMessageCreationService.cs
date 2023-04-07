@@ -16,6 +16,17 @@ public class MimeMessageCreationService
         this.options = options;
     }
 
+    /// <summary>
+    /// Prepends Resent headers to the original email in order to reintroduce it into the mail transport system.
+    /// </summary>
+    /// <param name="inboxEmail">The original email received via IMAP</param>
+    /// <param name="address">The recipient to deliver the original email to</param>
+    /// <returns>A complete MIME message which is ready to send</returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    /// <remarks>
+    /// Forwarding emails by simply adding a Sender header fails DMARC policy checks because there is no valid DKIM signature of the original sender anymore.<br/>
+    /// To avoid this problem to we resent the entire MIME message: https://www.ietf.org/rfc/rfc2822.txt (Section 3.6.6)
+    /// </remarks>
     public MimeMessage PrepareForResentTo(InboxEmail inboxEmail, MailboxAddress address)
     {
         if (inboxEmail.Header == null) throw new ArgumentNullException(nameof(inboxEmail), "inboxEmail.Header must not be null");
