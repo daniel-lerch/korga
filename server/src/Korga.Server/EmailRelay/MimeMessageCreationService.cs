@@ -9,11 +9,13 @@ namespace Korga.Server.EmailRelay;
 
 public class MimeMessageCreationService
 {
-    private readonly IOptions<EmailDeliveryOptions> options;
+    private readonly IOptions<EmailRelayOptions> relayOptions;
+    private readonly IOptions<EmailDeliveryOptions> deliveryOptions;
 
-    public MimeMessageCreationService(IOptions<EmailDeliveryOptions> options)
+    public MimeMessageCreationService(IOptions<EmailRelayOptions> relayOptions, IOptions<EmailDeliveryOptions> deliveryOptions)
     {
-        this.options = options;
+        this.relayOptions = relayOptions;
+        this.deliveryOptions = deliveryOptions;
     }
 
     /// <summary>
@@ -22,7 +24,6 @@ public class MimeMessageCreationService
     /// <param name="inboxEmail">The original email received via IMAP</param>
     /// <param name="address">The recipient to deliver the original email to</param>
     /// <returns>A complete MIME message which is ready to send</returns>
-    /// <exception cref="ArgumentNullException"></exception>
     /// <remarks>
     /// Forwarding emails by simply adding a Sender header fails DMARC policy checks because there is no valid DKIM signature of the original sender anymore.<br/>
     /// To avoid this problem to we resent the entire MIME message: https://www.ietf.org/rfc/rfc2822.txt (Section 3.6.6)
@@ -40,7 +41,7 @@ public class MimeMessageCreationService
         using (MemoryStream memoryStream = new(inboxEmail.Body))
             body = MimeEntity.Load(memoryStream);
 
-        headers.Insert(0, HeaderId.ResentFrom, new MailboxAddress(options.Value.SenderName, options.Value.SenderAddress).ToString());
+        headers.Insert(0, HeaderId.ResentFrom, new MailboxAddress(deliveryOptions.Value.SenderName, deliveryOptions.Value.SenderAddress).ToString());
         headers.Insert(1, HeaderId.ResentTo, address.ToString());
 
         return new MimeMessage(headers, body);
@@ -65,14 +66,16 @@ public class MimeMessageCreationService
     {
         return ErrorMessage(inboxEmail, $"Hallo,\r\n" +
             $"deine E-Mail mit dem Betreff {inboxEmail.Subject} an {inboxEmail.Receiver} konnte nicht zugestellt werden, weil sie zu viele Header enthielt.\r\n" +
-            $"Bitte beachte, dass die Header kleiner als 64 KB sein müssen.");
+            $"Bitte beachte, dass die Header kleiner als {relayOptions.Value.MaxHeaderSizeInKilobytes} KB sein müssen.");
     }
 
     public MimeMessage? TooBigMessage(InboxEmail inboxEmail)
     {
+        int maxAttachmentSizeInMegabytes = relayOptions.Value.MaxBodySizeInKilobytes * 3 / 4 / 1024;
+        
         return ErrorMessage(inboxEmail, $"Hallo,\r\n" +
             $"deine E-Mail mit dem Betreff {inboxEmail.Subject} an {inboxEmail.Receiver} konnte nicht zugestellt werden, weil sie zu groß war.\r\n" +
-            $"Bitte beachte, dass alle Anhänge zusammen kleiner als 9 MB sein müssen.");
+            $"Bitte beachte, dass alle Anhänge zusammen kleiner als {maxAttachmentSizeInMegabytes} MB sein müssen.");
     }
 
     private MimeMessage? ErrorMessage(InboxEmail inboxEmail, string message)
@@ -93,7 +96,7 @@ public class MimeMessageCreationService
         }
 
         MimeMessage errorMessage = new();
-        errorMessage.From.Add(new MailboxAddress(options.Value.SenderName, options.Value.SenderAddress));
+        errorMessage.From.Add(new MailboxAddress(deliveryOptions.Value.SenderName, deliveryOptions.Value.SenderAddress));
         errorMessage.To.Add(recipient);
         errorMessage.Subject = "Unzustellbar: " + inboxEmail.Subject;
         errorMessage.Body = new TextPart { Text = message };

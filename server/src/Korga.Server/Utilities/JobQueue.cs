@@ -36,10 +36,17 @@ public class JobQueue<TController> : BackgroundService where TController : IJobC
             if (await QueryAndExecute(stoppingToken))
                 await @event.WaitAsync(RetryInterval, stoppingToken);
             else
+                // A transient failure occurred. Therefore we wait regardless of calls to EnsureRunning().
                 await Task.Delay(RetryInterval, stoppingToken);
         }
     }
 
+    /// <summary>
+    /// Queries for jobs and executes them until the job queue is empty.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> if batches executed correctly; <see langword="false"/> if a transient error occurred
+    /// </returns>
     private async ValueTask<bool> QueryAndExecute(CancellationToken cancellationToken)
     {
         await using AsyncServiceScope scope = serviceProvider.CreateAsyncScope();

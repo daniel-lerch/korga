@@ -5,6 +5,7 @@ namespace Korga.Server.Utilities;
 
 public abstract class OneAtATimeJobController<T> : IJobController
 {
+    /// <inheritdoc/>
     public async ValueTask<bool> FetchAndExecute(CancellationToken cancellationToken)
     {
         T? data = await NextPendingOrDefault(cancellationToken);

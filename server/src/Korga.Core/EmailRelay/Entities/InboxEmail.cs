@@ -30,8 +30,21 @@ public class InboxEmail
     public string? Sender { get; set; }
     public string? ReplyTo { get; set; }
     public string To { get; set; }
+    /// <summary>
+    /// The mailbox this email was delivered to via SMTP.
+    /// Determined by <c>Received</c>, <c>Envelope-To</c> or <c>X-Envelope-To</c> headers.
+    /// If none of these headers was present, this value is <see langword="null"/>.
+    /// </summary>
     public string? Receiver { get; set; }
+    /// <summary>
+    /// Original headers as received via IMAP, serialized by MimeKit.
+    /// If the headers exceeded a certain size limit, this value is <see langword="null"/>.
+    /// </summary>
     public byte[]? Header { get; set; }
+    /// <summary>
+    /// Original body as received via IMAP, serialized by MimeKit.
+    /// If the body exceeded a certain size limit, this value is <see langword="null"/>.
+    /// </summary>
     public byte[]? Body { get; set; }
     public DateTime DownloadTime { get; set; }
     public DateTime ProcessingCompletedTime { get; set; }
