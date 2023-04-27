@@ -2,6 +2,7 @@
 using Korga.EmailRelay.Entities;
 using Korga.Extensions;
 using Microsoft.EntityFrameworkCore;
+using MimeKit;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -18,19 +19,15 @@ public class DistributionListService
         this.database = database;
     }
 
-    public async ValueTask<string[]> GetRecipients(DistributionList distributionList, CancellationToken cancellationToken)
+    public async ValueTask<MailboxAddress[]> GetRecipients(DistributionList distributionList, CancellationToken cancellationToken)
     {
         return (await GetPeople(distributionList, cancellationToken))
-            .Select(p  => p.Email)
-            .Distinct()
-            .ToArray();
         // Avoid duplicate emails for married couples with a shared email address
-        //     .GroupBy(p => p.Email)
-        //     .Select(grouping => new EmailRecipient(
-        //     	emailAddress: grouping.Key,
-        //     	fullName: string.Join(", ", grouping.Select(r => r.FirstName)) + ' ' + grouping.First().LastName)
-        //     { EmailId = emailId })
-        //     .ToArray();
+             .GroupBy(p => p.Email)
+             .Select(grouping => new MailboxAddress(
+                 name: string.Join(", ", grouping.Select(r => r.FirstName)) + ' ' + grouping.First().LastName,
+                 address: grouping.Key))
+             .ToArray();
     }
 
     public async ValueTask<IEnumerable<Person>> GetPeople(DistributionList distributionList, CancellationToken cancellationToken)

@@ -72,11 +72,11 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
             return;
         }
 
-        string[] recipients = await distributionListService.GetRecipients(distributionList, cancellationToken);
-        foreach (string address in recipients)
+        MailboxAddress[] recipients = await distributionListService.GetRecipients(distributionList, cancellationToken);
+        foreach (MailboxAddress address in recipients)
         {
-            MimeMessage preparedMessage = emailRelay.PrepareForResentTo(email, MailboxAddress.Parse(address));
-            await emailDelivery.Enqueue(address, preparedMessage, email.Id, cancellationToken);
+            MimeMessage preparedMessage = emailRelay.PrepareForResentTo(email, address);
+            await emailDelivery.Enqueue(address.Address, preparedMessage, email.Id, cancellationToken);
         }
         email.DistributionListId = distributionList.Id;
         email.ProcessingCompletedTime = DateTime.UtcNow;
