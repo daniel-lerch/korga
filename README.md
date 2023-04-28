@@ -52,6 +52,7 @@ The following instructions are written for Windows but generally also apply to L
 ### Backend
 - Visual Studio 2022
 - .NET SDK 7.0
+- EF Core CLI Tools _(e.g. `dotnet tool install -g dotnet-ef`)_
 - MySQL or MariaDB _(e.g. from [PSModules](https://github.com/daniel-lerch/psmodules))_
 - OpenLDAP server
 
