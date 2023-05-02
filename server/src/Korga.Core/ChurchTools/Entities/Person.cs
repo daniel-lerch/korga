@@ -1,4 +1,6 @@
-﻿namespace Korga.ChurchTools.Entities;
+﻿using System;
+
+namespace Korga.ChurchTools.Entities;
 
 public class Person : IIdentifiable<int>
 {

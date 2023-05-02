@@ -4,17 +4,28 @@
 [![](https://img.shields.io/docker/pulls/daniellerch/korga.svg)](https://hub.docker.com/r/daniellerch/korga)
 [![](https://img.shields.io/docker/image-size/daniellerch/korga/latest.svg)](https://hub.docker.com/r/daniellerch/korga)
 
-## What is Korga planned to be?
-
 Korga stands for the german term _**K**irchen **Orga**nisation_ (church organization).
-It is not supposed to be an all-in-one solution for churches but rather to fill the gaps between commercial church management solutions like Church.Tools
-and several open source applications, while it itself only provides church-specific functionality.
+It synchronizes people and groups with [ChurchTools](https://church.tools) and provides specialized features like email distribution lists.
 
 ## What can Korga already do?
+
+### Email distribution lists
+
+Once configured, Korga automatically synchronizes people and groups from ChurchTools. This data can be used to create distribution lists.
+
+```
+./Korga.Server distribution-list create --group 137 kids
+```
+
+This command creates a distribution list _kids@example.org_ which forwards emails to every member of group #137.
+
+### Event registration
 
 ![Three screenshots of Korga's event registration](docs/assets/event_registration_overview.png)
 
 An event registration with multiple programs for each event. The list of participants is public as well as the possibility to delete registrations.
+
+Currently, there is neither an API endpoint nor a graphical user interface available to edit events and programs. Instead you have to write SQL queries.
 
 ## Installation
 
@@ -24,10 +35,12 @@ If you are using Docker Compose, take a look our example compose file in the `do
 When you start Korga for the first time you have create the database schema via CLI:
 
 ```
-./Korga.Server database create -fp
+docker compose exec app bash
+./Korga.Server database migrate
 ```
 
-Currently, there is neither an API endpoint nor a graphical user interface available to edit events and programs. Instead you have to write SQL queries.
+Configuration for ChurchTools synchronization, IMAP, SMTP, etc. can set as enviroment variables.
+See [appsettings.json](server/src/Korga.Server/appsettings.json) for an overview of available options and their default values.
 
 ## Contributing
 
@@ -39,6 +52,7 @@ The following instructions are written for Windows but generally also apply to L
 ### Backend
 - Visual Studio 2022
 - .NET SDK 7.0
+- EF Core CLI Tools _(e.g. `dotnet tool install -g dotnet-ef`)_
 - MySQL or MariaDB _(e.g. from [PSModules](https://github.com/daniel-lerch/psmodules))_
 - OpenLDAP server
 

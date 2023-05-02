@@ -1,4 +1,6 @@
-﻿namespace Korga.Extensions;
+﻿using System.Collections.Generic;
+
+namespace Korga.Extensions;
 
 public static class CollectionExtensions
 {

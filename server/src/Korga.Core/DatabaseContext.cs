@@ -1,4 +1,5 @@
 ﻿using Korga.ChurchTools.Entities;
+using Korga.EmailDelivery.Entities;
 using Korga.EmailRelay.Entities;
 using Korga.EventRegistration.Entities;
 using Korga.Ldap.Entities;
@@ -26,10 +27,11 @@ public sealed class DatabaseContext : DbContext
 	public DbSet<GroupType> GroupTypes => Set<GroupType>();
 	public DbSet<Status> Status => Set<Status>();
 
-	public DbSet<Email> Emails => Set<Email>();
-	public DbSet<EmailRecipient> EmailRecipients => Set<EmailRecipient>();
+	public DbSet<InboxEmail> InboxEmails => Set<InboxEmail>();
 	public DbSet<DistributionList> DistributionLists => Set<DistributionList>();
 	public DbSet<PersonFilter> PersonFilters => Set<PersonFilter>();
+
+	public DbSet<OutboxEmail> OutboxEmails => Set<OutboxEmail>();
 
 	public DbSet<PasswordReset> PasswordResets => Set<PasswordReset>();
 
@@ -45,6 +47,8 @@ public sealed class DatabaseContext : DbContext
 		CreateChurchTools(modelBuilder);
 
 		CreateEmailRelay(modelBuilder);
+
+		CreateEmailDelivery(modelBuilder);
 
 		CreateLdap(modelBuilder);
 	}
@@ -97,14 +101,10 @@ public sealed class DatabaseContext : DbContext
 
 	private void CreateEmailRelay(ModelBuilder modelBuilder)
 	{
-		var email = modelBuilder.Entity<Email>();
-		email.HasKey(e => e.Id);
-		email.HasOne(e => e.DistributionList).WithMany().HasForeignKey(e => e.DistributionListId);
-		email.Property(e => e.DownloadTime).HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
-
-		var emailRecipient = modelBuilder.Entity<EmailRecipient>();
-		emailRecipient.HasKey(e => e.Id);
-		emailRecipient.HasOne(e => e.Email).WithMany(e => e.Recipients).HasForeignKey(e => e.EmailId);
+		var inboxEmail = modelBuilder.Entity<InboxEmail>();
+		inboxEmail.HasKey(e => e.Id);
+		inboxEmail.HasOne(e => e.DistributionList).WithMany().HasForeignKey(e => e.DistributionListId);
+		inboxEmail.Property(e => e.DownloadTime).HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
 
 		var distributionList = modelBuilder.Entity<DistributionList>();
 		distributionList.HasKey(dl => dl.Id);
@@ -125,7 +125,14 @@ public sealed class DatabaseContext : DbContext
 		singlePerson.HasOne(p => p.Person).WithMany().HasForeignKey(p => p.PersonId);
 	}
 
-	private void CreateLdap(ModelBuilder modelBuilder)
+	private void CreateEmailDelivery(ModelBuilder modelBuilder)
+	{
+        var outboxEmail = modelBuilder.Entity<OutboxEmail>();
+        outboxEmail.HasKey(e => e.Id);
+        outboxEmail.HasOne(e => e.InboxEmail).WithMany(e => e.Recipients).HasForeignKey(e => e.InboxEmailId);
+    }
+
+    private void CreateLdap(ModelBuilder modelBuilder)
 	{
 		var passwordReset = modelBuilder.Entity<PasswordReset>();
 		passwordReset.HasKey(r => r.Token);
