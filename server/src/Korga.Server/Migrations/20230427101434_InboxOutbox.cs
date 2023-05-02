@@ -86,8 +86,12 @@ namespace Korga.Server.Migrations
                 table: "OutboxEmails",
                 column: "InboxEmailId");
 
-            migrationBuilder.Sql("INSERT INTO `InboxEmails` (`Id`, `DistributionListId`, `UniqueId`, `Subject`, `From`, `Sender`, `To`, `Receiver`, `Body`, `DownloadTime`, `ProcessingCompletedTime`)" +
-                "SELECT `Id`, `DistributionListId`, 0, `Subject`, `From`, `Sender`, `To`, `Receiver`, `Body`, `DownloadTime`, `RecipientsFetchTime` FROM `Emails`");
+            // Insert data from old Emails table into new InboxEmails table. EmailRecipients will not be migrated.
+            migrationBuilder.Sql(
+@"INSERT INTO `InboxEmails` 
+(`Id`, `DistributionListId`, `UniqueId`, `Subject`, `From`, `Sender`, `To`, `Receiver`, `Body`, `DownloadTime`, `ProcessingCompletedTime`)
+SELECT `Id`, `DistributionListId`, 0, `Subject`, `From`, `Sender`, `To`, `Receiver`, `Body`, `DownloadTime`, `RecipientsFetchTime`
+FROM `Emails`");
 
             migrationBuilder.DropTable(
                 name: "Emails");
@@ -168,9 +172,13 @@ namespace Korga.Server.Migrations
                 table: "Emails",
                 column: "DistributionListId");
 
-            migrationBuilder.Sql("INSERT INTO `Emails` (`Id`, `DistributionListId`, `Subject`, `From`, `Sender`, `To`, `Receiver`, `Body`, `DownloadTime`, `RecipientsFetchTime`)" +
-                "SELECT `Id`, `DistributionListId`, `Subject`, `From`, `Sender`, `To`, `Receiver`, `Body`, `DownloadTime`, `ProcessingCompletedTime` FROM `InboxEmails`");
-            
+            // Insert data from new InboxEmails table into the old recreated Emails table. OutboxEmails will not be migrated into EmailRecipients.
+            migrationBuilder.Sql(
+@"INSERT INTO `Emails`
+(`Id`, `DistributionListId`, `Subject`, `From`, `Sender`, `To`, `Receiver`, `Body`, `DownloadTime`, `RecipientsFetchTime`)
+SELECT `Id`, `DistributionListId`, `Subject`, `From`, `Sender`, `To`, `Receiver`, `Body`, `DownloadTime`, `ProcessingCompletedTime`
+FROM `InboxEmails`");
+
             migrationBuilder.DropTable(
                 name: "InboxEmails");
         }
