@@ -109,6 +109,7 @@ public sealed class DatabaseContext : DbContext
 		var distributionList = modelBuilder.Entity<DistributionList>();
 		distributionList.HasKey(dl => dl.Id);
 		distributionList.HasAlternateKey(dl => dl.Alias);
+		distributionList.Property(dl => dl.Flags).HasConversion<int>();
 
 		var personFilter = modelBuilder.Entity<PersonFilter>();
 		personFilter.HasKey(f => f.Id);

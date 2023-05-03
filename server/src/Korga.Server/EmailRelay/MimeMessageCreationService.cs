@@ -47,6 +47,25 @@ public class MimeMessageCreationService
         return new MimeMessage(headers, body);
     }
 
+    public MimeMessage PrepareForForwardTo(InboxEmail inboxEmail, MailboxAddress address)
+    {
+        if (inboxEmail.Body == null) throw new ArgumentNullException(nameof(inboxEmail), "inboxEmail.Body must not be null");
+
+        MimeEntity body;
+        using (MemoryStream memoryStream = new(inboxEmail.Body))
+            body = MimeEntity.Load(memoryStream);
+
+        MailboxAddress? from = FirstMailboxAddressOrDefault(inboxEmail.From);
+
+        MimeMessage message = new();
+        message.From.Add(new MailboxAddress(from?.Name, deliveryOptions.Value.SenderAddress));
+        message.To.Add(address);
+        if (from != null)
+            message.ReplyTo.Add(from);
+        message.Body = body;
+        return message;
+    }
+
     public MimeMessage? InvalidServerConfiguration(InboxEmail inboxEmail)
     {
         return ErrorMessage(inboxEmail, $"Hallo,\r\n" +
@@ -72,7 +91,7 @@ public class MimeMessageCreationService
     public MimeMessage? TooBigMessage(InboxEmail inboxEmail)
     {
         int maxAttachmentSizeInMegabytes = relayOptions.Value.MaxBodySizeInKilobytes * 3 / 4 / 1024;
-        
+
         return ErrorMessage(inboxEmail, $"Hallo,\r\n" +
             $"deine E-Mail mit dem Betreff {inboxEmail.Subject} an {inboxEmail.Receiver} konnte nicht zugestellt werden, weil sie zu groß war.\r\n" +
             $"Bitte beachte, dass alle Anhänge zusammen kleiner als {maxAttachmentSizeInMegabytes} MB sein müssen.");
@@ -80,20 +99,10 @@ public class MimeMessageCreationService
 
     private MimeMessage? ErrorMessage(InboxEmail inboxEmail, string message)
     {
-        InternetAddress recipient;
+        MailboxAddress? recipient = FirstMailboxAddressOrDefault(inboxEmail.ReplyTo)
+            ?? FirstMailboxAddressOrDefault(inboxEmail.From);
 
-        if (inboxEmail.ReplyTo != null && MailboxAddress.TryParse(inboxEmail.ReplyTo, out MailboxAddress replyTo))
-        {
-            recipient = replyTo;
-        }
-        else if (InternetAddressList.TryParse(inboxEmail.From, out InternetAddressList? originalFrom) && originalFrom.Count > 0)
-        {
-            recipient = originalFrom[0];
-        }
-        else
-        {
-            return null;
-        }
+        if (recipient == null) return null;
 
         MimeMessage errorMessage = new();
         errorMessage.From.Add(new MailboxAddress(deliveryOptions.Value.SenderName, deliveryOptions.Value.SenderAddress));
@@ -101,5 +110,20 @@ public class MimeMessageCreationService
         errorMessage.Subject = "Unzustellbar: " + inboxEmail.Subject;
         errorMessage.Body = new TextPart { Text = message };
         return errorMessage;
+    }
+
+    private static MailboxAddress? FirstMailboxAddressOrDefault(string? addressList)
+    {
+        if (addressList == null || !InternetAddressList.TryParse(addressList, out InternetAddressList? internetAddressList))
+            return null;
+
+        foreach (InternetAddress address in internetAddressList)
+        {
+            // We might find no MailboxAddress in a From header if all addresses are GroupAddresses
+            if (address is MailboxAddress mailboxAddress)
+                return mailboxAddress;
+        }
+
+        return null;
     }
 }
