@@ -101,14 +101,16 @@ public sealed class DatabaseContext : DbContext
         inboxEmail.HasIndex(e => e.ProcessingCompletedTime);
         inboxEmail.Property(e => e.DownloadTime).HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
 
-        var distributionList = modelBuilder.Entity<DistributionList>();
-        distributionList.HasKey(dl => dl.Id);
-        distributionList.HasAlternateKey(dl => dl.Alias);
+		var distributionList = modelBuilder.Entity<DistributionList>();
+		distributionList.HasKey(dl => dl.Id);
+		distributionList.HasAlternateKey(dl => dl.Alias);
+        distributionList.HasOne(dl => dl.PermittedSenders).WithMany().HasForeignKey(dl => dl.PermittedSendersId);
+        distributionList.HasOne(dl => dl.PermittedRecipients).WithMany().HasForeignKey(dl => dl.PermittedRecipientsId);
         distributionList.Property(dl => dl.Flags).HasConversion<int>();
 
-        var personFilter = modelBuilder.Entity<PersonFilter>();
-        personFilter.HasKey(f => f.Id);
-        personFilter.HasOne(f => f.DistributionList).WithMany(dl => dl.Filters).HasForeignKey(f => f.DistributionListId);
+		var personFilter = modelBuilder.Entity<PersonFilter>();
+		personFilter.HasKey(f => f.Id);
+		personFilter.HasOne(f => f.Parent).WithMany().HasForeignKey(f => f.ParentId);
 
         var groupFilter = modelBuilder.Entity<GroupFilter>();
         groupFilter.HasOne(f => f.Group).WithMany().HasForeignKey(f => f.GroupId);

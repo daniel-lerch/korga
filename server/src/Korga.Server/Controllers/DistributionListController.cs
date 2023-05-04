@@ -11,55 +11,63 @@ using System.Threading.Tasks;
 
 namespace Korga.Server.Controllers
 {
-	[ApiController]
-	public class DistributionListController : ControllerBase
-	{
-		private readonly DatabaseContext database;
+    [ApiController]
+    public class DistributionListController : ControllerBase
+    {
+        private readonly DatabaseContext database;
 
-		public DistributionListController(DatabaseContext database)
-		{
-			this.database = database;
-		}
+        public DistributionListController(DatabaseContext database)
+        {
+            this.database = database;
+        }
 
 		[Authorize]
 		[HttpGet("~/api/distribution-lists")]
 		[ProducesResponseType(typeof(DistributionListResponse[]), StatusCodes.Status200OK)]
 		public async Task<IActionResult> GetDistributionLists()
 		{
-			List<DistributionList> distributionLists = await database.DistributionLists.Include(dl => dl.Filters).OrderBy(dl => dl.Alias).ToListAsync();
+            List<DistributionList> distributionLists = await database.DistributionLists.Include(dl => dl.PermittedRecipients).OrderBy(dl => dl.Alias).ToListAsync();
 
-			List<DistributionListResponse> response = new();
+            List<DistributionListResponse> response = new();
 
-			foreach (DistributionList distributionList in distributionLists)
-			{
-				List<DistributionListResponse.PersonFilter> filters = new();
+            foreach (DistributionList distributionList in distributionLists)
+            {
+                response.Add(new(distributionList.Id, distributionList.Alias, distributionList.Flags.HasFlag(DistributionListFlags.Newsletter))
+                {
+                    PermittedRecipients = distributionList.PermittedRecipients != null ? await GetFiltersRecursive(distributionList.PermittedRecipients) : null
+                });
+            }
 
-				foreach (PersonFilter personFilter in distributionList.Filters!)
-				{
-					DistributionListResponse.PersonFilter filter = new() { Id = personFilter.Id, Discriminator = personFilter.GetType().Name };
+            return new JsonResult(response);
+        }
 
-					if (personFilter is StatusFilter statusFilter)
-					{
-						filter.StatusName = await database.Status.Where(s => s.Id == statusFilter.StatusId).Select(s => s.Name).SingleAsync();
-					}
-					else if (personFilter is GroupFilter groupFilter)
-					{
-						filter.GroupName = await database.Groups.Where(g => g.Id == groupFilter.GroupId).Select(g => g.Name).SingleAsync();
-						if (groupFilter.GroupRoleId.HasValue)
-							filter.GroupRoleName = await database.GroupRoles.Where(r => r.Id == groupFilter.GroupRoleId.Value).Select(r => r.Name).SingleAsync();
-					}
-					else if (personFilter is SinglePerson singlePerson)
-					{
-						filter.PersonFullName = await database.People.Where(p => p.Id == singlePerson.PersonId).Select(p => $"{p.FirstName} {p.LastName}").SingleAsync();
-					}
+        private async ValueTask<DistributionListResponse.PersonFilter> GetFiltersRecursive(PersonFilter personFilter)
+        {
+            DistributionListResponse.PersonFilter filter = new() { Id = personFilter.Id, Discriminator = personFilter.GetType().Name };
 
-					filters.Add(filter);
-				}
+            if (personFilter is LogicalOr or LogicalAnd)
+            {
+                foreach (PersonFilter child in await database.PersonFilters.Where(filter => filter.ParentId == personFilter.Id).ToListAsync())
+                {
+                    filter.Children.Add(await GetFiltersRecursive(child));
+                }
+            }
+            else if (personFilter is StatusFilter statusFilter)
+            {
+                filter.StatusName = await database.Status.Where(s => s.Id == statusFilter.StatusId).Select(s => s.Name).SingleAsync();
+            }
+            else if (personFilter is GroupFilter groupFilter)
+            {
+                filter.GroupName = await database.Groups.Where(g => g.Id == groupFilter.GroupId).Select(g => g.Name).SingleAsync();
+                if (groupFilter.GroupRoleId.HasValue)
+                    filter.GroupRoleName = await database.GroupRoles.Where(r => r.Id == groupFilter.GroupRoleId.Value).Select(r => r.Name).SingleAsync();
+            }
+            else if (personFilter is SinglePerson singlePerson)
+            {
+                filter.PersonFullName = await database.People.Where(p => p.Id == singlePerson.PersonId).Select(p => $"{p.FirstName} {p.LastName}").SingleAsync();
+            }
 
-				response.Add(new(distributionList.Id, distributionList.Alias, distributionList.Flags.HasFlag(DistributionListFlags.Newsletter), filters));
-			}
-
-			return new JsonResult(response);
-		}
-	}
+            return filter;
+        }
+    }
 }

@@ -1,8 +1,8 @@
 ﻿using Korga.ChurchTools.Entities;
 using Korga.EmailRelay.Entities;
-using Korga.Extensions;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -21,7 +21,11 @@ public class DistributionListService
 
     public async ValueTask<MailboxAddress[]> GetRecipients(DistributionList distributionList, CancellationToken cancellationToken)
     {
-        return (await GetPeople(distributionList, cancellationToken))
+        if (!distributionList.PermittedRecipientsId.HasValue) return Array.Empty<MailboxAddress>();
+
+        PersonFilter recipients = await database.PersonFilters.SingleAsync(filter => filter.Id == distributionList.PermittedRecipientsId.Value, cancellationToken);
+
+        return (await GetPeopleRecursive(recipients, cancellationToken))
         // Avoid duplicate emails for married couples with a shared email address
              .GroupBy(p => p.Email)
              .Select(grouping => new MailboxAddress(
@@ -30,36 +34,51 @@ public class DistributionListService
              .ToArray();
     }
 
-    public async ValueTask<IEnumerable<Person>> GetPeople(DistributionList distributionList, CancellationToken cancellationToken)
+    public async ValueTask<ISet<Person>> GetPeopleRecursive(PersonFilter personFilter, CancellationToken cancellationToken)
     {
-        List<PersonFilter> personFilters = await database.PersonFilters.Where(f => f.DistributionListId == distributionList.Id).ToListAsync(cancellationToken);
-
         HashSet<Person> people = new();
 
-        foreach (PersonFilter personFilter in personFilters)
+        if (personFilter is LogicalOr)
         {
-            if (personFilter is GroupFilter groupFilter)
+            List<PersonFilter> children = await database.PersonFilters
+                .Where(filter => filter.ParentId == personFilter.Id)
+                .ToListAsync(cancellationToken);
+
+            foreach (PersonFilter child in children)
             {
-                people.AddRange(
-                    await database.GroupMembers
-                        .Where(m => m.GroupId == groupFilter.GroupId && (groupFilter.GroupRoleId == null || m.GroupRoleId == groupFilter.GroupRoleId))
-                        .Join(database.People, m => m.PersonId, p => p.Id, (m, p) => p)
-                        .Where(p => !string.IsNullOrEmpty(p.Email))
-                        .ToListAsync(cancellationToken));
+                people.UnionWith(await GetPeopleRecursive(child, cancellationToken));
             }
-            else if (personFilter is StatusFilter statusFilter)
+        }
+        else if (personFilter is LogicalAnd)
+        {
+            List<PersonFilter> children = await database.PersonFilters
+                .Where(filter => filter.ParentId == personFilter.Id)
+                .ToListAsync(cancellationToken);
+
+            foreach (PersonFilter child in children)
             {
-                people.AddRange(
-                    await database.People
-                        .Where(p => p.StatusId == statusFilter.StatusId && !string.IsNullOrEmpty(p.Email))
-                        .ToListAsync(cancellationToken));
+                people.IntersectWith(await GetPeopleRecursive(child, cancellationToken));
             }
-            else if (personFilter is SinglePerson singlePerson)
-            {
-                people.AddRange(
-                    await database.People.Where(p => p.Id == singlePerson.PersonId && !string.IsNullOrEmpty(p.Email))
-                        .ToListAsync(cancellationToken));
-            }
+        }
+        else if (personFilter is GroupFilter groupFilter)
+        {
+            people.UnionWith(
+                await database.GroupMembers
+                    .Where(m => m.GroupId == groupFilter.GroupId && (groupFilter.GroupRoleId == null || m.GroupRoleId == groupFilter.GroupRoleId))
+                    .Join(database.People, m => m.PersonId, p => p.Id, (m, p) => p)
+                    .ToListAsync(cancellationToken));
+        }
+        else if (personFilter is StatusFilter statusFilter)
+        {
+            people.UnionWith(
+                await database.People
+                    .Where(p => p.StatusId == statusFilter.StatusId && !string.IsNullOrEmpty(p.Email))
+                    .ToListAsync(cancellationToken));
+        }
+        else if (personFilter is SinglePerson singlePerson)
+        {
+            people.Add(
+                await database.People.SingleAsync(p => p.Id == singlePerson.PersonId, cancellationToken));
         }
 
         return people;
