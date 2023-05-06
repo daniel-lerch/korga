@@ -2,14 +2,21 @@
   <Loading v-if="!loaded" :state="{ error }" />
   <div v-else class="container page-loaded-container">
     <h1>E-Mail-Verteiler</h1>
-    <div v-for="dl in distributionLists" :key="dl.id" class="card mb-3">
-      <div class="card-body">
-        <p class="card-title">{{ dl.alias }}</p>
-        <ul>
-          <li v-for="filter in dl.filters" :key="filter.id">
-            {{ shortText(filter) }}
-          </li>
-        </ul>
+    <div class="container">
+      <div v-for="dl in distributionLists" :key="dl.id" class="row">
+        <div class="col-sm-4 col-md-3">
+          <h6>{{ dl.alias }}</h6>
+          <span v-if="dl.newsletter" class="badge rounded-pill bg-primary">
+            Newsletter
+          </span>
+        </div>
+        <div class="col">
+          <ul class="list-unstyled">
+            <li v-for="filter in dl.filters" :key="filter.id">
+              {{ shortText(filter) }}
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -45,8 +52,12 @@ export default defineComponent({
       switch (filter.discriminator) {
         case "StatusFilter":
           return "Status: " + filter.statusName;
-        case "GroupFilter":
-          return "Gruppe: " + filter.groupName;
+        case "GroupFilter": {
+          const prefix = "Gruppe: " + filter.groupName;
+          return filter.groupRoleName
+            ? prefix + " (" + filter.groupRoleName + ")"
+            : prefix;
+        }
         case "SinglePerson":
           return "Person: " + filter.personFullName;
         default:
