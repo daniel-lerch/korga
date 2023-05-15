@@ -1,6 +1,7 @@
 ﻿using Korga.EmailRelay;
 using Korga.EmailRelay.Entities;
 using Korga.Server.Models.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,7 @@ namespace Korga.Server.Controllers
 			this.database = database;
 		}
 
+		[Authorize]
 		[HttpGet("~/api/distribution-lists")]
 		[ProducesResponseType(typeof(DistributionListResponse[]), StatusCodes.Status200OK)]
 		public async Task<IActionResult> GetDistributionLists()
