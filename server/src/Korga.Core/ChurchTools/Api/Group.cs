@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text.Json;
 
-namespace Korga.Server.ChurchTools.Api;
+namespace Korga.ChurchTools.Api;
 
 public class Group : IIdentifiable<int>
 {

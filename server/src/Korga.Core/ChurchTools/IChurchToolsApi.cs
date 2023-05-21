@@ -1,12 +1,12 @@
-﻿using Korga.Server.ChurchTools.Api;
+﻿using Korga.ChurchTools.Api;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Korga.Server.ChurchTools;
+namespace Korga.ChurchTools;
 
-public interface IChurchToolsApiService : IDisposable
+public interface IChurchToolsApi : IDisposable
 {
 	ValueTask<List<Group>> GetGroups(CancellationToken cancellationToken);
 	ValueTask<List<GroupMember>> GetGroupMembers(CancellationToken cancellationToken);

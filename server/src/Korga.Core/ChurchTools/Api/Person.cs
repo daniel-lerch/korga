@@ -1,4 +1,4 @@
-﻿namespace Korga.Server.ChurchTools.Api;
+﻿namespace Korga.ChurchTools.Api;
 
 public class Person : IIdentifiable<int>
 {
