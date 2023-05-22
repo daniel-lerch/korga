@@ -8,9 +8,12 @@ namespace Korga.ChurchTools;
 
 public interface IChurchToolsApi : IDisposable
 {
-	ValueTask<List<Group>> GetGroups(CancellationToken cancellationToken);
-	ValueTask<List<GroupMember>> GetGroupMembers(CancellationToken cancellationToken);
-	ValueTask<List<Person>> GetPeople(CancellationToken cancellationToken);
-	ValueTask<Person> GetPerson(int personId, CancellationToken cancellationToken);
-	ValueTask<PersonMasterdata> GetPersonMasterdata(CancellationToken cancellationToken);
+	Login? User { get; }
+	ValueTask<List<Group>> GetGroups(CancellationToken cancellationToken = default);
+	ValueTask<List<GroupMember>> GetGroupMembers(CancellationToken cancellationToken = default);
+	ValueTask<List<Person>> GetPeople(CancellationToken cancellationToken = default);
+	ValueTask<Person> GetPerson(CancellationToken cancellationToken = default);
+	ValueTask<Person> GetPerson(int personId, CancellationToken cancellationToken = default);
+	ValueTask<string> GetPersonLoginToken(int personId, CancellationToken cancellationToken = default);
+	ValueTask<PersonMasterdata> GetPersonMasterdata(CancellationToken cancellationToken = default);
 }
