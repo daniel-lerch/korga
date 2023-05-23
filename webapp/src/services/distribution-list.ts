@@ -3,6 +3,7 @@ import { get } from "./client";
 export interface DistributionList {
   id: number;
   alias: string;
+  newsletter: boolean;
   filters: PersonFilter[];
 }
 

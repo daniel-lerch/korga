@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Korga.ChurchTools.Entities;
 
@@ -18,6 +19,7 @@ public class Person : IIdentifiable<int>
 	public int StatusId { get; set; }
 	public Status? Status { get; set; }
 
+	public IEnumerable<DepartmentMember>? Departments { get; set; }
 
 	public string FirstName { get; set; }
 	public string LastName { get; set; }

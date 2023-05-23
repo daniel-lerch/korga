@@ -57,22 +57,25 @@ public class EmailDeliveryJobController : OneAtATimeJobController<OutboxEmail>, 
             // Strato for reference only allows you to send 50 emails without delay (September 2021)
             //
             // RFC 821 defines common status code as 450 mailbox unavailable (busy or blocked for policy reasons)
-            // RFC 3463 defines enhanced status code as 4.7.X for persistent transient failures caused by security or policy status
 
             logger.LogInformation("Mailbox busy. This is most likely caused by a temporary rate limit.");
             throw new TransientFailureException("Mailbox busy. This is most likely caused by a temporary rate limit.", ex);
         }
-        catch (SmtpCommandException ex) when (ex.StatusCode == SmtpStatusCode.MailboxUnavailable && ex.Message.Contains("5.7.26"))
+        catch (SmtpCommandException ex) when ((int)ex.StatusCode >= 500)
         {
-            // We have to handle emails being rejected permanently for policy violations like From headers violating DMARC policies
+            // We have to handle emails being rejected permanently and must not try to send again
             //
-            // RFC 7372 defines enhanced status code X.7.26 for multiple authentication failures associated to common status code 550
+            // RFC 3463 defines enhanced status code X.7.1 for local policy violations (Sending SPAM is not permitted)
+            // RFC 7372 defines enhanced status code X.7.26 for multiple authentication failures associated to common status code 550 (DMARC violation)
 
-            logger.LogWarning("Email #{Id} has been rejected by our SMTP server for multiple authentication failures: {ErrorMessage}",
+            logger.LogWarning("Email #{Id} has been rejected by our SMTP server: {ErrorMessage}",
                 outboxEmail.Id, ex.Message);
 
             // Set delivery time to prevent this email from being attempted again
             outboxEmail.DeliveryTime = DateTime.UtcNow;
+
+            // The exception message includes the enhanced status code
+            // E.g. "5.7.1 Refused by local policy. Sending of SPAM is not permitted! (B-URL)"
             outboxEmail.ErrorMessage = ex.Message;
 
             await database.SaveChangesAsync(cancellationToken);

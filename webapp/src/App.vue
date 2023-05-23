@@ -32,8 +32,12 @@
   <main class="content">
     <router-view v-bind="$attrs" />
   </main>
-  <footer class="bg-light">
-    <div>Copyright &copy; 2022 Daniel Lerch and Benjamin Stieler</div>
+  <footer>
+    <div>
+      <small
+        >Copyright &copy; 2022-2023 Daniel Lerch and Benjamin Stieler
+      </small>
+    </div>
   </footer>
 </template>
 
@@ -41,7 +45,7 @@
 div#app {
   display: flex;
   flex-flow: column;
-  height: 100vh;
+  min-height: 100vh;
 }
 
 main.content {

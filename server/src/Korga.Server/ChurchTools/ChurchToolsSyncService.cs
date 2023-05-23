@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+using DbDepartmentMember = Korga.ChurchTools.Entities.DepartmentMember;
 using DbGroupMember = Korga.ChurchTools.Entities.GroupMember;
 
 namespace Korga.Server.ChurchTools;
@@ -31,6 +32,8 @@ public class ChurchToolsSyncService
 
 		await Synchronize(personMasterdata.Roles, database.GroupRoles, x => new(x.Id, x.GroupTypeId, x.Name), (x, y) => { y.GroupTypeId = x.GroupTypeId; y.Name = x.Name; }, cancellationToken);
 
+		await Synchronize(personMasterdata.Departments, database.Departments, x => new(x.Id, x.Name), (x, y) => y.Name = x.Name, cancellationToken);
+		
 		await Synchronize(personMasterdata.Statuses, database.Status, x => new(x.Id, x.Name), (x, y) => y.Name = x.Name, cancellationToken);
 
 		await Task.WhenAll(
@@ -58,9 +61,11 @@ public class ChurchToolsSyncService
 
 	private async Task SynchronizePeople(CancellationToken cancellationToken)
 	{
-		await SynchronizePaginated(
-			await churchTools.GetPeople(cancellationToken),
-			database.People,
+        List<Person> people = await churchTools.GetPeople(cancellationToken);
+
+        await SynchronizePaginated(
+            people,
+            database.People,
 			x => new(x.Id, x.StatusId, x.FirstName, x.LastName, x.Email),
 			(response, entity) =>
 			{
@@ -69,6 +74,18 @@ public class ChurchToolsSyncService
 				entity.LastName = response.LastName;
 				entity.Email = response.Email;
 			},
+			cancellationToken
+		);
+
+		List<DbDepartmentMember> departmentMemberships = 
+			people.SelectMany(x => x.DepartmentIds.Select(y => new DbDepartmentMember { PersonId = x.Id, DepartmentId = y })).ToList();
+
+		await Synchronize<DbDepartmentMember, DbDepartmentMember, long>(
+			departmentMemberships,
+			database.DepartmentMembers,
+			await database.DepartmentMembers.OrderBy(x => x.PersonId).ThenBy(x => x.DepartmentId).ToListAsync(cancellationToken),
+			x => x,
+			(x, y) => { },
 			cancellationToken
 		);
 	}
@@ -85,15 +102,16 @@ public class ChurchToolsSyncService
 		);
 	}
 
+	// This shorthand without TKey does not work for composite keys hacked into a long
 	private async ValueTask Synchronize<TSrc, TDest>(List<TSrc> apiResponses, DbSet<TDest> cachedSet, Func<TSrc, TDest> convert, Action<TSrc, TDest> update, CancellationToken cancellationToken)
 		where TSrc : IIdentifiable<int>
 		where TDest : class, IIdentifiable<int>
 	{
-		List<TDest> cachedValues = await cachedSet.OrderBy(x => x.Id).ToListAsync(cancellationToken);
+        List<TDest> cachedValues = await cachedSet.OrderBy(x => x.Id).ToListAsync(cancellationToken);
 		await Synchronize<TSrc, TDest, int>(apiResponses, cachedSet, cachedValues, convert, update, cancellationToken);
-	}
+    }
 
-	private async ValueTask Synchronize<TSrc, TDest, TKey>(List<TSrc> apiResponses, DbSet<TDest> cachedSet, List<TDest> cachedValues, Func<TSrc, TDest> convert, Action<TSrc, TDest> update, CancellationToken cancellationToken)
+    private async ValueTask Synchronize<TSrc, TDest, TKey>(List<TSrc> apiResponses, DbSet<TDest> cachedSet, List<TDest> cachedValues, Func<TSrc, TDest> convert, Action<TSrc, TDest> update, CancellationToken cancellationToken)
 		where TSrc : IIdentifiable<TKey>
 		where TDest : class, IIdentifiable<TKey>
 		where TKey : IComparable<TKey>

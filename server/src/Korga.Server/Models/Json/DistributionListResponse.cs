@@ -4,15 +4,17 @@ namespace Korga.Server.Models.Json;
 
 public class DistributionListResponse
 {
-	public DistributionListResponse(long id, string alias, IReadOnlyList<PersonFilter> filters)
+	public DistributionListResponse(long id, string alias, bool newsletter, IReadOnlyList<PersonFilter> filters)
 	{
 		Id = id;
 		Alias = alias;
+		Newsletter = newsletter;
 		Filters = filters;
 	}
 
 	public long Id { get; set; }
 	public string Alias { get; set; }
+	public bool Newsletter { get; set; }
 	public IReadOnlyList<PersonFilter> Filters { get; set; }
 
 	public class PersonFilter

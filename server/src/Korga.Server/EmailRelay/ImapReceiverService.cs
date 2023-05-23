@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -43,63 +44,81 @@ public class ImapReceiverService
 
         foreach (IMessageSummary message in messages)
         {
-            if (message.Flags.GetValueOrDefault().HasFlag(MessageFlags.Seen)) continue;
+            InboxEmail? savedEmail = await database.InboxEmails.SingleOrDefaultAsync(email => email.UniqueId == message.UniqueId.Id, stoppingToken);
 
-            // Check if message has been downloaded but not marked as seen
-            if (await database.InboxEmails.AnyAsync(email => email.UniqueId == message.UniqueId.Id, stoppingToken))
+            if (savedEmail == null)
             {
-                await imap.Inbox.AddFlagsAsync(message.UniqueId, MessageFlags.Seen, silent: true, stoppingToken);
-                continue;
+                // Leave this message as is if it has been read by a user other than Korga
+                if (message.Flags!.Value.HasFlag(MessageFlags.Seen)) continue;
+
+                await QueueEmailForProcessing(imap, message, stoppingToken);
             }
-
-            byte[]? headerContent = null;
-
-            using (System.IO.MemoryStream memoryStream = new())
+            else
             {
-                // Writing to a MemoryStream is a synchronous operation that won't be cancelled anyhow
-                message.Headers.WriteTo(memoryStream, CancellationToken.None);
-                if (memoryStream.Length <= options.Value.MaxHeaderSizeInKilobytes * 1024)
-                    headerContent = memoryStream.ToArray();
+                // Check if message has been downloaded but not marked as seen
+                if (!message.Flags!.Value.HasFlag(MessageFlags.Seen))
+                    await imap.Inbox.AddFlagsAsync(message.UniqueId, MessageFlags.Seen, silent: true, stoppingToken);
+
+                // Delete email if download is longer ago than imap prune interval
+                if (savedEmail.DownloadTime < DateTime.UtcNow.AddDays(-options.Value.ImapRetentionIntervalInDays))
+                {
+                    logger.LogDebug("Pruning message {Id} from IMAP inbox", savedEmail.Id);
+                    await imap.Inbox.AddFlagsAsync(message.UniqueId, MessageFlags.Deleted, silent: true, stoppingToken);
+                }
             }
-
-            byte[]? bodyContent = null;
-
-            // Dispose body and memoryStream directly after use to limit memory consumption
-            using (MimeEntity body = await imap.Inbox.GetBodyPartAsync(message.UniqueId, message.Body, stoppingToken))
-            using (System.IO.MemoryStream memoryStream = new())
-            {
-                // Writing to a MemoryStream is a synchronous operation that won't be cancelled anyhow
-                body.WriteTo(memoryStream, CancellationToken.None);
-                if (memoryStream.Length <= options.Value.MaxBodySizeInKilobytes * 1024)
-                    bodyContent = memoryStream.ToArray();
-            }
-
-            string from = message.Headers[HeaderId.From];
-            string to = message.Headers[HeaderId.To];
-            string? receiver = message.Headers.GetReceiver();
-
-            InboxEmail emailEntity = new(
-                uniqueId: message.UniqueId.Id,
-                subject: message.Headers[HeaderId.Subject],
-                from: from,
-                sender: message.Headers[HeaderId.Sender],
-                replyTo: message.Headers[HeaderId.ReplyTo],
-                to: to,
-                receiver: receiver,
-                header: headerContent,
-                body: bodyContent);
-
-            database.InboxEmails.Add(emailEntity);
-
-            await database.SaveChangesAsync(stoppingToken);
-
-            jobQueue.EnsureRunning();
-
-            await imap.Inbox.AddFlagsAsync(message.UniqueId, MessageFlags.Seen, silent: true, stoppingToken);
-
-            logger.LogInformation("Downloaded and stored message #{Id} from {From} for {Receiver}", emailEntity.Id, from, receiver ?? "an unkown receiver");
         }
 
+        await imap.Inbox.ExpungeAsync(stoppingToken);
         await imap.DisconnectAsync(quit: true, stoppingToken);
+    }
+
+    private async Task QueueEmailForProcessing(ImapClient imap, IMessageSummary message, CancellationToken stoppingToken)
+    {
+        byte[]? headerContent = null;
+
+        using (System.IO.MemoryStream memoryStream = new())
+        {
+            // Writing to a MemoryStream is a synchronous operation that won't be cancelled anyhow
+            message.Headers.WriteTo(memoryStream, CancellationToken.None);
+            if (memoryStream.Length <= options.Value.MaxHeaderSizeInKilobytes * 1024)
+                headerContent = memoryStream.ToArray();
+        }
+
+        byte[]? bodyContent = null;
+
+        // Dispose body and memoryStream directly after use to limit memory consumption
+        using (MimeEntity body = await imap.Inbox.GetBodyPartAsync(message.UniqueId, message.Body, stoppingToken))
+        using (System.IO.MemoryStream memoryStream = new())
+        {
+            // Writing to a MemoryStream is a synchronous operation that won't be cancelled anyhow
+            body.WriteTo(memoryStream, CancellationToken.None);
+            if (memoryStream.Length <= options.Value.MaxBodySizeInKilobytes * 1024)
+                bodyContent = memoryStream.ToArray();
+        }
+
+        string from = message.Headers[HeaderId.From];
+        string to = message.Headers[HeaderId.To];
+        string? receiver = message.Headers.GetReceiver();
+
+        InboxEmail emailEntity = new(
+            uniqueId: message.UniqueId.Id,
+            subject: message.Headers[HeaderId.Subject],
+            from: from,
+            sender: message.Headers[HeaderId.Sender],
+            replyTo: message.Headers[HeaderId.ReplyTo],
+            to: to,
+            receiver: receiver,
+            header: headerContent,
+            body: bodyContent);
+
+        database.InboxEmails.Add(emailEntity);
+
+        await database.SaveChangesAsync(stoppingToken);
+
+        jobQueue.EnsureRunning();
+
+        await imap.Inbox.AddFlagsAsync(message.UniqueId, MessageFlags.Seen, silent: true, stoppingToken);
+
+        logger.LogInformation("Downloaded and stored message #{Id} from {From} for {Receiver}", emailEntity.Id, from, receiver ?? "an unkown receiver");
     }
 }
