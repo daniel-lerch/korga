@@ -3,15 +3,24 @@
   <div v-else class="container page-loaded-container">
     <h1>E-Mail-Verteiler</h1>
     <div class="container">
-      <div v-for="dl in distributionLists" :key="dl.id" class="row">
-        <div class="col-sm-4 col-md-3">
+      <div
+        v-for="dl in distributionLists"
+        :key="dl.id"
+        class="row border-bottom mb-2"
+      >
+        <div class="col-8 col-md-3 col-lg-2">
           <h6>{{ dl.alias }}</h6>
-          <span v-if="dl.newsletter" class="badge rounded-pill bg-primary">
+        </div>
+        <div class="col-auto">
+          <span
+            class="badge rounded-pill bg-primary"
+            :class="{ invisible: !dl.newsletter }"
+          >
             Newsletter
           </span>
         </div>
-        <div class="col">
-          <ul class="list-unstyled">
+        <div class="col-12 col-md-6">
+          <ul class="list-unstyled mb-2">
             <li v-for="filter in dl.filters" :key="filter.id">
               {{ shortText(filter) }}
             </li>
