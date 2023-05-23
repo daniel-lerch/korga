@@ -1,4 +1,5 @@
-﻿using Korga.EmailRelay.Entities;
+﻿using Korga.EmailRelay;
+using Korga.EmailRelay.Entities;
 using Korga.Server.EmailDelivery;
 using Korga.Server.Utilities;
 using Microsoft.EntityFrameworkCore;
@@ -75,7 +76,9 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
         MailboxAddress[] recipients = await distributionListService.GetRecipients(distributionList, cancellationToken);
         foreach (MailboxAddress address in recipients)
         {
-            MimeMessage preparedMessage = emailRelay.PrepareForResentTo(email, address);
+            MimeMessage preparedMessage = distributionList.Flags.HasFlag(DistributionListFlags.Newsletter)
+                ? emailRelay.PrepareForForwardTo(email, address)
+                : emailRelay.PrepareForResentTo(email, address);
             await emailDelivery.Enqueue(address.Address, preparedMessage, email.Id, cancellationToken);
         }
         email.DistributionListId = distributionList.Id;

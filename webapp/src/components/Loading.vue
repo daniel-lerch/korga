@@ -1,7 +1,7 @@
 <template>
   <div class="page-load-container container">
     <div v-if="state.error === null" class="spinner-border" role="status"></div>
-    <div v-else class="alert alert-danger" role="alert">
+    <div v-else class="alert alert-danger mt-4" role="alert">
       {{ state.error.toString() }}
     </div>
   </div>

@@ -1,4 +1,5 @@
-﻿using Korga.EmailRelay.Entities;
+﻿using Korga.EmailRelay;
+using Korga.EmailRelay.Entities;
 using Korga.Server.Models.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -53,7 +54,7 @@ namespace Korga.Server.Controllers
 					filters.Add(filter);
 				}
 
-				response.Add(new(distributionList.Id, distributionList.Alias, filters));
+				response.Add(new(distributionList.Id, distributionList.Alias, distributionList.Flags.HasFlag(DistributionListFlags.Newsletter), filters));
 			}
 
 			return new JsonResult(response);

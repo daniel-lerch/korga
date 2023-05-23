@@ -112,7 +112,7 @@ public class LdapCommand
 			if (mailAddress == null) return 1;
 			if (mailAddress.Length > 0) person.Mail = mailAddress;
 
-			person.Cn = person.DisplayName = $"{givenName} {familyName}";
+			person.Cn = person.DisplayName = $"{person.GivenName} {person.Sn}";
 
 			ldap.SavePerson(Uid, person);
 			return 0;
