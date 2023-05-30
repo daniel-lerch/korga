@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Korga.Server.ChurchTools.Api;
+namespace Korga.ChurchTools.Api;
 
 public class PersonMasterdata
 {

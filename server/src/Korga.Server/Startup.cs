@@ -1,4 +1,5 @@
 using Korga.Server.ChurchTools;
+using Korga.Server.ChurchTools.Hosting;
 using Korga.Server.EmailDelivery;
 using Korga.Server.EmailRelay;
 using Korga.Server.Extensions;
@@ -31,7 +32,7 @@ public class Startup
 
         services.AddSingleton<LdapService>();
 
-        services.AddSingleton<IChurchToolsApiService, ChurchToolsApiService>();
+        services.AddChurchToolsApi();
 
         services.AddKorgaMySqlDatabase();
 

@@ -1,4 +1,5 @@
-﻿using Korga.Server.ChurchTools.Api;
+﻿using Korga.ChurchTools;
+using Korga.ChurchTools.Api;
 using Korga.Server.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -15,9 +16,9 @@ namespace Korga.Server.ChurchTools;
 public class ChurchToolsSyncService
 {
 	private readonly DatabaseContext database;
-	private readonly IChurchToolsApiService churchTools;
+	private readonly IChurchToolsApi churchTools;
 
-	public ChurchToolsSyncService(DatabaseContext database, IChurchToolsApiService churchTools)
+	public ChurchToolsSyncService(DatabaseContext database, IChurchToolsApi churchTools)
 	{
 		this.database = database;
 		this.churchTools = churchTools;
