@@ -2,8 +2,10 @@ name: Release build and publish
 
 on:
   push:
-    branches-ignore: "*"
-    tags: "v*"
+    branches-ignore:
+    - "**"
+    tags:
+    - "v*"
 
 jobs:
   docker:
