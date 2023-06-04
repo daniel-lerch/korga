@@ -77,7 +77,7 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
         foreach (MailboxAddress address in recipients)
         {
             MimeMessage preparedMessage = distributionList.Flags.HasFlag(DistributionListFlags.Newsletter)
-                ? emailRelay.PrepareForForwardTo(email, address)
+                ? await emailRelay.PrepareForForwardTo(email, address, cancellationToken)
                 : emailRelay.PrepareForResentTo(email, address);
             await emailDelivery.Enqueue(address.Address, preparedMessage, email.Id, cancellationToken);
         }
