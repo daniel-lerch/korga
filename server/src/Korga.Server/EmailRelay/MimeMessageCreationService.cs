@@ -1,9 +1,14 @@
 ﻿using Korga.EmailRelay.Entities;
 using Korga.Server.EmailDelivery;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Korga.Server.EmailRelay;
 
@@ -11,11 +16,13 @@ public class MimeMessageCreationService
 {
     private readonly IOptions<EmailRelayOptions> relayOptions;
     private readonly IOptions<EmailDeliveryOptions> deliveryOptions;
+    private readonly DatabaseContext database;
 
-    public MimeMessageCreationService(IOptions<EmailRelayOptions> relayOptions, IOptions<EmailDeliveryOptions> deliveryOptions)
+    public MimeMessageCreationService(IOptions<EmailRelayOptions> relayOptions, IOptions<EmailDeliveryOptions> deliveryOptions, DatabaseContext database)
     {
         this.relayOptions = relayOptions;
         this.deliveryOptions = deliveryOptions;
+        this.database = database;
     }
 
     /// <summary>
@@ -47,21 +54,24 @@ public class MimeMessageCreationService
         return new MimeMessage(headers, body);
     }
 
-    public MimeMessage PrepareForForwardTo(InboxEmail inboxEmail, MailboxAddress address)
+    public async ValueTask<MimeMessage> PrepareForForwardTo(InboxEmail inboxEmail, MailboxAddress address, CancellationToken cancellationToken)
     {
         if (inboxEmail.Body == null) throw new ArgumentNullException(nameof(inboxEmail), "inboxEmail.Body must not be null");
 
         MimeEntity body;
         using (MemoryStream memoryStream = new(inboxEmail.Body))
-            body = MimeEntity.Load(memoryStream);
+            // Reading from a MemoryStream is a synchronous operation that won't be cancelled anyhow
+            body = MimeEntity.Load(memoryStream, CancellationToken.None);
 
         MailboxAddress? from = FirstMailboxAddressOrDefault(inboxEmail.From);
+        string? fromName = await FromName(from, cancellationToken);
 
         MimeMessage message = new();
-        message.From.Add(new MailboxAddress(from?.Name, deliveryOptions.Value.SenderAddress));
+        message.From.Add(new MailboxAddress(fromName, deliveryOptions.Value.SenderAddress));
         message.To.Add(address);
         if (from != null)
             message.ReplyTo.Add(from);
+        message.Subject = inboxEmail.Subject;
         message.Body = body;
         return message;
     }
@@ -110,6 +120,20 @@ public class MimeMessageCreationService
         errorMessage.Subject = "Unzustellbar: " + inboxEmail.Subject;
         errorMessage.Body = new TextPart { Text = message };
         return errorMessage;
+    }
+
+    private async ValueTask<string?> FromName(MailboxAddress? from, CancellationToken cancellationToken)
+    {
+        if (from == null) return null;
+
+        if (!string.IsNullOrWhiteSpace(from.Name)) return from.Name;
+
+        // If the email client did not add a from name, try to get the persons name from ChurchTools
+        List<string> names = await database.People.Where(p => p.Email == from.Address).Select(p => $"{p.FirstName} {p.LastName}").ToListAsync(cancellationToken);
+        if (names.Count > 0) return string.Join(", ", names);
+
+        // If no name can be determined return address like: alice@example.org <noreply@example.org>
+        return from.Address;
     }
 
     private static MailboxAddress? FirstMailboxAddressOrDefault(string? addressList)
