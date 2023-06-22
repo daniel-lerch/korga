@@ -115,6 +115,7 @@ public sealed class DatabaseContext : DbContext
         var inboxEmail = modelBuilder.Entity<InboxEmail>();
         inboxEmail.HasKey(e => e.Id);
         inboxEmail.HasOne(e => e.DistributionList).WithMany().HasForeignKey(e => e.DistributionListId);
+        inboxEmail.HasIndex(e => e.ProcessingCompletedTime);
         inboxEmail.Property(e => e.DownloadTime).HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
 
         var distributionList = modelBuilder.Entity<DistributionList>();
@@ -142,6 +143,7 @@ public sealed class DatabaseContext : DbContext
         var outboxEmail = modelBuilder.Entity<OutboxEmail>();
         outboxEmail.HasKey(e => e.Id);
         outboxEmail.HasOne(e => e.InboxEmail).WithMany(e => e.Recipients).HasForeignKey(e => e.InboxEmailId);
+        outboxEmail.HasIndex(e => e.DeliveryTime);
     }
 
     private void CreateLdap(ModelBuilder modelBuilder)
