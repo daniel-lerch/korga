@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using Korga.EmailDelivery.Entities;
 
 namespace Korga.EmailRelay.Entities;
 
@@ -48,6 +46,4 @@ public class InboxEmail
     public byte[]? Body { get; set; }
     public DateTime DownloadTime { get; set; }
     public DateTime ProcessingCompletedTime { get; set; }
-
-    public IEnumerable<OutboxEmail>? Recipients { get; set; }
 }

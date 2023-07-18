@@ -34,6 +34,7 @@ public sealed class DatabaseContext : DbContext
     public DbSet<PersonFilter> PersonFilters => Set<PersonFilter>();
 
     public DbSet<OutboxEmail> OutboxEmails => Set<OutboxEmail>();
+    public DbSet<SentEmail> SentEmails => Set<SentEmail>();
 
     public DbSet<PasswordReset> PasswordResets => Set<PasswordReset>();
 
@@ -115,6 +116,7 @@ public sealed class DatabaseContext : DbContext
         var inboxEmail = modelBuilder.Entity<InboxEmail>();
         inboxEmail.HasKey(e => e.Id);
         inboxEmail.HasOne(e => e.DistributionList).WithMany().HasForeignKey(e => e.DistributionListId);
+        inboxEmail.HasIndex(e => e.UniqueId).IsUnique();
         inboxEmail.HasIndex(e => e.ProcessingCompletedTime);
         inboxEmail.Property(e => e.DownloadTime).HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
 
@@ -142,8 +144,13 @@ public sealed class DatabaseContext : DbContext
     {
         var outboxEmail = modelBuilder.Entity<OutboxEmail>();
         outboxEmail.HasKey(e => e.Id);
-        outboxEmail.HasOne(e => e.InboxEmail).WithMany(e => e.Recipients).HasForeignKey(e => e.InboxEmailId);
-        outboxEmail.HasIndex(e => e.DeliveryTime);
+        outboxEmail.HasOne(e => e.InboxEmail).WithMany().HasForeignKey(e => e.InboxEmailId);
+
+        var sentEmail = modelBuilder.Entity<SentEmail>();
+        sentEmail.HasKey(e => e.Id);
+        sentEmail.HasOne(e => e.InboxEmail).WithMany().HasForeignKey(e => e.InboxEmailId);
+        sentEmail.HasIndex(e => e.DeliveryTime);
+        sentEmail.Property(e => e.Id).ValueGeneratedNever();
     }
 
     private void CreateLdap(ModelBuilder modelBuilder)

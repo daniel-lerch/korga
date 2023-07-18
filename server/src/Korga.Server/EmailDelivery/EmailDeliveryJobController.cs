@@ -28,13 +28,13 @@ public class EmailDeliveryJobController : OneAtATimeJobController<OutboxEmail>, 
 
     protected override async ValueTask<OutboxEmail?> NextPendingOrDefault(CancellationToken cancellationToken)
     {
-        return await database.OutboxEmails.FirstOrDefaultAsync(email => email.DeliveryTime == default, cancellationToken);
+        return await database.OutboxEmails.FirstOrDefaultAsync(cancellationToken);
     }
 
     protected override async ValueTask ExecuteJob(OutboxEmail outboxEmail, CancellationToken cancellationToken)
     {
         SmtpClient smtp = await GetConnection(cancellationToken);
-        
+
         MimeMessage mimeMessage;
 
         using (MemoryStream memoryStream = new(outboxEmail.Content))
@@ -44,7 +44,15 @@ public class EmailDeliveryJobController : OneAtATimeJobController<OutboxEmail>, 
         {
             await smtp.SendAsync(mimeMessage, cancellationToken);
 
-            outboxEmail.DeliveryTime = DateTime.UtcNow;
+            database.OutboxEmails.Remove(outboxEmail);
+            database.SentEmails.Add(new SentEmail
+            {
+                Id = outboxEmail.Id,
+                InboxEmailId = outboxEmail.InboxEmailId,
+                EmailAddress = outboxEmail.EmailAddress,
+                ContentSize = outboxEmail.Content.Length,
+                DeliveryTime = DateTime.UtcNow
+            });
 
             // Don't cancel this operation because messages would sent twice otherwise
             await database.SaveChangesAsync(CancellationToken.None);
@@ -71,12 +79,19 @@ public class EmailDeliveryJobController : OneAtATimeJobController<OutboxEmail>, 
             logger.LogWarning("Email #{Id} has been rejected by our SMTP server: {ErrorMessage}",
                 outboxEmail.Id, ex.Message);
 
-            // Set delivery time to prevent this email from being attempted again
-            outboxEmail.DeliveryTime = DateTime.UtcNow;
-
-            // The exception message includes the enhanced status code
-            // E.g. "5.7.1 Refused by local policy. Sending of SPAM is not permitted! (B-URL)"
-            outboxEmail.ErrorMessage = ex.Message;
+            // Move this email into SentEmails table to prevent it from being attempted again
+            database.OutboxEmails.Remove(outboxEmail);
+            database.SentEmails.Add(new SentEmail
+            {
+                Id = outboxEmail.Id,
+                InboxEmailId = outboxEmail.InboxEmailId,
+                EmailAddress = outboxEmail.EmailAddress,
+                ContentSize = outboxEmail.Content.Length,
+                // The exception message includes the enhanced status code
+                // E.g. "5.7.1 Refused by local policy. Sending of SPAM is not permitted! (B-URL)"
+                ErrorMessage = ex.Message,
+                DeliveryTime = DateTime.UtcNow
+            });
 
             await database.SaveChangesAsync(cancellationToken);
         }
