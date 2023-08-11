@@ -52,7 +52,7 @@ public abstract class MigrationTest : IDisposable
         serviceScope.Dispose();
         serviceProvider.Dispose();
 
-        //DropDatabase(connection, databaseName);
+        DropDatabase(connection, databaseName);
 
         connection.Close();
         connection.Dispose();

@@ -109,22 +109,42 @@ Daniel");
     [Fact]
     public async Task TestUpgrade()
     {
+        AddSinglePersonFilter_Email beforeUpgrade = new()
+        {
+            DistributionListId = null,
+            Subject = inboxEmail_Subject,
+            From = inboxEmail_From,
+            Sender = null,
+            To = inboxEmail_To,
+            Receiver = inboxEmail_Receiver,
+            Body = inboxEmail_Body,
+            DownloadTime = inboxEmail_DownloadTime,
+            RecipientsFetchTime = inboxEmail_ProcessingCompletedTime
+        };
+        InboxOutbox_InboxEmail expected = new()
+        {
+            Id = 1,
+            DistributionListId = null,
+            UniqueId = 0u,
+            Subject = inboxEmail_Subject,
+            From = inboxEmail_From,
+            Sender = null,
+            ReplyTo = null,
+            To = inboxEmail_To,
+            Receiver = inboxEmail_Receiver,
+            Header = null,
+            Body = inboxEmail_Body,
+            DownloadTime = inboxEmail_DownloadTime,
+            ProcessingCompletedTime = inboxEmail_ProcessingCompletedTime
+        };
+
         IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
 
         // Create database schema of last migration before the one to test
         await migrator.MigrateAsync("AddSinglePersonFilter");
 
         // Add test data
-        addSinglePersonFilter.Emails.Add(new()
-        {
-            Subject = inboxEmail_Subject,
-            From = inboxEmail_From,
-            To = inboxEmail_To,
-            Receiver = inboxEmail_Receiver,
-            Body = inboxEmail_Body,
-            DownloadTime = inboxEmail_DownloadTime,
-            RecipientsFetchTime = inboxEmail_ProcessingCompletedTime
-        });
+        addSinglePersonFilter.Emails.Add(beforeUpgrade);
         await addSinglePersonFilter.SaveChangesAsync();
 
         // Run migration at test
@@ -132,18 +152,7 @@ Daniel");
 
         // Verify that data has been migrated as expected
         InboxOutbox_InboxEmail inboxEmail = await inboxOutbox.InboxEmails.SingleAsync();
-        Assert.False(inboxEmail.DistributionListId.HasValue);
-        Assert.Equal(0u, inboxEmail.UniqueId);
-        Assert.Equal(inboxEmail_Subject, inboxEmail.Subject);
-        Assert.Equal(inboxEmail_From, inboxEmail.From);
-        Assert.Null(inboxEmail.Sender);
-        Assert.Null(inboxEmail.ReplyTo);
-        Assert.Equal(inboxEmail_To, inboxEmail.To);
-        Assert.Equal(inboxEmail_Receiver, inboxEmail.Receiver);
-        Assert.Null(inboxEmail.Header);
-        Assert.Equal(inboxEmail_Body, inboxEmail.Body);
-        Assert.Equal(inboxEmail_DownloadTime, inboxEmail.DownloadTime);
-        Assert.Equal(inboxEmail_ProcessingCompletedTime, inboxEmail.ProcessingCompletedTime);
+        Assert.Equivalent(expected, inboxEmail);
 
         // Make sure old table has been deleted
         await using (MySqlCommand command = connection.CreateCommand())
@@ -167,24 +176,42 @@ Daniel");
     [Fact]
     public async Task TestDowngrade()
     {
-        IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
-
-        // Create database schema of the migration to test
-        await migrator.MigrateAsync("InboxOutbox");
-
-        // Add test data
-        inboxOutbox.InboxEmails.Add(new()
+        InboxOutbox_InboxEmail beforeDowngrade = new()
         {
+            DistributionListId = null,
             UniqueId = inboxEmail_UniqueId,
             Subject = inboxEmail_Subject,
             From = inboxEmail_From,
+            Sender = null,
+            ReplyTo = null,
             To = inboxEmail_To,
             Receiver = inboxEmail_Receiver,
             Header = inboxEmail_Header,
             Body = inboxEmail_Body,
             DownloadTime = inboxEmail_DownloadTime,
             ProcessingCompletedTime = inboxEmail_ProcessingCompletedTime,
-        });
+        };
+        AddSinglePersonFilter_Email expected = new()
+        {
+            Id = 1,
+            DistributionListId = null,
+            Subject = inboxEmail_Subject,
+            From = inboxEmail_From,
+            Sender = null,
+            To = inboxEmail_To,
+            Receiver = inboxEmail_Receiver,
+            Body = inboxEmail_Body,
+            DownloadTime = inboxEmail_DownloadTime,
+            RecipientsFetchTime = inboxEmail_ProcessingCompletedTime
+        };
+
+        IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
+
+        // Create database schema of the migration to test
+        await migrator.MigrateAsync("InboxOutbox");
+
+        // Add test data
+        inboxOutbox.InboxEmails.Add(beforeDowngrade);
         await inboxOutbox.SaveChangesAsync();
 
         // Migrate to migration before the one to test and thereby revert it
@@ -192,15 +219,7 @@ Daniel");
 
         // Verify that data has been rolled back as expected
         AddSinglePersonFilter_Email email = await addSinglePersonFilter.Emails.SingleAsync();
-        Assert.False(email.DistributionListId.HasValue);
-        Assert.Equal(inboxEmail_Subject, email.Subject);
-        Assert.Equal(inboxEmail_From, email.From);
-        Assert.Null(email.Sender);
-        Assert.Equal(inboxEmail_To, email.To);
-        Assert.Equal(inboxEmail_Receiver, email.Receiver);
-        Assert.Equal(inboxEmail_Body, email.Body);
-        Assert.Equal(inboxEmail_DownloadTime, email.DownloadTime);
-        Assert.Equal(inboxEmail_ProcessingCompletedTime, email.RecipientsFetchTime);
+        Assert.Equivalent(expected, email);
 
         // Make sure old table has been deleted
         await using (MySqlCommand command = connection.CreateCommand())
