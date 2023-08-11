@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
+﻿using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using MySqlConnector;
@@ -17,12 +16,8 @@ namespace Korga.Server.Tests.Migrations;
 /// Non-breaking changes like creating columns are handled by generated code
 /// which is covered by Microsoft's unit tests.
 /// </summary>
-public class InboxOutboxMigrationTests : IDisposable
+public class InboxOutboxMigrationTests : MigrationTest
 {
-    private const string databaseName = "Korga_InboxOutboxMigration";
-    private const string shortConnectionString = "Server=localhost;Port=3306;User=root;Password=root;";
-    private const string connectionString = $"Server=localhost;Port=3306;Database={databaseName};User=root;Password=root;";
-
     private const uint inboxEmail_UniqueId = 573;
     private const string inboxEmail_Subject = "Korga is amazing!";
     private const string inboxEmail_From = "Alice <alice@example.org>";
@@ -53,7 +48,7 @@ From: Alice <alice@example.org>
 To: <admin@example.org>
 Subject: Korga is amazing!
 Date: Thu, 3 Aug 2023 22:40:54 -0700
-Message-ID: <000601d9c696$3d776850$b86638f0$@lerchen.net>
+Message-ID: <000601d9c696$3d776850$b86638f0$@example.org>
 MIME-Version: 1.0
 Content-Type: text/plain;
         charset=""us-ascii""
@@ -78,48 +73,7 @@ Daniel");
     private static readonly DateTime inboxEmail_DownloadTime = DateTime.Parse("2023-08-03 22:42:00.797007");
     private static readonly DateTime inboxEmail_ProcessingCompletedTime = DateTime.Parse("2023-08-04 05:42:00.881735");
 
-    private readonly MySqlConnection connection;
-    private readonly ServiceProvider serviceProvider;
-    private readonly IServiceScope serviceScope;
-    private readonly DatabaseContext databaseContext;
-
-    public InboxOutboxMigrationTests()
-    {
-        // Create test database
-        connection = new(shortConnectionString);
-        connection.Open();
-        CreateEmptyDatabase(connection, databaseName);
-        connection.ChangeDatabase(databaseName);
-
-        // Create DatabaseContext for migrations
-        serviceProvider = new ServiceCollection()
-            .AddDbContext<DatabaseContext>(optionsBuilder =>
-            {
-                optionsBuilder.UseMySql(
-                    connectionString,
-                    ServerVersion.AutoDetect(shortConnectionString),
-                    builder =>
-                    {
-                        builder.MigrationsAssembly($"{nameof(Korga)}.{nameof(Server)}");
-                        builder.EnableRetryOnFailure();
-                    });
-            })
-            .BuildServiceProvider();
-
-        serviceScope = serviceProvider.CreateScope();
-        databaseContext = serviceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
-    }
-
-    public void Dispose()
-    {
-        serviceScope.Dispose();
-        serviceProvider.Dispose();
-
-        //DropDatabase(connection, databaseName);
-
-        connection.Close();
-        connection.Dispose();
-    }
+    public InboxOutboxMigrationTests() : base("InboxOutboxMigration") { }
 
     /// <summary>
     /// Tests custom migration code from Emails table to InboxEmails.
@@ -140,7 +94,7 @@ Daniel");
         await migrator.MigrateAsync("AddSinglePersonFilter");
 
         // Add test data
-        using (MySqlCommand command = connection.CreateCommand())
+        await using (MySqlCommand command = connection.CreateCommand())
         {
             command.CommandText =
 @"INSERT INTO `Emails`
@@ -162,12 +116,12 @@ VALUES (NULL, @subject, @from, NULL, @to, @receiver, @body, @downloadtime, @comp
         await migrator.MigrateAsync("InboxOutbox");
 
         // Verify that data has been migrated as expected
-        using (MySqlCommand command = connection.CreateCommand())
+        await using (MySqlCommand command = connection.CreateCommand())
         {
             command.CommandText =
 @"SELECT `DistributionListId`, `UniqueId`, `Subject`, `From`, `Sender`, `ReplyTo`, `To`, `Receiver`, `Header`, `Body`, `DownloadTime`, `ProcessingCompletedTime`
 FROM `InboxEmails`";
-            MySqlDataReader reader = await command.ExecuteReaderAsync();
+            await using MySqlDataReader reader = await command.ExecuteReaderAsync();
             Assert.True(await reader.ReadAsync());
             Assert.True(reader.IsDBNull(0));
             Assert.Equal(0u, reader.GetUInt32(1));
@@ -181,6 +135,13 @@ FROM `InboxEmails`";
             Assert.Equal(inboxEmail_Body, (byte[])reader.GetValue(9));
             Assert.Equal(inboxEmail_DownloadTime, reader.GetDateTime(10));
             Assert.Equal(inboxEmail_ProcessingCompletedTime, reader.GetDateTime(11));
+        }
+
+        await using (MySqlCommand command = connection.CreateCommand())
+        {
+            command.CommandText = $"SHOW TABLES WHERE `Tables_in_{databaseName}` = \"Emails\"";
+            await using MySqlDataReader reader = await command.ExecuteReaderAsync();
+            Assert.False(await reader.ReadAsync());
         }
     }
 
@@ -201,9 +162,9 @@ FROM `InboxEmails`";
 
         // Create database schema of the migration to test
         await migrator.MigrateAsync("InboxOutbox");
-        
+
         // Add test data
-        using (MySqlCommand command = connection.CreateCommand())
+        await using (MySqlCommand command = connection.CreateCommand())
         {
             command.CommandText =
 @"INSERT INTO `InboxEmails`
@@ -226,12 +187,12 @@ VALUES (NULL, @uniqueid, @subject, @from, NULL, NULL, @to, @receiver, @header, @
         await migrator.MigrateAsync("AddSinglePersonFilter");
 
         // Verify that data has been rolled back as expected
-        using (MySqlCommand command = connection.CreateCommand())
+        await using (MySqlCommand command = connection.CreateCommand())
         {
             command.CommandText =
 @"SELECT `DistributionListId`, `Subject`, `From`, `Sender`, `To`, `Receiver`, `Body`, `DownloadTime`, `RecipientsFetchTime`
 FROM `Emails`";
-            MySqlDataReader reader = await command.ExecuteReaderAsync();
+            await using MySqlDataReader reader = await command.ExecuteReaderAsync();
             Assert.True(await reader.ReadAsync());
             Assert.True(reader.IsDBNull(0));
             Assert.Equal(inboxEmail_Subject, reader.GetString(1));
@@ -243,26 +204,12 @@ FROM `Emails`";
             Assert.Equal(inboxEmail_DownloadTime, reader.GetDateTime(7));
             Assert.Equal(inboxEmail_ProcessingCompletedTime, reader.GetDateTime(8));
         }
-    }
 
-    private static void CreateEmptyDatabase(MySqlConnection connection, string databaseName)
-    {
-        using (MySqlCommand command = connection.CreateCommand())
+        await using (MySqlCommand command = connection.CreateCommand())
         {
-            command.CommandText = $"DROP DATABASE IF EXISTS {databaseName}";
-            command.ExecuteNonQuery();
+            command.CommandText = $"SHOW TABLES WHERE `Tables_in_{databaseName}` = \"InboxEmails\"";
+            await using MySqlDataReader reader = await command.ExecuteReaderAsync();
+            Assert.False(await reader.ReadAsync());
         }
-        using (MySqlCommand command = connection.CreateCommand())
-        {
-            command.CommandText = $"CREATE DATABASE {databaseName}";
-            command.ExecuteNonQuery();
-        }
-    }
-
-    private static void DropDatabase(MySqlConnection connection, string databaseName)
-    {
-        using MySqlCommand command = connection.CreateCommand();
-        command.CommandText = $"DROP DATABASE {databaseName}";
-        command.ExecuteNonQuery();
     }
 }
