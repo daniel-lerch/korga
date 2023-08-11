@@ -27,7 +27,11 @@ public class Program
 #endif
         if (args.Length == 0)
         {
-            await CreateWebHostBuilder(args).Build().RunAsync();
+            await CreateWebHostBuilder(args).Build()
+                // Automatic database migration is done here right after building the host and not in Startup.Configure
+                // to make sure no other other hosted services can start while migrations are not yet completed.
+                .MigrateDatabase()
+                .RunAsync();
             return Environment.ExitCode;
         }
         else
