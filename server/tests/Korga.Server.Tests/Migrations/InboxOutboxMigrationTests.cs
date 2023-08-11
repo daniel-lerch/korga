@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Infrastructure;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using MySqlConnector;
@@ -6,6 +7,10 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using AddSinglePersonFilter_DbContext = Korga.Server.Tests.Migrations.AddSinglePersonFilter.DatabaseContext;
+using AddSinglePersonFilter_Email = Korga.Server.Tests.Migrations.AddSinglePersonFilter.Email;
+using InboxOutbox_DbContext = Korga.Server.Tests.Migrations.InboxOutbox.DatabaseContext;
+using InboxOutbox_InboxEmail = Korga.Server.Tests.Migrations.InboxOutbox.InboxEmail;
 
 namespace Korga.Server.Tests.Migrations;
 
@@ -73,7 +78,23 @@ Daniel");
     private static readonly DateTime inboxEmail_DownloadTime = DateTime.Parse("2023-08-03 22:42:00.797007");
     private static readonly DateTime inboxEmail_ProcessingCompletedTime = DateTime.Parse("2023-08-04 05:42:00.881735");
 
-    public InboxOutboxMigrationTests() : base("InboxOutboxMigration") { }
+    private readonly AddSinglePersonFilter_DbContext addSinglePersonFilter;
+    private readonly InboxOutbox_DbContext inboxOutbox;
+
+    public InboxOutboxMigrationTests() : base("InboxOutboxMigration")
+    {
+        addSinglePersonFilter = serviceScope.ServiceProvider.GetRequiredService<AddSinglePersonFilter_DbContext>();
+        inboxOutbox = serviceScope.ServiceProvider.GetRequiredService<InboxOutbox_DbContext>();
+    }
+
+    protected override void ConfigureServices(IServiceCollection services)
+    {
+        services.AddDbContext<AddSinglePersonFilter_DbContext>(
+            optionsBuilder => optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(shortConnectionString)));
+
+        services.AddDbContext<InboxOutbox_DbContext>(
+            optionsBuilder => optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(shortConnectionString)));
+    }
 
     /// <summary>
     /// Tests custom migration code from Emails table to InboxEmails.
@@ -94,49 +115,37 @@ Daniel");
         await migrator.MigrateAsync("AddSinglePersonFilter");
 
         // Add test data
-        await using (MySqlCommand command = connection.CreateCommand())
+        addSinglePersonFilter.Emails.Add(new()
         {
-            command.CommandText =
-@"INSERT INTO `Emails`
-(`DistributionListId`, `Subject`, `From`, `Sender`, `To`, `Receiver`, `Body`, `DownloadTime`, `RecipientsFetchTime`)
-VALUES (NULL, @subject, @from, NULL, @to, @receiver, @body, @downloadtime, @completedtime)
-";
-            command.Parameters.AddWithValue("@subject", inboxEmail_Subject);
-            command.Parameters.AddWithValue("@from", inboxEmail_From);
-            command.Parameters.AddWithValue("@to", inboxEmail_To);
-            command.Parameters.AddWithValue("@receiver", inboxEmail_Receiver);
-            command.Parameters.AddWithValue("@body", inboxEmail_Body);
-            command.Parameters.AddWithValue("@downloadtime", inboxEmail_DownloadTime);
-            command.Parameters.AddWithValue("@completedtime", inboxEmail_ProcessingCompletedTime);
-
-            Assert.Equal(1, await command.ExecuteNonQueryAsync());
-        }
+            Subject = inboxEmail_Subject,
+            From = inboxEmail_From,
+            To = inboxEmail_To,
+            Receiver = inboxEmail_Receiver,
+            Body = inboxEmail_Body,
+            DownloadTime = inboxEmail_DownloadTime,
+            RecipientsFetchTime = inboxEmail_ProcessingCompletedTime
+        });
+        await addSinglePersonFilter.SaveChangesAsync();
 
         // Run migration at test
         await migrator.MigrateAsync("InboxOutbox");
 
         // Verify that data has been migrated as expected
-        await using (MySqlCommand command = connection.CreateCommand())
-        {
-            command.CommandText =
-@"SELECT `DistributionListId`, `UniqueId`, `Subject`, `From`, `Sender`, `ReplyTo`, `To`, `Receiver`, `Header`, `Body`, `DownloadTime`, `ProcessingCompletedTime`
-FROM `InboxEmails`";
-            await using MySqlDataReader reader = await command.ExecuteReaderAsync();
-            Assert.True(await reader.ReadAsync());
-            Assert.True(reader.IsDBNull(0));
-            Assert.Equal(0u, reader.GetUInt32(1));
-            Assert.Equal(inboxEmail_Subject, reader.GetString(2));
-            Assert.Equal(inboxEmail_From, reader.GetString(3));
-            Assert.True(reader.IsDBNull(4));
-            Assert.True(reader.IsDBNull(5));
-            Assert.Equal(inboxEmail_To, reader.GetString(6));
-            Assert.Equal(inboxEmail_Receiver, reader.GetString(7));
-            Assert.True(reader.IsDBNull(8));
-            Assert.Equal(inboxEmail_Body, (byte[])reader.GetValue(9));
-            Assert.Equal(inboxEmail_DownloadTime, reader.GetDateTime(10));
-            Assert.Equal(inboxEmail_ProcessingCompletedTime, reader.GetDateTime(11));
-        }
+        InboxOutbox_InboxEmail inboxEmail = await inboxOutbox.InboxEmails.SingleAsync();
+        Assert.False(inboxEmail.DistributionListId.HasValue);
+        Assert.Equal(0u, inboxEmail.UniqueId);
+        Assert.Equal(inboxEmail_Subject, inboxEmail.Subject);
+        Assert.Equal(inboxEmail_From, inboxEmail.From);
+        Assert.Null(inboxEmail.Sender);
+        Assert.Null(inboxEmail.ReplyTo);
+        Assert.Equal(inboxEmail_To, inboxEmail.To);
+        Assert.Equal(inboxEmail_Receiver, inboxEmail.Receiver);
+        Assert.Null(inboxEmail.Header);
+        Assert.Equal(inboxEmail_Body, inboxEmail.Body);
+        Assert.Equal(inboxEmail_DownloadTime, inboxEmail.DownloadTime);
+        Assert.Equal(inboxEmail_ProcessingCompletedTime, inboxEmail.ProcessingCompletedTime);
 
+        // Make sure old table has been deleted
         await using (MySqlCommand command = connection.CreateCommand())
         {
             command.CommandText = $"SHOW TABLES WHERE `Tables_in_{databaseName}` = \"Emails\"";
@@ -164,47 +173,36 @@ FROM `InboxEmails`";
         await migrator.MigrateAsync("InboxOutbox");
 
         // Add test data
-        await using (MySqlCommand command = connection.CreateCommand())
+        inboxOutbox.InboxEmails.Add(new()
         {
-            command.CommandText =
-@"INSERT INTO `InboxEmails`
-(`DistributionListId`, `UniqueId`, `Subject`, `From`, `Sender`, `ReplyTo`, `To`, `Receiver`, `Header`, `Body`, `DownloadTime`, `ProcessingCompletedTime`)
-VALUES (NULL, @uniqueid, @subject, @from, NULL, NULL, @to, @receiver, @header, @body, @downloadtime, @completedtime)";
-            command.Parameters.AddWithValue("@uniqueid", inboxEmail_UniqueId);
-            command.Parameters.AddWithValue("@subject", inboxEmail_Subject);
-            command.Parameters.AddWithValue("@from", inboxEmail_From);
-            command.Parameters.AddWithValue("@to", inboxEmail_To);
-            command.Parameters.AddWithValue("@receiver", inboxEmail_Receiver);
-            command.Parameters.AddWithValue("@header", inboxEmail_Header);
-            command.Parameters.AddWithValue("@body", inboxEmail_Body);
-            command.Parameters.AddWithValue("@downloadtime", inboxEmail_DownloadTime);
-            command.Parameters.AddWithValue("@completedtime", inboxEmail_ProcessingCompletedTime);
-
-            Assert.Equal(1, await command.ExecuteNonQueryAsync());
-        }
+            UniqueId = inboxEmail_UniqueId,
+            Subject = inboxEmail_Subject,
+            From = inboxEmail_From,
+            To = inboxEmail_To,
+            Receiver = inboxEmail_Receiver,
+            Header = inboxEmail_Header,
+            Body = inboxEmail_Body,
+            DownloadTime = inboxEmail_DownloadTime,
+            ProcessingCompletedTime = inboxEmail_ProcessingCompletedTime,
+        });
+        await inboxOutbox.SaveChangesAsync();
 
         // Migrate to migration before the one to test and thereby revert it
         await migrator.MigrateAsync("AddSinglePersonFilter");
 
         // Verify that data has been rolled back as expected
-        await using (MySqlCommand command = connection.CreateCommand())
-        {
-            command.CommandText =
-@"SELECT `DistributionListId`, `Subject`, `From`, `Sender`, `To`, `Receiver`, `Body`, `DownloadTime`, `RecipientsFetchTime`
-FROM `Emails`";
-            await using MySqlDataReader reader = await command.ExecuteReaderAsync();
-            Assert.True(await reader.ReadAsync());
-            Assert.True(reader.IsDBNull(0));
-            Assert.Equal(inboxEmail_Subject, reader.GetString(1));
-            Assert.Equal(inboxEmail_From, reader.GetString(2));
-            Assert.True(reader.IsDBNull(3));
-            Assert.Equal(inboxEmail_To, reader.GetString(4));
-            Assert.Equal(inboxEmail_Receiver, reader.GetString(5));
-            Assert.Equal(inboxEmail_Body, (byte[])reader.GetValue(6));
-            Assert.Equal(inboxEmail_DownloadTime, reader.GetDateTime(7));
-            Assert.Equal(inboxEmail_ProcessingCompletedTime, reader.GetDateTime(8));
-        }
+        AddSinglePersonFilter_Email email = await addSinglePersonFilter.Emails.SingleAsync();
+        Assert.False(email.DistributionListId.HasValue);
+        Assert.Equal(inboxEmail_Subject, email.Subject);
+        Assert.Equal(inboxEmail_From, email.From);
+        Assert.Null(email.Sender);
+        Assert.Equal(inboxEmail_To, email.To);
+        Assert.Equal(inboxEmail_Receiver, email.Receiver);
+        Assert.Equal(inboxEmail_Body, email.Body);
+        Assert.Equal(inboxEmail_DownloadTime, email.DownloadTime);
+        Assert.Equal(inboxEmail_ProcessingCompletedTime, email.RecipientsFetchTime);
 
+        // Make sure old table has been deleted
         await using (MySqlCommand command = connection.CreateCommand())
         {
             command.CommandText = $"SHOW TABLES WHERE `Tables_in_{databaseName}` = \"InboxEmails\"";
