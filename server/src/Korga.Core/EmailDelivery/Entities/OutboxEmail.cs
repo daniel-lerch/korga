@@ -1,5 +1,4 @@
-﻿using System;
-using Korga.EmailRelay.Entities;
+﻿using Korga.EmailRelay.Entities;
 
 namespace Korga.EmailDelivery.Entities;
 
@@ -18,6 +17,4 @@ public class OutboxEmail
 
     public string EmailAddress { get; set; }
     public byte[] Content { get; set; }
-    public string? ErrorMessage { get; set; }
-    public DateTime DeliveryTime { get; set; }
 }
