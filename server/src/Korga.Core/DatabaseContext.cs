@@ -25,6 +25,7 @@ public sealed class DatabaseContext : DbContext
     public DbSet<GroupMember> GroupMembers => Set<GroupMember>();
     public DbSet<GroupRole> GroupRoles => Set<GroupRole>();
     public DbSet<GroupType> GroupTypes => Set<GroupType>();
+    public DbSet<GroupStatus> GroupStatuses => Set<GroupStatus>();
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<DepartmentMember> DepartmentMembers => Set<DepartmentMember>();
     public DbSet<Status> Status => Set<Status>();
@@ -80,6 +81,7 @@ public sealed class DatabaseContext : DbContext
         var group = modelBuilder.Entity<Group>();
         group.HasKey(x => x.Id);
         group.HasOne(x => x.GroupType).WithMany().HasForeignKey(x => x.GroupTypeId);
+        group.HasOne(x => x.GroupStatus).WithMany().HasForeignKey(x => x.GroupStatusId);
         group.Property(x => x.Id).ValueGeneratedNever();
 
         var groupMember = modelBuilder.Entity<GroupMember>();
@@ -91,6 +93,10 @@ public sealed class DatabaseContext : DbContext
         var groupType = modelBuilder.Entity<GroupType>();
         groupType.HasKey(x => x.Id);
         groupType.Property(x => x.Id).ValueGeneratedNever();
+
+        var groupStatus = modelBuilder.Entity<GroupStatus>();
+        groupStatus.HasKey(x => x.Id);
+        groupStatus.Property(x => x.Id).ValueGeneratedNever();
 
         var groupRole = modelBuilder.Entity<GroupRole>();
         groupRole.HasKey(x => x.Id);

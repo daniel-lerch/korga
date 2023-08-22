@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Korga.ChurchTools.Entities;
 
-public class Person : IIdentifiable<int>
+public class Person : IIdentifiable<int>, IArchivable
 {
 	public Person(int id, int statusId, string firstName, string lastName, string email)
 	{
@@ -24,6 +24,7 @@ public class Person : IIdentifiable<int>
 	public string FirstName { get; set; }
 	public string LastName { get; set; }
 	public string Email { get; set; }
+	public DateTime DeletionTime { get; set; }
 
 	public override bool Equals(object? obj)
 	{

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+using IArchivable = Korga.ChurchTools.Entities.IArchivable;
 using DbDepartmentMember = Korga.ChurchTools.Entities.DepartmentMember;
 using DbGroupMember = Korga.ChurchTools.Entities.GroupMember;
 
@@ -28,28 +29,30 @@ public class ChurchToolsSyncService
 	{
 		PersonMasterdata personMasterdata = await churchTools.GetPersonMasterdata(cancellationToken);
 
-		await Synchronize(personMasterdata.GroupTypes, database.GroupTypes, x => new(x.Id, x.Name), (x, y) => y.Name = x.Name, cancellationToken);
+		await SynchronizeArchivable(personMasterdata.GroupTypes, database.GroupTypes, x => new(x.Id, x.Name), (x, y) => y.Name = x.Name, cancellationToken);
 
-		await Synchronize(personMasterdata.Roles, database.GroupRoles, x => new(x.Id, x.GroupTypeId, x.Name), (x, y) => { y.GroupTypeId = x.GroupTypeId; y.Name = x.Name; }, cancellationToken);
+		await SynchronizeArchivable(personMasterdata.GroupStatuses, database.GroupStatuses, x => new(x.Id, x.Name), (x, y) => y.Name = x.Name, cancellationToken);
 
-		await Synchronize(personMasterdata.Departments, database.Departments, x => new(x.Id, x.Name), (x, y) => y.Name = x.Name, cancellationToken);
+		await SynchronizeArchivable(personMasterdata.Roles, database.GroupRoles, x => new(x.Id, x.GroupTypeId, x.Name), (x, y) => { y.GroupTypeId = x.GroupTypeId; y.Name = x.Name; }, cancellationToken);
+
+		await SynchronizeArchivable(personMasterdata.Departments, database.Departments, x => new(x.Id, x.Name), (x, y) => y.Name = x.Name, cancellationToken);
 		
-		await Synchronize(personMasterdata.Statuses, database.Status, x => new(x.Id, x.Name), (x, y) => y.Name = x.Name, cancellationToken);
+		await SynchronizeArchivable(personMasterdata.Statuses, database.Status, x => new(x.Id, x.Name), (x, y) => y.Name = x.Name, cancellationToken);
 
 		await Task.WhenAll(
-			SynchronizeGroups(cancellationToken),
+			SynchronizeGroups(personMasterdata.GroupStatuses.Select(x => x.Id), cancellationToken),
 			SynchronizePeople(cancellationToken)
 		);
 
 		await SynchronizeGroupMembers(cancellationToken);
 	}
 
-	private async Task SynchronizeGroups(CancellationToken cancellationToken)
+	private async Task SynchronizeGroups(IEnumerable<int> groupStatuses, CancellationToken cancellationToken)
 	{
-		await SynchronizePaginated(
-			await churchTools.GetGroups(cancellationToken),
+		await SynchronizeArchivable(
+			await churchTools.GetGroups(groupStatuses, cancellationToken),
 			database.Groups,
-			x => new(x.Id, x.GroupTypeId, x.Name),
+			x => new(x.Id, x.GroupTypeId, x.GroupStatusId, x.Name),
 			(response, entity) =>
 			{
 				entity.GroupTypeId = response.GroupTypeId;
@@ -63,7 +66,7 @@ public class ChurchToolsSyncService
 	{
         List<Person> people = await churchTools.GetPeople(cancellationToken);
 
-        await SynchronizePaginated(
+        await SynchronizeArchivable(
             people,
             database.People,
 			x => new(x.Id, x.StatusId, x.FirstName, x.LastName, x.Email),
@@ -102,15 +105,6 @@ public class ChurchToolsSyncService
 		);
 	}
 
-	// This shorthand without TKey does not work for composite keys hacked into a long
-	private async ValueTask Synchronize<TSrc, TDest>(List<TSrc> apiResponses, DbSet<TDest> cachedSet, Func<TSrc, TDest> convert, Action<TSrc, TDest> update, CancellationToken cancellationToken)
-		where TSrc : IIdentifiable<int>
-		where TDest : class, IIdentifiable<int>
-	{
-        List<TDest> cachedValues = await cachedSet.OrderBy(x => x.Id).ToListAsync(cancellationToken);
-		await Synchronize<TSrc, TDest, int>(apiResponses, cachedSet, cachedValues, convert, update, cancellationToken);
-    }
-
     private async ValueTask Synchronize<TSrc, TDest, TKey>(List<TSrc> apiResponses, DbSet<TDest> cachedSet, List<TDest> cachedValues, Func<TSrc, TDest> convert, Action<TSrc, TDest> update, CancellationToken cancellationToken)
 		where TSrc : IIdentifiable<TKey>
 		where TDest : class, IIdentifiable<TKey>
@@ -131,9 +125,9 @@ public class ChurchToolsSyncService
 		await database.SaveChangesAsync(cancellationToken);
 	}
 
-	private async ValueTask SynchronizePaginated<TSrc, TDest>(List<TSrc> apiResponses, DbSet<TDest> cachedSet, Func<TSrc, TDest> convert, Action<TSrc, TDest> update, CancellationToken cancellationToken)
+	private async ValueTask SynchronizeArchivable<TSrc, TDest>(List<TSrc> apiResponses, DbSet<TDest> cachedSet, Func<TSrc, TDest> convert, Action<TSrc, TDest> update, CancellationToken cancellationToken)
 		where TSrc : IIdentifiable<int>
-		where TDest : class, IIdentifiable<int>
+		where TDest : class, IIdentifiable<int>, IArchivable
 	{
 		apiResponses.Sort((x, y) => x.Id.CompareTo(y.Id));
 		List<TDest> cachedValues = await cachedSet.OrderBy(x => x.Id).ToListAsync(cancellationToken);
@@ -141,8 +135,8 @@ public class ChurchToolsSyncService
 		foreach ((TSrc? response, TDest? entity) in apiResponses.ContrastWith<TSrc, TDest, int>(cachedValues))
 		{
 			if (response == null)
-				// TODO: This is a paginated API. Make sure this item really doesn't exist anymore before deleting it
-				cachedSet.Remove(entity!);
+				// TODO: In case of a paginated API: Make sure this item really doesn't exist anymore before archiving it
+				entity!.DeletionTime = DateTime.UtcNow;
 			else if (entity == null)
 				cachedSet.Add(convert(response));
 			else
