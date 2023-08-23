@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace Korga.Server.Tests.Migrations.SplitOutboxEmail;
+namespace Korga.Server.Tests.Migrations.GroupStatus;
 
 public class DatabaseContext : DbContext
 {
@@ -8,6 +8,5 @@ public class DatabaseContext : DbContext
 
     public DbSet<Group> Groups => Set<Group>();
     public DbSet<GroupType> GroupTypes => Set<GroupType>();
-    public DbSet<OutboxEmail> OutboxEmails => Set<OutboxEmail>();
-    public DbSet<SentEmail> SentEmails => Set<SentEmail>();
+    public DbSet<GroupStatus> GroupStatuses => Set<GroupStatus>();
 }

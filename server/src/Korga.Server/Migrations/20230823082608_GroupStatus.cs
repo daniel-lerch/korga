@@ -26,7 +26,14 @@ namespace Korga.Server.Migrations
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
-            migrationBuilder.Sql("INSERT INTO `GroupStatuses` VALUES (1, \"default\", \"0001-01-01 00:00:00\")");
+            // Insert default GroupType only if Groups table has rows
+            // DUAL is a virtual table in MySQL with a single row
+            // https://stackoverflow.com/a/913929/7075733
+            migrationBuilder.Sql(
+@"INSERT INTO `GroupStatuses`
+(`Id`, `Name`, `DeletionTime`)
+SELECT 1, ""default"", ""0001-01-01 00:00:00"" FROM DUAL
+WHERE EXISTS (SELECT * FROM `Groups`)");
 
             migrationBuilder.AddColumn<int>(
                 name: "GroupStatusId",

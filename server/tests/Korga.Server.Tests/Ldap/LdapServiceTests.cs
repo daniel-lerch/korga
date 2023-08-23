@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using System;
 using Xunit;
 
-namespace Korga.Server.Tests;
+namespace Korga.Server.Tests.Ldap;
 
 public class LdapServiceTests
 {
