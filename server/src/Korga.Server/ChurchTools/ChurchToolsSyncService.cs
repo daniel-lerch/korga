@@ -11,16 +11,19 @@ using System.Threading.Tasks;
 using IArchivable = Korga.ChurchTools.Entities.IArchivable;
 using DbDepartmentMember = Korga.ChurchTools.Entities.DepartmentMember;
 using DbGroupMember = Korga.ChurchTools.Entities.GroupMember;
+using Microsoft.Extensions.Logging;
 
 namespace Korga.Server.ChurchTools;
 
 public class ChurchToolsSyncService
 {
+	private readonly ILogger<ChurchToolsSyncService> logger;
 	private readonly DatabaseContext database;
 	private readonly IChurchToolsApi churchTools;
 
-	public ChurchToolsSyncService(DatabaseContext database, IChurchToolsApi churchTools)
+	public ChurchToolsSyncService(ILogger<ChurchToolsSyncService> logger, DatabaseContext database, IChurchToolsApi churchTools)
 	{
+		this.logger = logger;
 		this.database = database;
 		this.churchTools = churchTools;
 	}
@@ -122,10 +125,11 @@ public class ChurchToolsSyncService
 				update(response, entity);
 		}
 
-		await database.SaveChangesAsync(cancellationToken);
+        int rowsAffected = await database.SaveChangesAsync(cancellationToken);
+		LogChanges(rowsAffected, cachedSet);
 	}
 
-	private async ValueTask SynchronizeArchivable<TSrc, TDest>(List<TSrc> apiResponses, DbSet<TDest> cachedSet, Func<TSrc, TDest> convert, Action<TSrc, TDest> update, CancellationToken cancellationToken)
+    private async ValueTask SynchronizeArchivable<TSrc, TDest>(List<TSrc> apiResponses, DbSet<TDest> cachedSet, Func<TSrc, TDest> convert, Action<TSrc, TDest> update, CancellationToken cancellationToken)
 		where TSrc : IIdentifiable<int>
 		where TDest : class, IIdentifiable<int>, IArchivable
 	{
@@ -143,6 +147,15 @@ public class ChurchToolsSyncService
 				update(response, entity);
 		}
 
-		await database.SaveChangesAsync(cancellationToken);
-	}
+        int rowsAffected = await database.SaveChangesAsync(cancellationToken);
+		LogChanges(rowsAffected, cachedSet);
+    }
+
+	private void LogChanges<T>(int rowsAffected, DbSet<T> table) where T : class
+	{
+        if (rowsAffected > 0)
+            logger.LogInformation("Updated {Count} {EntityDisplayName} entities", rowsAffected, table.EntityType.DisplayName());
+        else
+            logger.LogDebug("No changes for {EntityDisplayName} entities", table.EntityType.DisplayName());
+    }
 }
