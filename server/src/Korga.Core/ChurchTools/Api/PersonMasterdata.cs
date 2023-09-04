@@ -1,10 +1,22 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Korga.ChurchTools.Api;
 
 public class PersonMasterdata
 {
-    public PersonMasterdata(List<Role> roles, List<GroupType> groupTypes, List<GroupStatus> groupStatuses, List<Department> departments, List<Status> statuses)
+    public PersonMasterdata()
+    {
+        Roles = Array.Empty<Role>();
+        GroupTypes = Array.Empty<GroupType>();
+        GroupStatuses = Array.Empty<GroupStatus>();
+        Departments = Array.Empty<Department>();
+        Statuses = Array.Empty<Status>();
+    }
+
+    [JsonConstructor]
+    public PersonMasterdata(IReadOnlyList<Role> roles, IReadOnlyList<GroupType> groupTypes, IReadOnlyList<GroupStatus> groupStatuses, IReadOnlyList<Department> departments, IReadOnlyList<Status> statuses)
     {
         Roles = roles;
         GroupTypes = groupTypes;
@@ -13,11 +25,11 @@ public class PersonMasterdata
         Statuses = statuses;
     }
 
-    public List<Role> Roles { get; set; }
-	public List<GroupType> GroupTypes { get; set; }
-    public List<GroupStatus> GroupStatuses { get; set; }
-	public List<Department> Departments { get; set; }
-	public List<Status> Statuses { get; set; }
+    public IReadOnlyList<Role> Roles { get; set; }
+	public IReadOnlyList<GroupType> GroupTypes { get; set; }
+    public IReadOnlyList<GroupStatus> GroupStatuses { get; set; }
+	public IReadOnlyList<Department> Departments { get; set; }
+	public IReadOnlyList<Status> Statuses { get; set; }
 
 	public record Role(int Id, int GroupTypeId, string Name, int SortKey) : IIdentifiable<int>;
 	public record GroupType(int Id, string Name, int SortKey) : IIdentifiable<int>;

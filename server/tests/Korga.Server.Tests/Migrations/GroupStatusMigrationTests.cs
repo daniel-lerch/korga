@@ -4,28 +4,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using Xunit;
+
 namespace Korga.Server.Tests.Migrations;
 
-public class GroupStatusMigrationTests : MigrationTest
+public class GroupStatusMigrationTests : MigrationTestBase<SplitOutboxEmail.DatabaseContext, GroupStatus.DatabaseContext>
 {
-    private readonly SplitOutboxEmail.DatabaseContext splitOutboxEmail;
-    private readonly GroupStatus.DatabaseContext groupStatus;
-
-    public GroupStatusMigrationTests() : base("GroupStatusMigration")
-    {
-        splitOutboxEmail = serviceScope.ServiceProvider.GetRequiredService<SplitOutboxEmail.DatabaseContext>();
-        groupStatus = serviceScope.ServiceProvider.GetRequiredService<GroupStatus.DatabaseContext>();
-    }
-
-    protected override void ConfigureServices(IServiceCollection services)
-    {
-        services.AddDbContext<SplitOutboxEmail.DatabaseContext>(
-            optionsBuilder => optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(shortConnectionString)));
-
-        services.AddDbContext<GroupStatus.DatabaseContext>(
-            optionsBuilder => optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(shortConnectionString)));
-    }
-
     [Fact]
     public async Task TestUpgrade()
     {
@@ -69,19 +52,19 @@ public class GroupStatusMigrationTests : MigrationTest
         await migrator.MigrateAsync("SplitOutboxEmail");
 
         // Add test data
-        splitOutboxEmail.GroupTypes.Add(groupTypeBeforeUpgrade);
-        splitOutboxEmail.Groups.Add(beforeUpgrade);
-        await splitOutboxEmail.SaveChangesAsync();
+        before.GroupTypes.Add(groupTypeBeforeUpgrade);
+        before.Groups.Add(beforeUpgrade);
+        await before.SaveChangesAsync();
 
         // Run migration at test
         await migrator.MigrateAsync("GroupStatus");
 
         // Verify that data has been migrated as expected
-        GroupStatus.GroupType groupType = await groupStatus.GroupTypes.SingleAsync();
+        GroupStatus.GroupType groupType = await after.GroupTypes.SingleAsync();
         Assert.Equivalent(expectedGroupType, groupType);
-        GroupStatus.GroupStatus intermediateStatus = await groupStatus.GroupStatuses.SingleAsync();
+        GroupStatus.GroupStatus intermediateStatus = await after.GroupStatuses.SingleAsync();
         Assert.Equivalent(expectedIntermediateStatus, intermediateStatus);
-        GroupStatus.Group group = await groupStatus.Groups.Include(x => x.GroupType).Include(x => x.GroupStatus).SingleAsync();
+        GroupStatus.Group group = await after.Groups.Include(x => x.GroupType).Include(x => x.GroupStatus).SingleAsync();
         Assert.Equivalent(expected, group);
     }
 
@@ -123,18 +106,18 @@ public class GroupStatusMigrationTests : MigrationTest
         // Create database schema of the migration to test
         await migrator.MigrateAsync("GroupStatus");
 
-        groupStatus.GroupTypes.Add(groupTypeBeforeDowngrade);
-        groupStatus.GroupStatuses.Add(groupStatusBeforeDowngrade);
-        groupStatus.Groups.Add(groupBeforeDowngrade);
-        await groupStatus.SaveChangesAsync();
+        after.GroupTypes.Add(groupTypeBeforeDowngrade);
+        after.GroupStatuses.Add(groupStatusBeforeDowngrade);
+        after.Groups.Add(groupBeforeDowngrade);
+        await after.SaveChangesAsync();
 
         // Migrate to migration before the one to test and thereby revert it
         await migrator.MigrateAsync("SplitOutboxEmail");
 
         // Verify that data has been rolled back as expected
-        SplitOutboxEmail.GroupType groupType = await splitOutboxEmail.GroupTypes.SingleAsync();
+        SplitOutboxEmail.GroupType groupType = await before.GroupTypes.SingleAsync();
         Assert.Equivalent(expectedGroupType, groupType);
-        SplitOutboxEmail.Group group = await splitOutboxEmail.Groups.SingleAsync();
+        SplitOutboxEmail.Group group = await before.Groups.SingleAsync();
         Assert.Equivalent(expected, group);
     }
 }
