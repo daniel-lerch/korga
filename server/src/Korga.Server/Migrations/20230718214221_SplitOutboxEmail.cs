@@ -35,6 +35,17 @@ namespace Korga.Server.Migrations
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
+            // Make UniqueId column nullable and change zero values to NULL to avoid conflicts when creating a unqiue index later
+            migrationBuilder.AlterColumn<uint?>(
+                name: "UniqueId",
+                table: "InboxEmails",
+                type: "int unsigned",
+                nullable: true,
+                oldClrType: typeof(uint),
+                oldType: "int unsigned");
+
+            migrationBuilder.Sql("UPDATE `InboxEmails` SET `UniqueId` = NULL WHERE `UniqueId` = 0");
+
             migrationBuilder.CreateIndex(
                 name: "IX_InboxEmails_ProcessingCompletedTime",
                 table: "InboxEmails",
@@ -91,6 +102,16 @@ WHERE `DeliveryTime` <> ""0001-01-01 00:00:00""");
             migrationBuilder.DropIndex(
                 name: "IX_InboxEmails_UniqueId",
                 table: "InboxEmails");
+
+            migrationBuilder.AlterColumn<uint>(
+                name: "UniqueId",
+                table: "InboxEmails",
+                type: "int unsigned",
+                nullable: false,
+                defaultValue: 0u,
+                oldClrType: typeof(uint),
+                oldType: "int unsigned",
+                oldNullable: false);
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "DeliveryTime",

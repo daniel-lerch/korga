@@ -4,7 +4,7 @@ namespace Korga.EmailRelay.Entities;
 
 public class InboxEmail
 {
-    public InboxEmail(uint uniqueId, string subject, string from, string? sender, string? replyTo, string to, string? receiver, byte[]? header, byte[]? body)
+    public InboxEmail(uint? uniqueId, string subject, string from, string? sender, string? replyTo, string to, string? receiver, byte[]? header, byte[]? body)
     {
         UniqueId = uniqueId;
         Subject = subject;
@@ -22,7 +22,7 @@ public class InboxEmail
     public long? DistributionListId { get; set; }
     public DistributionList? DistributionList { get; set; }
 
-    public uint UniqueId { get; set; }
+    public uint? UniqueId { get; set; }
     public string Subject { get; set; }
     public string From { get; set; }
     public string? Sender { get; set; }
