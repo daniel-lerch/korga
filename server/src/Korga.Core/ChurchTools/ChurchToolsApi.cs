@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -78,6 +79,17 @@ public class ChurchToolsApi : IChurchToolsApi, IDisposable
     public ValueTask<List<Group>> GetGroups(CancellationToken cancellationToken = default)
     {
         return InternalGetAllPages<Group>("/api/groups", "&show_overdue_groups=true&show_inactive_groups=true", cancellationToken);
+    }
+
+    public ValueTask<List<Group>> GetGroups(IEnumerable<int> groupStatuses, CancellationToken cancellationToken = default)
+    {
+        StringBuilder query = new("&show_overdue_groups=true&show_inactive_groups=true");
+        foreach (int groupStatus in groupStatuses)
+        {
+            query.Append("&group_status_ids[]=");
+            query.Append(groupStatus);
+        }
+        return InternalGetAllPages<Group>("/api/groups", query.ToString(), cancellationToken);
     }
 
     public async ValueTask<List<GroupMember>> GetGroupMembers(CancellationToken cancellationToken = default)

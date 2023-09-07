@@ -2,9 +2,9 @@
 
 namespace Korga.ChurchTools.Entities;
 
-public class Department : IIdentifiable<int>, IArchivable
+public class GroupStatus : IIdentifiable<int>, IArchivable
 {
-    public Department(int id, string name)
+    public GroupStatus(int id, string name)
     {
         Id = id;
         Name = name;

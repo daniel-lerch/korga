@@ -10,7 +10,7 @@ using System;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Korga.Server.Tests.Commands;
+namespace Korga.Server.Tests.Ldap;
 
 public class LdapCommandTests : IClassFixture<LdapCommandTests.Fixture>
 {

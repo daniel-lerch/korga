@@ -1,6 +1,8 @@
-﻿namespace Korga.ChurchTools.Entities;
+﻿using System;
 
-public class Status : IIdentifiable<int>
+namespace Korga.ChurchTools.Entities;
+
+public class Status : IIdentifiable<int>, IArchivable
 {
     public Status(int id, string name)
     {
@@ -10,4 +12,5 @@ public class Status : IIdentifiable<int>
 
     public int Id { get; set; }
     public string Name { get; set; }
+    public DateTime DeletionTime { get; set; }
 }

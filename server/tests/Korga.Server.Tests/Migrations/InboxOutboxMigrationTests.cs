@@ -7,10 +7,6 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
-using AddSinglePersonFilter_DbContext = Korga.Server.Tests.Migrations.AddSinglePersonFilter.DatabaseContext;
-using AddSinglePersonFilter_Email = Korga.Server.Tests.Migrations.AddSinglePersonFilter.Email;
-using InboxOutbox_DbContext = Korga.Server.Tests.Migrations.InboxOutbox.DatabaseContext;
-using InboxOutbox_InboxEmail = Korga.Server.Tests.Migrations.InboxOutbox.InboxEmail;
 
 namespace Korga.Server.Tests.Migrations;
 
@@ -21,7 +17,7 @@ namespace Korga.Server.Tests.Migrations;
 /// Non-breaking changes like creating columns are handled by generated code
 /// which is covered by Microsoft's unit tests.
 /// </summary>
-public class InboxOutboxMigrationTests : MigrationTest
+public class InboxOutboxMigrationTests : MigrationTestBase<AddSinglePersonFilter.DatabaseContext, InboxOutbox.DatabaseContext>
 {
     private const uint inboxEmail_UniqueId = 573;
     private const string inboxEmail_Subject = "Korga is amazing!";
@@ -78,24 +74,6 @@ Daniel");
     private static readonly DateTime inboxEmail_DownloadTime = DateTime.Parse("2023-08-03 22:42:00.797007");
     private static readonly DateTime inboxEmail_ProcessingCompletedTime = DateTime.Parse("2023-08-04 05:42:00.881735");
 
-    private readonly AddSinglePersonFilter_DbContext addSinglePersonFilter;
-    private readonly InboxOutbox_DbContext inboxOutbox;
-
-    public InboxOutboxMigrationTests() : base("InboxOutboxMigration")
-    {
-        addSinglePersonFilter = serviceScope.ServiceProvider.GetRequiredService<AddSinglePersonFilter_DbContext>();
-        inboxOutbox = serviceScope.ServiceProvider.GetRequiredService<InboxOutbox_DbContext>();
-    }
-
-    protected override void ConfigureServices(IServiceCollection services)
-    {
-        services.AddDbContext<AddSinglePersonFilter_DbContext>(
-            optionsBuilder => optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(shortConnectionString)));
-
-        services.AddDbContext<InboxOutbox_DbContext>(
-            optionsBuilder => optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(shortConnectionString)));
-    }
-
     /// <summary>
     /// Tests custom migration code from Emails table to InboxEmails.
     /// </summary>
@@ -109,7 +87,7 @@ Daniel");
     [Fact]
     public async Task TestUpgrade()
     {
-        AddSinglePersonFilter_Email beforeUpgrade = new()
+        AddSinglePersonFilter.Email beforeUpgrade = new()
         {
             DistributionListId = null,
             Subject = inboxEmail_Subject,
@@ -121,7 +99,7 @@ Daniel");
             DownloadTime = inboxEmail_DownloadTime,
             RecipientsFetchTime = inboxEmail_ProcessingCompletedTime
         };
-        InboxOutbox_InboxEmail expected = new()
+        InboxOutbox.InboxEmail expected = new()
         {
             Id = 1,
             DistributionListId = null,
@@ -144,14 +122,14 @@ Daniel");
         await migrator.MigrateAsync("AddSinglePersonFilter");
 
         // Add test data
-        addSinglePersonFilter.Emails.Add(beforeUpgrade);
-        await addSinglePersonFilter.SaveChangesAsync();
+        before.Emails.Add(beforeUpgrade);
+        await before.SaveChangesAsync();
 
         // Run migration at test
         await migrator.MigrateAsync("InboxOutbox");
 
         // Verify that data has been migrated as expected
-        InboxOutbox_InboxEmail inboxEmail = await inboxOutbox.InboxEmails.SingleAsync();
+        InboxOutbox.InboxEmail inboxEmail = await after.InboxEmails.SingleAsync();
         Assert.Equivalent(expected, inboxEmail);
 
         // Make sure old table has been deleted
@@ -176,7 +154,7 @@ Daniel");
     [Fact]
     public async Task TestDowngrade()
     {
-        InboxOutbox_InboxEmail beforeDowngrade = new()
+        InboxOutbox.InboxEmail beforeDowngrade = new()
         {
             DistributionListId = null,
             UniqueId = inboxEmail_UniqueId,
@@ -191,7 +169,7 @@ Daniel");
             DownloadTime = inboxEmail_DownloadTime,
             ProcessingCompletedTime = inboxEmail_ProcessingCompletedTime,
         };
-        AddSinglePersonFilter_Email expected = new()
+        AddSinglePersonFilter.Email expected = new()
         {
             Id = 1,
             DistributionListId = null,
@@ -211,14 +189,14 @@ Daniel");
         await migrator.MigrateAsync("InboxOutbox");
 
         // Add test data
-        inboxOutbox.InboxEmails.Add(beforeDowngrade);
-        await inboxOutbox.SaveChangesAsync();
+        after.InboxEmails.Add(beforeDowngrade);
+        await after.SaveChangesAsync();
 
         // Migrate to migration before the one to test and thereby revert it
         await migrator.MigrateAsync("AddSinglePersonFilter");
 
         // Verify that data has been rolled back as expected
-        AddSinglePersonFilter_Email email = await addSinglePersonFilter.Emails.SingleAsync();
+        AddSinglePersonFilter.Email email = await before.Emails.SingleAsync();
         Assert.Equivalent(expected, email);
 
         // Make sure old table has been deleted

@@ -1,6 +1,8 @@
-﻿namespace Korga.ChurchTools.Entities;
+﻿using System;
 
-public class GroupRole : IIdentifiable<int>
+namespace Korga.ChurchTools.Entities;
+
+public class GroupRole : IIdentifiable<int>, IArchivable
 {
     public GroupRole(int id, int groupTypeId, string name)
     {
@@ -15,4 +17,5 @@ public class GroupRole : IIdentifiable<int>
     public int GroupTypeId { get; set; }
 
     public string Name { get; set; }
+    public DateTime DeletionTime { get; set; }
 }

@@ -1,11 +1,14 @@
-﻿namespace Korga.ChurchTools.Entities;
+﻿using System;
 
-public class Group : IIdentifiable<int>
+namespace Korga.ChurchTools.Entities;
+
+public class Group : IIdentifiable<int>, IArchivable
 {
-    public Group(int id, int groupTypeId, string name)
+    public Group(int id, int groupTypeId, int groupStatusId, string name)
     {
         Id = id;
         GroupTypeId = groupTypeId;
+        GroupStatusId = groupStatusId;
         Name = name;
     }
 
@@ -13,6 +16,9 @@ public class Group : IIdentifiable<int>
 
     public GroupType? GroupType { get; set; }
     public int GroupTypeId { get; set; }
+    public GroupStatus? GroupStatus { get; set; }
+    public int GroupStatusId { get; set; }
 
     public string Name { get; set; }
+    public DateTime DeletionTime { get; set; }
 }

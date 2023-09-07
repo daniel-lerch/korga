@@ -3,9 +3,9 @@ using Microsoft.Extensions.DependencyInjection;
 using MySqlConnector;
 using System;
 
-namespace Korga.Server.Tests.Migrations;
+namespace Korga.Server.Tests;
 
-public abstract class MigrationTest : IDisposable
+public abstract class DatabaseTestBase : IDisposable
 {
     protected readonly string databaseName;
     protected readonly string shortConnectionString;
@@ -15,9 +15,9 @@ public abstract class MigrationTest : IDisposable
     protected readonly IServiceScope serviceScope;
     protected readonly DatabaseContext databaseContext;
 
-    public MigrationTest(string testName)
+    public DatabaseTestBase()
     {
-        databaseName = $"Korga_{testName}";
+        databaseName = "Korga_" + GetType().Name.Replace("Tests", string.Empty);
         shortConnectionString = "Server=localhost;Port=3306;User=root;Password=root;";
         connectionString = $"Server=localhost;Port=3306;Database={databaseName};User=root;Password=root;";
 

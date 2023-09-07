@@ -10,6 +10,7 @@ public interface IChurchToolsApi : IDisposable
 {
 	Login? User { get; }
 	ValueTask<List<Group>> GetGroups(CancellationToken cancellationToken = default);
+	ValueTask<List<Group>> GetGroups(IEnumerable<int> groupStatuses, CancellationToken cancellationToken = default);
 	ValueTask<List<GroupMember>> GetGroupMembers(CancellationToken cancellationToken = default);
 	ValueTask<List<Person>> GetPeople(CancellationToken cancellationToken = default);
 	ValueTask<Person> GetPerson(CancellationToken cancellationToken = default);
