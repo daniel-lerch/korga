@@ -322,7 +322,7 @@ namespace Korga.Server.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<uint>("UniqueId")
+                    b.Property<uint?>("UniqueId")
                         .HasColumnType("int unsigned");
 
                     b.HasKey("Id");
