@@ -14,8 +14,12 @@ function jsonParse(text: string) {
 }
 
 export async function get<T>(query: string): Promise<T> {
-  const response = await fetch(baseUrl + query);
+  const response = await fetch(baseUrl + query, { credentials: "include" });
   if (response.ok === false) {
+    if (response.status === 401) {
+      const responseData = await response.json();
+      window.location.href = responseData.openIdConnectRedirectUrl;
+    }
     throw new Error("Unexpected status code " + response.status);
   }
   const responseText = await response.text();

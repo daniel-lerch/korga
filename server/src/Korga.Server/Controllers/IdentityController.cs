@@ -1,13 +1,12 @@
-﻿using Korga.Server.ChurchTools;
+﻿using Korga.ChurchTools;
+using Korga.Server.ChurchTools.Hosting;
 using Korga.Server.Models.Json;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -16,21 +15,24 @@ namespace Korga.Server.Controllers;
 [ApiController]
 public class IdentityController : ControllerBase
 {
-    private readonly IOptions<ChurchToolsOptions> options;
+    private readonly ChurchToolsApiFactory churchToolsApiFactory;
 
-    public IdentityController(IOptions<ChurchToolsOptions> options)
+    public IdentityController(ChurchToolsApiFactory churchToolsApiFactory)
     {
-        this.options = options;
+        this.churchToolsApiFactory = churchToolsApiFactory;
     }
 
     [HttpPost("~/api/login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
-        using HttpClient httpClient = new() { BaseAddress = new UriBuilder("https", options.Value.Host).Uri };
-
-        var response = await httpClient.PostAsJsonAsync("/api/login", new { request.Username, request.Password, RememberMe = false });
-
-        if (!response.IsSuccessStatusCode) return BadRequest();
+        try
+        {
+            using ChurchToolsApi churchTools = await churchToolsApiFactory.Login(request.Username, request.Password);
+        }
+        catch (HttpRequestException)
+        {
+            return BadRequest();
+        }
 
         var claims = new Claim[]
         {
