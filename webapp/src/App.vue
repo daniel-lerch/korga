@@ -13,7 +13,7 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav">
+          <ul class="navbar-nav me-auto">
             <li class="nav-item">
               <router-link :to="{ name: 'Events' }" class="nav-link"
                 >Events</router-link
@@ -25,6 +25,19 @@
             >
           </li> -->
           </ul>
+          <div class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle"
+              href="#"
+              role="button"
+              data-bs-toggle="dropdown"
+            >
+              {{ profile?.givenName }}
+            </a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#">Abmelden</a></li>
+            </ul>
+          </div>
         </div>
       </div>
     </nav>
@@ -40,6 +53,25 @@
     </div>
   </footer>
 </template>
+
+<script lang="ts">
+import { defineComponent, onMounted, ref } from "vue";
+import { ProfileResponse, getProfile } from "@/services/profile";
+
+export default defineComponent({
+  setup() {
+    const profile = ref<ProfileResponse | null>(null);
+
+    onMounted(async () => {
+      profile.value = await getProfile();
+    });
+
+    return {
+      profile,
+    };
+  },
+});
+</script>
 
 <style>
 div#app {
