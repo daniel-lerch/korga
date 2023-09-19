@@ -19,12 +19,6 @@ const routes: Array<RouteRecordRaw> = [
     props: true,
   },
   {
-    path: "/admin",
-    name: "Admin",
-    component: () =>
-      import(/* webpackChunkName: "event" */ "../views/Admin.vue"),
-  },
-  {
     path: "/event/:id",
     name: "Event",
     component: () =>

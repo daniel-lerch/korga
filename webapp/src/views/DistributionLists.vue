@@ -1,5 +1,5 @@
 <template>
-  <Loading v-if="!loaded" :state="{ error }" />
+  <LoadingSpinner v-if="!loaded" :state="{ error }" />
   <div v-else class="container page-loaded-container">
     <h1>E-Mail-Verteiler</h1>
     <div class="container">
@@ -38,10 +38,10 @@ import {
   PersonFilter,
   getDistributionLists,
 } from "@/services/distribution-list";
-import Loading from "@/components/Loading.vue";
+import LoadingSpinner from "@/components/LoadingSpinner.vue";
 
 export default defineComponent({
-  components: { Loading },
+  components: { LoadingSpinner },
   setup() {
     const distributionLists = ref<DistributionList[]>([]);
     const loaded = ref(false);

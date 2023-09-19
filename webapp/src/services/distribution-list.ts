@@ -1,4 +1,4 @@
-import { get } from "./client";
+import client from "./client";
 
 export interface DistributionList {
   id: number;
@@ -16,6 +16,6 @@ export interface PersonFilter {
   personFullName: string | null;
 }
 
-export function getDistributionLists() {
-  return get<DistributionList[]>("/api/distribution-lists");
+export function getDistributionLists(): Promise<DistributionList[]> {
+  return client.get("/api/distribution-lists");
 }

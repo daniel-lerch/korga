@@ -1,4 +1,4 @@
-# Korga software architecture
+# Korga email processing pipeline architecture
 
 ## Design goals
 

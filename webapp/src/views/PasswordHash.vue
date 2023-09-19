@@ -1,5 +1,5 @@
 <template>
-  <Loading v-if="state === 'LOADING'" :state="{ error }" />
+  <LoadingSpinner v-if="state === 'LOADING'" :state="{ error }" />
   <div v-else class="container page-loaded-container">
     <h1>Hallo {{ userData?.givenName }}</h1>
     <div class="card shadow">
@@ -64,10 +64,10 @@ import { computed, defineComponent, onMounted, ref } from "vue";
 import entropy from "ideal-password";
 import { ssha, postHash, checkToken, TokenData } from "../services/hash";
 import { useRoute } from "vue-router";
-import Loading from "@/components/Loading.vue";
+import LoadingSpinner from "@/components/LoadingSpinner.vue";
 
 export default defineComponent({
-  components: { Loading },
+  components: { LoadingSpinner },
   setup() {
     const state = ref<"LOADING" | "LOADED" | "SENDING" | "SENT">("LOADING");
     const error = ref<string | null>(null);
@@ -96,7 +96,6 @@ export default defineComponent({
         userData.value = res;
         state.value = "LOADED";
       } catch (e) {
-        console.log("token invalid");
         error.value =
           "Dieser Link ist ungültig oder abgelaufen. Bitte wende dich an den Administrator.";
       }
@@ -114,7 +113,8 @@ export default defineComponent({
           state.value = "SENT";
         }
       } catch (e) {
-        console.log(e);
+        // TODO: Show a toast notification with error information
+        state.value = "LOADED";
       }
     }
 
