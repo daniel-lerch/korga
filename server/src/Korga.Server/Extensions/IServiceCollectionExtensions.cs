@@ -4,10 +4,12 @@ using Korga.Server.EmailDelivery;
 using Korga.Server.EmailRelay;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -80,8 +82,10 @@ public static class IServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddOpenIdConnectAuthentication(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddOpenIdConnectAuthentication(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
     {
+        SameSiteMode sameSiteMode = environment.IsDevelopment() ? SameSiteMode.None : SameSiteMode.Strict;
+
         services
             .AddAuthentication(options =>
             {
@@ -91,12 +95,17 @@ public static class IServiceCollectionExtensions
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
             {
                 options.ExpireTimeSpan = TimeSpan.FromDays(1);
-                options.Cookie.SameSite = SameSiteMode.Strict;
+                options.Cookie.SameSite = sameSiteMode;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.Cookie.HttpOnly = true;
                 options.LoginPath = PathString.Empty;
             })
             .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
             {
+                options.CorrelationCookie.SameSite = sameSiteMode;
+                options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.NonceCookie.SameSite = sameSiteMode;
+                options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.Authority = configuration.GetValue<string>("OpenIdConnect:Authority");
                 options.ClientId = configuration.GetValue<string>("OpenIdConnect:ClientId");
@@ -111,8 +120,30 @@ public static class IServiceCollectionExtensions
                 options.Events.OnRedirectToIdentityProvider = context =>
                 {
                     context.HandleResponse();
+
+                    if (environment.IsDevelopment() && context.Request.Host.Equals(new HostString("localhost", 50805)))
+                    {
+                        context.Properties.RedirectUri = "http://localhost:8080";
+                    }
+                    else
+                    {
+                        context.Properties.RedirectUri = (context.Request.IsHttps ? "https://" : "http://") + context.Request.Host + context.Request.PathBase;
+                    }
+
+                    #region Code ported from OpenIdConnectHandler.cs
+                    if (!string.IsNullOrEmpty(context.ProtocolMessage.State))
+                    {
+                        context.Properties.Items[OpenIdConnectDefaults.UserstatePropertiesKey] = context.ProtocolMessage.State;
+                    }
+
+                    // When redeeming a 'code' for an AccessToken, this value is needed
+                    context.Properties.Items.Add(OpenIdConnectDefaults.RedirectUriForCodePropertiesKey, context.ProtocolMessage.RedirectUri);
+
+                    context.ProtocolMessage.State = options.StateDataFormat.Protect(context.Properties);
+                    #endregion
+
                     context.Response.StatusCode = 401;
-                    return context.Response.WriteAsJsonAsync(new { OpenIdConnectRedirectUrl = context.ProtocolMessage.BuildRedirectUrl() });
+                    return context.Response.WriteAsJsonAsync(new { OpenIdConnectRedirectUrl = context.ProtocolMessage.CreateAuthenticationRequestUrl() });
                 };
             });
 
