@@ -9,17 +9,30 @@ namespace Korga.Server.Controllers;
 [ApiController]
 public class ProfileController : ControllerBase
 {
-    [Authorize]
     [HttpGet("~/api/profile")]
     [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
     public IActionResult Profile()
     {
+        string? id = User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
+        string? givenName = User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname");
+        string? familyName = User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname");
+        string? emailAddress = User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
+
+        if (id == null || givenName == null || familyName == null || emailAddress == null) return new JsonResult(null);
+
         return new JsonResult(new ProfileResponse
         {
-            Id = User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"),
-            GivenName = User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"),
-            FamilyName = User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"),
-            EmailAddress = User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")
+            Id = id,
+            GivenName = givenName,
+            FamilyName = familyName,
+            EmailAddress = emailAddress
         });
+    }
+
+    [Authorize]
+    [HttpGet("~/api/challenge")]
+    public NoContentResult ChallengeLogin()
+    {
+        return NoContent();
     }
 }

@@ -2,8 +2,8 @@
 
 public class ProfileResponse
 {
-    public string? Id { get; init; }
-    public string? GivenName { get; init; }
-    public string? FamilyName { get; init; }
-    public string? EmailAddress { get; init; }
+    public required string Id { get; init; }
+    public required string GivenName { get; init; }
+    public required string FamilyName { get; init; }
+    public required string EmailAddress { get; init; }
 }

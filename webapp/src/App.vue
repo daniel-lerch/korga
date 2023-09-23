@@ -20,19 +20,7 @@
               >
             </li>
           </ul>
-          <div class="nav-item dropdown">
-            <a
-              class="nav-link dropdown-toggle"
-              href="#"
-              role="button"
-              data-bs-toggle="dropdown"
-            >
-              {{ profile?.givenName }}
-            </a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#">Abmelden</a></li>
-            </ul>
-          </div>
+          <profile-nav></profile-nav>
         </div>
       </div>
     </nav>
@@ -50,21 +38,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from "vue";
-import { ProfileResponse, getProfile } from "@/services/profile";
+import { defineComponent } from "vue";
+import ProfileNav from "@/components/ProfileNav.vue";
 
 export default defineComponent({
-  setup() {
-    const profile = ref<ProfileResponse | null>(null);
-
-    onMounted(async () => {
-      profile.value = await getProfile();
-    });
-
-    return {
-      profile,
-    };
-  },
+  components: { ProfileNav },
 });
 </script>
 
