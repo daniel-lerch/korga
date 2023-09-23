@@ -8,10 +8,9 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
-    "@vueuse/core": "9.x",
-    "axios": "1.1.x",
+    "@vueuse/core": "10.x",
     "base64-arraybuffer": "1.0.x",
-    "bootstrap": "5.1.x",
+    "bootstrap": "5.2.x",
     "core-js": "3.x",
     "ideal-password": "2.4.x",
     "vue": "3.x",
@@ -19,23 +18,23 @@
     "webpack-require-from": "1.8.x"
   },
   "devDependencies": {
-    "@types/bootstrap": "5.1.x",
-    "@typescript-eslint/eslint-plugin": "5.x",
-    "@typescript-eslint/parser": "5.x",
+    "@types/bootstrap": "5.2.x",
+    "@typescript-eslint/eslint-plugin": "6.x",
+    "@typescript-eslint/parser": "6.x",
     "@vue/cli-plugin-babel": "5.x",
     "@vue/cli-plugin-eslint": "5.x",
     "@vue/cli-plugin-router": "5.x",
     "@vue/cli-plugin-typescript": "5.x",
     "@vue/cli-service": "5.x",
-    "@vue/eslint-config-typescript": "11.x",
+    "@vue/eslint-config-typescript": "12.x",
     "eslint": "8.x",
-    "eslint-config-prettier": "8.x",
-    "eslint-plugin-prettier": "4.x",
+    "eslint-config-prettier": "9.x",
+    "eslint-plugin-prettier": "5.x",
     "eslint-plugin-vue": "9.x",
-    "prettier": "2.x",
+    "prettier": "3.0.x",
     "sass": "1.x",
     "sass-loader": "13.x",
-    "typescript": "4.x"
+    "typescript": "5.2.x"
   },
   "babel": {
     "presets": [

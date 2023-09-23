@@ -22,9 +22,8 @@ export interface HashPostRequest {
   passwordHash: string;
 }
 
-export async function postHash(data: HashPostRequest): Promise<boolean> {
-  const response = await client.post("/api/password/reset", data);
-  return response.status === 204;
+export function postHash(data: HashPostRequest) {
+  return client.post("/api/password/reset", data);
 }
 
 export interface TokenData {
@@ -33,8 +32,6 @@ export interface TokenData {
   familyName: string;
 }
 
-export async function checkToken(token: string): Promise<TokenData> {
-  // return get(`/korga/api/password/reset?token=${token}`);
-  const response = await client.get(`/api/password/reset?token=${token}`);
-  return response.data ?? null;
+export function checkToken(token: string): Promise<TokenData> {
+  return client.get(`/api/password/reset?token=${token}`);
 }
