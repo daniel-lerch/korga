@@ -1,4 +1,4 @@
-import { get } from "./client";
+import client from "./client";
 
 export interface ProfileResponse {
   id: string;
@@ -8,5 +8,5 @@ export interface ProfileResponse {
 }
 
 export function getProfile(): Promise<ProfileResponse> {
-  return get("/api/profile");
+  return client.get("/api/profile");
 }

@@ -19,11 +19,6 @@
                 >Events</router-link
               >
             </li>
-            <!-- <li class="nav-item">
-            <router-link :to="{ name: 'Admin' }" class="nav-link"
-              >Admin</router-link
-            >
-          </li> -->
           </ul>
           <div class="nav-item dropdown">
             <a

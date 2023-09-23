@@ -1,55 +1,44 @@
-import axios from "axios";
-
 const baseUrl =
   process.env.VUE_APP_API_URL ?? window.resourceBasePath.slice(0, -1);
+const postInfo: RequestInit = {
+  method: "POST",
+};
+const deleteInfo: RequestInit = {
+  method: "DELETE",
+  headers: {
+    "Content-Type": "application/json",
+  },
+};
 
-function jsonParse(text: string) {
-  return JSON.parse(text, (key, value) => {
-    if (key.endsWith("Time") && value !== null) {
-      return new Date(value);
+export default {
+  async get<T>(path: string) {
+    const response = await fetch(baseUrl + path);
+    if (response.ok === false) {
+      if (response.status === 401) {
+        const responseData = await response.json();
+        window.location.href = responseData.openIdConnectRedirectUrl;
+      }
+      throw new Error("Unexpected status code " + response.status);
+    }
+    return (await response.json()) as T;
+  },
+  async post(path: string, data: object) {
+    const response = await fetch(baseUrl + path, {
+      ...postInfo,
+      body: JSON.stringify(data),
+    });
+    if (response.ok === true) {
+      return true;
+    } else if (response.status === 409) {
+      return false;
     } else {
-      return value;
+      throw new Error("Unexpected status code " + response.status);
     }
-  });
-}
-
-export async function get<T>(query: string): Promise<T> {
-  const response = await fetch(baseUrl + query, { credentials: "include" });
-  if (response.ok === false) {
-    if (response.status === 401) {
-      const responseData = await response.json();
-      window.location.href = responseData.openIdConnectRedirectUrl;
+  },
+  async delete(path: string) {
+    const response = await fetch(baseUrl + path, deleteInfo);
+    if (response.ok === false) {
+      throw new Error("Unexpected status code " + response.status);
     }
-    throw new Error("Unexpected status code " + response.status);
-  }
-  const responseText = await response.text();
-  return jsonParse(responseText) as T;
-}
-
-export async function send<T extends { conflict: boolean }>(
-  method: string,
-  query: string,
-  body?: object
-): Promise<T> {
-  const init: RequestInit = { method: method };
-  if (body !== undefined) {
-    init.headers = {
-      "Content-Type": "application/json",
-    };
-    init.body = JSON.stringify(body);
-  }
-  const response = await fetch(baseUrl + query, init);
-  if (![200, 204, 409].includes(response.status)) {
-    throw new Error(
-      "Unexpected status code " + response.status + " " + response.statusText
-    );
-  }
-  const responseText = await response.text();
-  const responseBody = jsonParse(responseText) as T;
-  responseBody.conflict = response.status === 409;
-  return responseBody;
-}
-
-export default axios.create({
-  baseURL: process.env.VUE_APP_API_URL ?? window.resourceBasePath.slice(0, -1),
-});
+  },
+};
