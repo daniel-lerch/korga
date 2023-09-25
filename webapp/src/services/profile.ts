@@ -7,10 +7,16 @@ export interface ProfileResponse {
   emailAddress: string;
 }
 
-export function getProfile(): Promise<ProfileResponse | null> {
-  return client.get("/api/profile");
-}
+export default {
+  getProfile(): Promise<ProfileResponse | null> {
+    return client.get("/api/profile");
+  },
 
-export async function challengeLogin() {
-  await client.getResponse("/api/challenge");
-}
+  async challengeLogin() {
+    await client.getResponse("/api/challenge");
+  },
+
+  async logout() {
+    await client.getResponse("/api/logout");
+  },
+};

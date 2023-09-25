@@ -9,22 +9,22 @@
         {{ profile.givenName }}
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item" href="#">Abmelden</a></li>
+        <li>
+          <button class="dropdown-item" @click.prevent="logout">
+            Abmelden
+          </button>
+        </li>
       </ul>
     </li>
-    <form v-else @submit.prevent="login">
-      <button class="btn btn-outline-light" type="submit">Login</button>
-    </form>
+    <button v-else class="btn btn-outline-light" @click.prevent="login">
+      Login
+    </button>
   </ul>
 </template>
 
 <script lang="ts">
 import { defineComponent, onMounted, ref } from "vue";
-import {
-  challengeLogin,
-  getProfile,
-  ProfileResponse,
-} from "@/services/profile";
+import korga, { ProfileResponse } from "@/services/profile";
 
 export default defineComponent({
   setup() {
@@ -32,7 +32,7 @@ export default defineComponent({
 
     onMounted(async () => {
       try {
-        profile.value = await getProfile();
+        profile.value = await korga.getProfile();
       } catch (error) {
         profile.value = null;
       }
@@ -40,13 +40,21 @@ export default defineComponent({
 
     async function login() {
       try {
-        await challengeLogin();
+        await korga.challengeLogin();
       } catch (error) {
         profile.value = null;
       }
     }
 
-    return { login, profile };
+    async function logout() {
+      try {
+        await korga.logout();
+      } catch (error) {
+        profile.value = null;
+      }
+    }
+
+    return { login, logout, profile };
   },
 });
 </script>

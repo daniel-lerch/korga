@@ -145,6 +145,31 @@ public static class IServiceCollectionExtensions
                     context.Response.StatusCode = 401;
                     return context.Response.WriteAsJsonAsync(new { OpenIdConnectRedirectUrl = context.ProtocolMessage.CreateAuthenticationRequestUrl() });
                 };
+                options.Events.OnRedirectToIdentityProviderForSignOut = context =>
+                {
+                    context.HandleResponse();
+
+                    if (environment.IsDevelopment() && context.Request.Host.Equals(new HostString("localhost", 50805)))
+                    {
+                        context.Properties.RedirectUri = "http://localhost:8080";
+                    }
+                    else
+                    {
+                        context.Properties.RedirectUri = (context.Request.IsHttps ? "https://" : "http://") + context.Request.Host + context.Request.PathBase;
+                    }
+
+                    #region Code ported from OpenIdConnectHandler.cs
+                    if (!string.IsNullOrEmpty(context.ProtocolMessage.State))
+                    {
+                        context.Properties.Items[OpenIdConnectDefaults.UserstatePropertiesKey] = context.ProtocolMessage.State;
+                    }
+
+                    context.ProtocolMessage.State = options.StateDataFormat.Protect(context.Properties);
+                    #endregion
+
+                    context.Response.StatusCode = 401;
+                    return context.Response.WriteAsJsonAsync(new { OpenIdConnectRedirectUrl = context.ProtocolMessage.CreateLogoutRequestUrl() });
+                };
             });
 
         return services;
