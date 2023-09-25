@@ -56,8 +56,16 @@ public class EmailDeliveryJobController : OneAtATimeJobController<OutboxEmail>, 
 
             // Don't cancel this operation because messages would sent twice otherwise
             await database.SaveChangesAsync(CancellationToken.None);
-            logger.LogInformation("Delivered email #{Id} to {EmailAddress}",
-                outboxEmail.Id, outboxEmail.EmailAddress);
+
+            if (outboxEmail.InboxEmailId.HasValue)
+            {
+                logger.LogInformation("Delivered inbox email #{InboxEmailId} as #{Id} to {EmailAddress}",
+                    outboxEmail.InboxEmailId, outboxEmail.Id, outboxEmail.EmailAddress);
+            }
+            else
+            {
+                logger.LogInformation("Delivered system email #{Id} to {EmailAddress}", outboxEmail.Id, outboxEmail.EmailAddress);
+            }
         }
         catch (SmtpCommandException ex) when (ex.StatusCode == SmtpStatusCode.MailboxBusy)
         {

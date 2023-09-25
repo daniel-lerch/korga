@@ -44,6 +44,7 @@ public class DistributionListService
                     await database.GroupMembers
                         .Where(m => m.GroupId == groupFilter.GroupId && (groupFilter.GroupRoleId == null || m.GroupRoleId == groupFilter.GroupRoleId))
                         .Join(database.People, m => m.PersonId, p => p.Id, (m, p) => p)
+                        .Where(p => !string.IsNullOrEmpty(p.Email))
                         .ToListAsync(cancellationToken));
             }
             else if (personFilter is StatusFilter statusFilter)
@@ -55,8 +56,9 @@ public class DistributionListService
             }
             else if (personFilter is SinglePerson singlePerson)
             {
-                people.Add(
-                    await database.People.SingleAsync(p => p.Id == singlePerson.PersonId, cancellationToken));
+                people.AddRange(
+                    await database.People.Where(p => p.Id == singlePerson.PersonId && !string.IsNullOrEmpty(p.Email))
+                        .ToListAsync(cancellationToken));
             }
         }
 
