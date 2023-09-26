@@ -1,6 +1,7 @@
 ﻿using Korga.Server.Utilities;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,6 +21,8 @@ public class EmailDeliveryService
 
     public async ValueTask<bool> Enqueue(string emailAddress, MimeMessage mimeMessage, long? inboxEmailId, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrEmpty(emailAddress)) throw new ArgumentException("The recipient address must not be null or empty", nameof(emailAddress));
+
         if (inboxEmailId.HasValue && await database.OutboxEmails
                 .AnyAsync(email => email.EmailAddress == emailAddress && email.InboxEmailId == inboxEmailId, cancellationToken))
             return false;
