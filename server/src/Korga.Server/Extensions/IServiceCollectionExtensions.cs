@@ -32,8 +32,8 @@ public static class IServiceCollectionExtensions
            .Bind(configuration.GetSection("OpenIdConnect"))
            .ValidateDataAnnotations();
         services.AddOptions<LdapOptions>()
-             .Bind(configuration.GetSection("Ldap"))
-             .ValidateDataAnnotations();
+            .Bind(configuration.GetSection("Ldap"))
+            .ValidateDataAnnotations();
         services.AddOptions<ChurchToolsOptions>()
             .Bind(configuration.GetSection("ChurchTools"))
             .Validate(options =>
