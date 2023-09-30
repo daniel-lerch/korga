@@ -42,6 +42,38 @@ docker compose exec app bash
 Configuration for ChurchTools synchronization, IMAP, SMTP, etc. can set as enviroment variables.
 See [appsettings.json](server/src/Korga.Server/appsettings.json) for an overview of available options and their default values.
 
+### ChurchTools sync
+
+First you must create a service account which Korga can use for API access to ChurchTools:
+
+1. Create a person with email address in your ChurchTools instance  
+   You might want to define a special status for API users
+2. Invite that person to ChurchTools
+3. Click on the invitation link and set a password
+4. Open https://example.church.tools/api/whoami to look up the ID of the newly created user
+5. Open https://example.church.tools/api/person/${ID}/logintoken to look up the long-term access token which will be used like an API key
+
+> ⚠️ For security reasons it is not recommended to let Korga use your ChurchTools admin account.
+
+Grant the following permissions to Korga's user:
+
+- Administration > Berechtigungen anpassen `churchcore:administer persons`
+- Personen & Gruppen > "Personen & Gruppen" sehen `churchdb:view`
+- Personen & Gruppen > Sicherheitslevel Personendaten (Stufe 1-3) `churchdb:security level person(1,2,3)`
+- Personen & Gruppen > Alle Personen des jeweiligen Bereiches sichtbar machen (Alle) `churchdb:view alldata(-1)`
+- Personen & Gruppen > Einzelne Gruppen inkl. der enthaltenen Personen sehen (gilt auch für versteckte Gruppen) (Alle) `churchdb:view group(-1)`
+
+After creating and configuring a ChurchTools user for Korga you can finally configure it in `docker-compose.yml` and restart Korga to start synchronizing data from ChurchTools.
+
+```yaml
+services:
+  app:
+    environment:
+      - ChurchTools__EnableSync=true
+      - ChurchTools__Host=example.church.tools
+      - ChurchTools__LoginToken=DuIojxSyqCIMLf8JXEhQCshetSCZFP2dCuNIzHtgrKxqK13e80MdPY15wjt2jUNpWZzlCpEkJVTxYr6MCx3WZpmY5w8CeiwJbke1lKZ4GfD2jc3niVbiRI66obQtfJH8biXw2HXgZVbgMnK4aMQGOlY7Ssfp8SwyZMki1RoIYNBjWPAGAWyeAD5Dp1cApB74BqoWyziSTIE0EP6DQA8HV7n2IUZCVdgnlQkypcM7YeUTGiex57vdHrfH1foJvwax
+```
+
 ## Contributing
 
 Contributions are highly welcome. Please open an issue before implementing a feature to discuss your plans.
