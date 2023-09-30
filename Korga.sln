@@ -19,8 +19,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Korga.Server.Tests", "serve
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2ED6D7FB-8B8A-4139-98C3-854E00A38490}"
 	ProjectSection(SolutionItems) = preProject
-		docs\architecture.md = docs\architecture.md
 		docs\docker-compose.yml = docs\docker-compose.yml
+		docs\email-processing-pipeline.md = docs\email-processing-pipeline.md
+		docs\frontend.md = docs\frontend.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Korga.Core", "server\src\Korga.Core\Korga.Core.csproj", "{D1CEB029-9AFB-4464-BF93-DBA6216B4128}"
