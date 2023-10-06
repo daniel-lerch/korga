@@ -12,6 +12,7 @@ It synchronizes people and groups with [ChurchTools](https://church.tools) and p
 ### Email distribution lists
 
 Once configured, Korga automatically synchronizes people and groups from ChurchTools. This data can be used to create distribution lists.
+There is no Web UI available yet to manage distribution lists so you must stick to the CLI inside the Docker container:
 
 ```
 ./Korga.Server distribution-list create --group 137 kids
@@ -30,17 +31,16 @@ Currently, there is neither an API endpoint nor a graphical user interface avail
 ## Installation
 
 The only officially supported distribution are Docker containers. An official image is available at [daniellerch/korga](https://hub.docker.com/r/daniellerch/korga).
-If you are using Docker Compose, take a look our example compose file in the `docs` folder.
+If you are using Docker Compose, take a look our [example compose file](docs/docker-compose.yml) in the `docs` folder.
 
-When you start Korga for the first time you have create the database schema via CLI:
+Korga has multiple modules that must be enabled via configuration to use them:
+- ChurchTools sync
+- Email delivery
+- Email relay
 
-```
-docker compose exec app bash
-./Korga.Server database migrate
-```
-
-Configuration for ChurchTools synchronization, IMAP, SMTP, etc. can set as enviroment variables.
-See [appsettings.json](server/src/Korga.Server/appsettings.json) for an overview of available options and their default values.
+Configuration can set as enviroment variables or by creating a custom config file.
+I recommend to use environment variables and will explain them in the following sections.
+However, if you prefer a config file, copy the default [appsettings.json](server/src/Korga.Server/appsettings.json), edit it as required, and mount it at `/app/appsettings.json`.
 
 ### ChurchTools sync
 
@@ -53,6 +53,8 @@ First you must create a service account which Korga can use for API access to Ch
 4. Open https://example.church.tools/api/whoami to look up the ID of the newly created user
 5. Open https://example.church.tools/api/person/${ID}/logintoken to look up the long-term access token which will be used like an API key
 
+Steps 4. and 5. can also be performed in the ChurchTools web interface: [Official Documentation](https://hilfe.church.tools/wiki/0/API%20Authentifizierung#logintoken)
+
 > ⚠️ For security reasons it is not recommended to let Korga use your ChurchTools admin account.
 
 Grant the following permissions to Korga's user:
@@ -63,16 +65,17 @@ Grant the following permissions to Korga's user:
 - Personen & Gruppen > Alle Personen des jeweiligen Bereiches sichtbar machen (Alle) `churchdb:view alldata(-1)`
 - Personen & Gruppen > Einzelne Gruppen inkl. der enthaltenen Personen sehen (gilt auch für versteckte Gruppen) (Alle) `churchdb:view group(-1)`
 
-After creating and configuring a ChurchTools user for Korga you can finally configure it in `docker-compose.yml` and restart Korga to start synchronizing data from ChurchTools.
+After creating and configuring a ChurchTools user for Korga you can finally configure it via environment variables in `docker-compose.yml`.
 
-```yaml
-services:
-  app:
-    environment:
-      - ChurchTools__EnableSync=true
-      - ChurchTools__Host=example.church.tools
-      - ChurchTools__LoginToken=DuIojxSyqCIMLf8JXEhQCshetSCZFP2dCuNIzHtgrKxqK13e80MdPY15wjt2jUNpWZzlCpEkJVTxYr6MCx3WZpmY5w8CeiwJbke1lKZ4GfD2jc3niVbiRI66obQtfJH8biXw2HXgZVbgMnK4aMQGOlY7Ssfp8SwyZMki1RoIYNBjWPAGAWyeAD5Dp1cApB74BqoWyziSTIE0EP6DQA8HV7n2IUZCVdgnlQkypcM7YeUTGiex57vdHrfH1foJvwax
-```
+- `ChurchTools__EnableSync`  
+Set this to `true` to enable a periodic sync with ChurchTools
+- `ChurchTools__Host`  
+Configure your ChurchTools domain, e.g. `example.church.tools`
+- `ChurchTools__LoginToken`  
+Fill in the login token of your service account for Korga.
+This should be a 256 chars long alphanumeric text without special chars.
+
+Do not forget to recreate your container to take these changes into effect.
 
 ## Contributing
 
