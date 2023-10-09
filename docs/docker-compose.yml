@@ -13,6 +13,12 @@ services:
 
       # Uncomment below if you want to use Korga behind a reverse proxy like NGINX
       #- Hosting__AllowProxies=true
+
+      # Uncomment the three options below to sync with ChurchTools
+      # See the main README for instructions on how to get a login token and configure permissions
+      #- ChurchTools__EnableSync=true
+      #- ChurchTools__Host=example.church.tools
+      #- ChurchTools__LoginToken=DuIojxSyqCIMLf8JXEhQCshetSCZFP2dCuNIzHtgrKxqK13e80MdPY15wjt2jUNpWZzlCpEkJVTxYr6MCx3WZpmY5w8CeiwJbke1lKZ4GfD2jc3niVbiRI66obQtfJH8biXw2HXgZVbgMnK4aMQGOlY7Ssfp8SwyZMki1RoIYNBjWPAGAWyeAD5Dp1cApB74BqoWyziSTIE0EP6DQA8HV7n2IUZCVdgnlQkypcM7YeUTGiex57vdHrfH1foJvwax
   db:
     image: mariadb:latest
     restart: unless-stopped
