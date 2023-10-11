@@ -38,18 +38,6 @@ public class Startup
 
         services.AddSpaStaticFiles(options => options.RootPath = environment.WebRootPath);
 
-        if (environment.IsDevelopment())
-        {
-            services.AddCors(options =>
-            {
-                options.AddDefaultPolicy(builder => builder
-                    .WithOrigins("http://localhost:8080")
-                    .AllowAnyMethod()
-                    .AllowAnyHeader()
-                    .AllowCredentials());
-            });
-        }
-
         services.AddControllers();
 
         services.AddOpenApiDocument();
@@ -96,10 +84,7 @@ public class Startup
 
         app.UseRouting();
 
-        if (env.IsDevelopment())
-        {
-            app.UseCors();
-        }
+        app.UseKorgaCors();
 
         app.UseAuthentication();
         app.UseAuthorization();

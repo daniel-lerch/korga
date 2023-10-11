@@ -15,6 +15,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 namespace Korga.Server.Extensions;
 
@@ -121,14 +122,15 @@ public static class IServiceCollectionExtensions
                 {
                     context.HandleResponse();
 
-                    if (environment.IsDevelopment() && context.Request.Host.Equals(new HostString("localhost", 50805)))
-                    {
-                        context.Properties.RedirectUri = "http://localhost:8080";
-                    }
-                    else
-                    {
-                        context.Properties.RedirectUri = (context.Request.IsHttps ? "https://" : "http://") + context.Request.Host + context.Request.PathBase;
-                    }
+                    string? redirectUri = context.Request.Headers.Referer.FirstOrDefault();
+
+                    if (string.IsNullOrEmpty(redirectUri))
+                        redirectUri = context.Request.Headers.Origin.FirstOrDefault();
+
+                    if (string.IsNullOrEmpty(redirectUri))
+                        redirectUri = (context.Request.IsHttps ? "https://" : "http://") + context.Request.Host + context.Request.PathBase;
+
+                    context.Properties.RedirectUri = redirectUri;
 
                     #region Code ported from OpenIdConnectHandler.cs
                     if (!string.IsNullOrEmpty(context.ProtocolMessage.State))
@@ -149,14 +151,15 @@ public static class IServiceCollectionExtensions
                 {
                     context.HandleResponse();
 
-                    if (environment.IsDevelopment() && context.Request.Host.Equals(new HostString("localhost", 50805)))
-                    {
-                        context.Properties.RedirectUri = "http://localhost:8080";
-                    }
-                    else
-                    {
-                        context.Properties.RedirectUri = (context.Request.IsHttps ? "https://" : "http://") + context.Request.Host + context.Request.PathBase;
-                    }
+                    string? redirectUri = context.Request.Headers.Referer.FirstOrDefault();
+
+                    if (string.IsNullOrEmpty(redirectUri))
+                        redirectUri = context.Request.Headers.Origin.FirstOrDefault();
+
+                    if (string.IsNullOrEmpty(redirectUri))
+                        redirectUri = (context.Request.IsHttps ? "https://" : "http://") + context.Request.Host + context.Request.PathBase;
+
+                    context.Properties.RedirectUri = redirectUri;
 
                     #region Code ported from OpenIdConnectHandler.cs
                     if (!string.IsNullOrEmpty(context.ProtocolMessage.State))
