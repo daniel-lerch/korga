@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using MimeKit;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,7 +29,9 @@ public class EmailDeliveryJobController : OneAtATimeJobController<OutboxEmail>, 
 
     protected override async ValueTask<OutboxEmail?> NextPendingOrDefault(CancellationToken cancellationToken)
     {
-        return await database.OutboxEmails.FirstOrDefaultAsync(cancellationToken);
+        return await database.OutboxEmails
+            .OrderBy(email => email.Id)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     protected override async ValueTask ExecuteJob(OutboxEmail outboxEmail, CancellationToken cancellationToken)

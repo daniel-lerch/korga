@@ -42,6 +42,37 @@ Configuration can set as enviroment variables or by creating a custom config fil
 I recommend to use environment variables and will explain them in the following sections.
 However, if you prefer a config file, copy the default [appsettings.json](server/src/Korga.Server/appsettings.json), edit it as required, and mount it at `/app/appsettings.json`.
 
+### OpenID Connect authentication
+
+Korga supports single sign-on using OpenID Connect.
+It is the only authentication mechanism Korga supports.
+If you do not configure OpenID Connect, you will not be able to login in Korga's Web UI.
+
+First you must register a new client in your OpenID Connect Provider.
+
+These instructions assume you use [Keycloak](https://www.keycloak.org/) either in standalone mode,
+with storage provider like [canchanchara/keycloak-churchtools-storage-provider](https://github.com/canchanchara/keycloak-churchtools-storage-provider),
+or with LDAP user federation with a wrapper like [milux/ctldap](https://github.com/milux/ctldap).
+
+1. Login to Keycloak's admin console, select the correct realm and select _Clients_ in the left-hand navbar
+
+2. Click on _Create client_, select _OpenID Connect_ as type and choose a client ID you like and click _Next_
+
+3. Enable _Client authentication_ and disable _Direct access grants_ so that _Standard flow_ is the only enabled authentication flow and click _Next_
+
+4. As _Root URL_ and _Home URL_ enter the URL to your Korga instance, e.g. https://example.org/korga. As _Valid redirect URIs_ and _Valid post logout redirect URIs_ enter a wildcard path, e.g. https://example.org/korga/*. _Web origins_ should be left empty. Then click _Save_
+
+5. Finally go to the _Credentials_ tab of your newly created client and copy the _Client secret_
+
+After creating a client for Korga in Keycloak or your OpenID Connect provider of choice, you can configure it via environment variables in `docker-compose.yml`.
+
+- `OpenIdConnect__Authority`  
+Set this to the root URL of your Keycloak realm, e.g. `https://keycloak.example.org/realms/churchtools`
+- `OpenIdConnect__ClientId`  
+Set this to the client ID you chose when creating a client for Korga in Keycloak, e.g. `korga`
+- `OpenIdConnect__ClientSecret`  
+Set this to the client secret copied in step 5.
+
 ### ChurchTools sync
 
 First you must create a service account which Korga can use for API access to ChurchTools:

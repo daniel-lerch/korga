@@ -16,6 +16,8 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using OpenIdConnectOptions = Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions;
+using KorgaOpenIdConnectOptions = Korga.Server.Configuration.OpenIdConnectOptions;
 
 namespace Korga.Server.Extensions;
 
@@ -29,7 +31,7 @@ public static class IServiceCollectionExtensions
         services.AddOptions<HostingOptions>()
             .Bind(configuration.GetSection("Hosting"))
             .ValidateDataAnnotations();
-        services.AddOptions<Configuration.OpenIdConnectOptions>()
+        services.AddOptions<KorgaOpenIdConnectOptions>()
            .Bind(configuration.GetSection("OpenIdConnect"))
            .ValidateDataAnnotations();
         services.AddOptions<LdapOptions>()
@@ -101,20 +103,29 @@ public static class IServiceCollectionExtensions
                 options.Cookie.HttpOnly = true;
                 options.LoginPath = PathString.Empty;
             })
-            .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
+            .AddOpenIdConnect();
+
+        services.AddOptions<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme)
+            .Configure<ILogger<Startup>, IOptions<KorgaOpenIdConnectOptions>>((options, logger, openIdConnectOptions) =>
             {
+                if (string.IsNullOrEmpty(openIdConnectOptions.Value.Authority)
+                    || string.IsNullOrEmpty(openIdConnectOptions.Value.ClientId)
+                    || string.IsNullOrEmpty(openIdConnectOptions.Value.ClientSecret))
+                {
+                    logger.LogWarning("OpenID Connect configuration is incomplete. Login will not work.");
+                }
+
                 options.CorrelationCookie.SameSite = sameSiteMode;
                 options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.NonceCookie.SameSite = sameSiteMode;
                 options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.Authority = configuration.GetValue<string>("OpenIdConnect:Authority");
-                options.ClientId = configuration.GetValue<string>("OpenIdConnect:ClientId");
-                options.ClientSecret = configuration.GetValue<string>("OpenIdConnect:ClientSecret");
+                options.Authority = openIdConnectOptions.Value.Authority;
+                options.ClientId = openIdConnectOptions.Value.ClientId;
+                options.ClientSecret = openIdConnectOptions.Value.ClientSecret;
                 options.ResponseType = OpenIdConnectResponseType.Code;
                 options.SaveTokens = true;
                 options.GetClaimsFromUserInfoEndpoint = true;
-                options.RequireHttpsMetadata = false;
                 options.Scope.Add("openid");
                 options.Scope.Add("profile");
                 options.Scope.Add("email");
