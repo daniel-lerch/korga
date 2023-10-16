@@ -24,4 +24,23 @@ public static class IApplicationBuilderExtensions
 
         return app;
     }
+
+    public static IApplicationBuilder UseKorgaCors(this IApplicationBuilder app)
+    {
+        var options = app.ApplicationServices.GetRequiredService<IOptions<HostingOptions>>();
+
+        if (options.Value.CorsOrigins != null && options.Value.CorsOrigins.Length > 0)
+        {
+            app.UseCors(builder =>
+            {
+                builder
+                    .WithOrigins(options.Value.CorsOrigins)
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+            });
+        }
+
+        return app;
+    }
 }

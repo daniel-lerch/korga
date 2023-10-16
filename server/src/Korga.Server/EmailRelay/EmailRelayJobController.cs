@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MimeKit;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -30,7 +31,10 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
 
     protected override async ValueTask<InboxEmail?> NextPendingOrDefault(CancellationToken cancellationToken)
     {
-        return await database.InboxEmails.FirstOrDefaultAsync(email => email.ProcessingCompletedTime == default, cancellationToken);
+        return await database.InboxEmails
+            .Where(email => email.ProcessingCompletedTime == default)
+            .OrderBy(email => email.Id)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     protected override async ValueTask ExecuteJob(InboxEmail email, CancellationToken cancellationToken)

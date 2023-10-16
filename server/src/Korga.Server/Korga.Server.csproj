@@ -10,6 +10,7 @@
     <PackageReference Include="MailKit" Version="4.2.0" />
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.1.0" />
     <PackageReference Include="McMaster.Extensions.Hosting.CommandLine" Version="4.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="7.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="7.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.11">
       <PrivateAssets>all</PrivateAssets>
