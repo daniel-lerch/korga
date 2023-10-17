@@ -1,6 +1,6 @@
 # Korga
 
-![Ubuntu build and tests](https://github.com/daniel-lerch/korga/workflows/Ubuntu%20build%20and%20tests/badge.svg)
+[![Build and tests](https://github.com/daniel-lerch/korga/actions/workflows/main.yml/badge.svg)](https://github.com/daniel-lerch/korga/actions/workflows/main.yml)
 [![](https://img.shields.io/docker/pulls/daniellerch/korga.svg)](https://hub.docker.com/r/daniellerch/korga)
 [![](https://img.shields.io/docker/image-size/daniellerch/korga/latest.svg)](https://hub.docker.com/r/daniellerch/korga)
 
@@ -107,6 +107,50 @@ Fill in the login token of your service account for Korga.
 This should be a 256 chars long alphanumeric text without special chars.
 
 Do not forget to recreate your container to take these changes into effect.
+
+### Email delivery
+
+Email delivery via SMTP can be configured with environment variables in `docker-compose.yml`:
+
+- `EmailDelivery__Enable`  
+Set this to `true` to enable Korga to send emails via SMTP
+- `EmailDelivery__SenderName`  
+The display name for system messages. Defaults to `Korga`
+- `EmailDelivery__SenderAddress`  
+The address Korga will send emails from. Usually this should be the email address for the credentials below.
+- `EmailDelivery__SmtpHost`  
+Defaults to `smtp.strato.de`
+- `EmailDelivery__SmtpPort`  
+Defaults to `465`
+- `EmailDelivery__SmtpUseSsl`  
+Defaults to `true`
+- `EmailDelivery__SmtpUsername`
+- `EmailDelivery__SmtpPassword`
+
+### Email relay
+
+Korga's email relay requires a catchall IMAP inbox.
+Such an inbox receives all emails sent to a domain where no matching inbox was found, i.e. `*@example.org`.
+It can be configured with environment variables in `docker-compose.yml`:
+
+- `EmailRelay__Enable`  
+Set this to `true` to let Korga periodically check for emails to forward them. If `EmailDelivery__Enable` is set to `false`, this option will have no effect. Email relay depends on email delivery.
+- `EmailRelay__ImapHost`  
+Defaults to `imap.strato.de`
+- `EmailRelay__ImapPort`  
+Defaults to `993`
+- `EmailRelay__ImapUseSsl`  
+Defaults to `true`
+- `EmailRelay__ImapUsername`
+- `EmailRelay__ImapPassword`
+- `EmailRelay__RetrievalIntervalInMinutes`  
+Defaults to `2.0` (2 minutes)
+- `EmailRelay__ImapRetentionIntervalInDays`  
+Defaults to `1.0` (24 hours)
+- `EmailRelay__MaxHeaderSizeInKilobytes`  
+Defaults to `64` (64 KiB)
+- `EmailRelay__MaxBodySizeInKilobytes`  
+Defaults to `12288` (12 MiB). You must adjust MariaDB's `max_packet_size` if you want to increase this limit.
 
 ## Contributing
 
