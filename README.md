@@ -95,6 +95,9 @@ Grant the following permissions to Korga's user:
 - Personen & Gruppen > Sicherheitslevel Personendaten (Stufe 1-3) `churchdb:security level person(1,2,3)`
 - Personen & Gruppen > Alle Personen des jeweiligen Bereiches sichtbar machen (Alle) `churchdb:view alldata(-1)`
 - Personen & Gruppen > Einzelne Gruppen inkl. der enthaltenen Personen sehen (gilt auch für versteckte Gruppen) (Alle) `churchdb:view group(-1)`
+- Events > "Events" sehen `churchservice:view`
+- Events > Dienste einzelner Dienstgruppen einsehen (Alle) `churchservice:view servicegroup(-1)`
+- Events > Events von einzelnen Kalendern sehen (Alle) `churchservice:view events(-1)`
 
 After creating and configuring a ChurchTools user for Korga you can finally configure it via environment variables in `docker-compose.yml`.
 
