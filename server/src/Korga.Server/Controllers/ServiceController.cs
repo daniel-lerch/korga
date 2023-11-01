@@ -48,6 +48,9 @@ public class ServiceController : ControllerBase
     public async Task<IActionResult> GetServiceHistory(int id, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to)
     {
         Service service = await churchTools.GetService(id);
+
+        if (service.GroupIds == null) return new JsonResult(Array.Empty<ServiceHistoryResponse>());
+
         List<int> groupIds = service.GroupIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
             .Select(int.Parse)
             .ToList();

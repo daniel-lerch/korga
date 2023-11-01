@@ -19,9 +19,9 @@ public class Service
     /// <summary>
     /// Comma separated list of standard groups IDs
     /// </summary>
-    public string GroupIds { get; }
+    public string? GroupIds { get; }
     /// <summary>
     /// Comma separated list of person tag IDs
     /// </summary>
-    public string TagIds { get; }
+    public string? TagIds { get; }
 }
