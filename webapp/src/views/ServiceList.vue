@@ -45,7 +45,7 @@ import {
   getServices,
   ServiceHistory,
   Services,
-} from "@/services/service.ts";
+} from "@/services/service";
 
 interface Props {
   id: string;
