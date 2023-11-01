@@ -31,7 +31,7 @@
           <th scope="row">{{ index }}</th>
           <td>{{ person.firstName }}</td>
           <td>{{ person.lastName }}</td>
-          <td>{{ person.serviceDates }}</td>
+          <td>{{ person.serviceDates.join(", ") }}</td>
         </tr>
       </tbody>
     </table>
