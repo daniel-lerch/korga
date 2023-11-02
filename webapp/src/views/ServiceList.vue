@@ -38,8 +38,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, onMounted, ref } from "vue";
+<script setup lang="ts">
+import { onMounted, ref } from "vue";
 import {
   getServiceHistory,
   getServices,
@@ -47,38 +47,16 @@ import {
   Services,
 } from "@/services/service";
 
-interface Props {
-  id: string;
-}
+const services = ref<Services[] | null>(null);
+const serviceHistory = ref<ServiceHistory[] | null>(null);
 
-export default defineComponent({
-  props: {
-    id: {
-      type: String,
-      required: true,
-    },
-  },
-  setup(props: Props) {
-    const services = ref<Services[] | null>(null);
-    const serviceHistory = ref<ServiceHistory[] | null>(null);
-
-    onMounted(async () => {
-      services.value = await getServices();
-    });
-
-    const fetchServiceHistory = async function (id: number) {
-      console.log(id);
-      serviceHistory.value = await getServiceHistory(id);
-    };
-
-    return {
-      services,
-      props,
-      fetchServiceHistory,
-      serviceHistory,
-    };
-  },
+onMounted(async () => {
+  services.value = await getServices();
 });
+
+const fetchServiceHistory = async function (id: number) {
+  serviceHistory.value = await getServiceHistory(id);
+};
 </script>
 
 <style scoped></style>
