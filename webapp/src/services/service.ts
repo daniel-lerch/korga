@@ -3,7 +3,7 @@ import client from "./client";
 export interface Services {
   id: number;
   name: string;
-  serviceGroup?: string;
+  serviceGroup: string | null;
 }
 
 export interface ServiceHistory {
