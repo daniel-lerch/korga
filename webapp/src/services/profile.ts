@@ -7,9 +7,14 @@ export interface ProfileResponse {
   emailAddress: string;
 }
 
+let profile: ProfileResponse | null = null;
 export default {
-  getProfile(): Promise<ProfileResponse | null> {
-    return client.get("/api/profile");
+  async getProfile(): Promise<ProfileResponse | null> {
+    if (profile != null) {
+      return profile;
+    }
+    profile = await client.get("/api/profile");
+    return profile;
   },
 
   async challengeLogin() {
@@ -18,5 +23,6 @@ export default {
 
   async logout() {
     await client.getResponse("/api/logout");
+    profile = null;
   },
 };
