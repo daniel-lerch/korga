@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <h1>Service List</h1>
+    <h1>Dienstzuteilung</h1>
 
     <select
       class="form-select"
