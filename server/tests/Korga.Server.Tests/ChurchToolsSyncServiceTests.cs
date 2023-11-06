@@ -289,5 +289,25 @@ public class ChurchToolsSyncServiceTests : DatabaseTestBase
             else
                 return ValueTask.FromResult(PersonMasterdata);
         }
+
+        public ValueTask<List<Service>> GetServices(CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ValueTask<Service> GetService(int serviceId, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ValueTask<List<ServiceGroup>> GetServiceGroups(CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ValueTask<List<Event>> GetEvents(DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

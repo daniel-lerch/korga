@@ -13,13 +13,19 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav">
+          <ul class="navbar-nav me-auto">
             <li class="nav-item">
               <router-link :to="{ name: 'Events' }" class="nav-link"
                 >Events</router-link
               >
             </li>
+            <li class="nav-item" v-if="profile">
+              <router-link :to="{ name: 'Service' }" class="nav-link"
+                >Dienste</router-link
+              >
+            </li>
           </ul>
+          <profile-nav></profile-nav>
         </div>
       </div>
     </nav>
@@ -35,6 +41,22 @@
     </div>
   </footer>
 </template>
+
+<script setup lang="ts">
+import ProfileNav from "@/components/ProfileNav.vue";
+import korga, { ProfileResponse } from "@/services/profile";
+import { onMounted, ref } from "vue";
+
+const profile = ref<ProfileResponse | null>(null);
+
+onMounted(async () => {
+  try {
+    profile.value = await korga.getProfile();
+  } catch (error) {
+    console.log(error);
+  }
+});
+</script>
 
 <style>
 div#app {

@@ -17,4 +17,8 @@ public interface IChurchToolsApi : IDisposable
 	ValueTask<Person> GetPerson(int personId, CancellationToken cancellationToken = default);
 	ValueTask<string> GetPersonLoginToken(int personId, CancellationToken cancellationToken = default);
 	ValueTask<PersonMasterdata> GetPersonMasterdata(CancellationToken cancellationToken = default);
+    ValueTask<List<Service>> GetServices(CancellationToken cancellationToken = default);
+    ValueTask<Service> GetService(int serviceId, CancellationToken cancellationToken = default);
+    ValueTask<List<ServiceGroup>> GetServiceGroups(CancellationToken cancellationToken = default);
+    ValueTask<List<Event>> GetEvents(DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
 }

@@ -92,12 +92,9 @@ public class ChurchToolsApi : IChurchToolsApi, IDisposable
         return InternalGetAllPages<Group>("/api/groups", query.ToString(), cancellationToken);
     }
 
-    public async ValueTask<List<GroupMember>> GetGroupMembers(CancellationToken cancellationToken = default)
+    public ValueTask<List<GroupMember>> GetGroupMembers(CancellationToken cancellationToken = default)
     {
-        Response<List<GroupMember>> groupMembers = await httpClient.GetFromJsonAsync<Response<List<GroupMember>>>("/api/groups/members", cancellationToken)
-            ?? throw new InvalidDataException();
-
-        return groupMembers.Data;
+        return InternalGetNonPaged<List<GroupMember>>("/api/groups/members", cancellationToken);
     }
 
     public ValueTask<List<Person>> GetPeople(CancellationToken cancellationToken = default)
@@ -105,41 +102,58 @@ public class ChurchToolsApi : IChurchToolsApi, IDisposable
         return InternalGetAllPages<Person>("/api/persons", null, cancellationToken);
     }
 
-    public async ValueTask<Person> GetPerson(CancellationToken cancellationToken = default)
+    public ValueTask<Person> GetPerson(CancellationToken cancellationToken = default)
     {
-        Response<Person> person = await httpClient.GetFromJsonAsync<Response<Person>>("/api/whoami", cancellationToken)
-            ?? throw new InvalidDataException();
-
-        return person.Data;
+        return InternalGetNonPaged<Person>("/api/whoami", cancellationToken);
     }
 
-    public async ValueTask<Person> GetPerson(int personId, CancellationToken cancellationToken = default)
+    public ValueTask<Person> GetPerson(int personId, CancellationToken cancellationToken = default)
     {
-        Response<Person> person = await httpClient.GetFromJsonAsync<Response<Person>>($"/api/persons/{personId}", cancellationToken)
-            ?? throw new InvalidDataException();
-
-        return person.Data;
+        return InternalGetNonPaged<Person>($"/api/persons/{personId}", cancellationToken);
     }
 
-    public async ValueTask<string> GetPersonLoginToken(int personId, CancellationToken cancellationToken = default)
+    public ValueTask<string> GetPersonLoginToken(int personId, CancellationToken cancellationToken = default)
     {
-        Response<string> loginToken = await httpClient.GetFromJsonAsync<Response<string>>($"/api/persons/{personId}/logintoken", cancellationToken)
-            ?? throw new InvalidDataException();
-
-        return loginToken.Data;
+        return InternalGetNonPaged<string>($"/api/persons/{personId}/logintoken", cancellationToken);
     }
 
-    public async ValueTask<PersonMasterdata> GetPersonMasterdata(CancellationToken cancellationToken = default)
+    public ValueTask<PersonMasterdata> GetPersonMasterdata(CancellationToken cancellationToken = default)
     {
-        Response<PersonMasterdata> personMasterdata = await httpClient.GetFromJsonAsync<Response<PersonMasterdata>>("/api/person/masterdata", cancellationToken)
-            ?? throw new InvalidDataException();
+        return InternalGetNonPaged<PersonMasterdata>("/api/person/masterdata", cancellationToken);
+    }
 
-        return personMasterdata.Data;
+    public ValueTask<List<Service>> GetServices(CancellationToken cancellationToken = default)
+    {
+        return InternalGetNonPaged<List<Service>>("/api/services", cancellationToken);
+    }
+
+    public ValueTask<Service> GetService(int serviceId, CancellationToken cancellationToken = default)
+    {
+        return InternalGetNonPaged<Service>($"/api/services/{serviceId}", cancellationToken);
+    }
+
+    public ValueTask<List<ServiceGroup>> GetServiceGroups(CancellationToken cancellationToken = default)
+    {
+        return InternalGetNonPaged<List<ServiceGroup>>("/api/servicegroups", cancellationToken);
+    }
+
+    public ValueTask<List<Event>> GetEvents(DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
+    {
+        string path = $"/api/events?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}&include=eventServices";
+        return InternalGetNonPaged<List<Event>>(path, cancellationToken);
     }
 
     public void Dispose()
     {
         httpClient.Dispose();
+    }
+
+    private async ValueTask<T> InternalGetNonPaged<T>(string path, CancellationToken cancellationToken)
+    {
+        Response<T> response = await httpClient.GetFromJsonAsync<Response<T>>(path, cancellationToken)
+            ?? throw new InvalidDataException($"ChurchTools endpoint {path} returned an invalid response");
+
+        return response.Data;
     }
 
     private async ValueTask<List<T>> InternalGetAllPages<T>(string path, string? query, CancellationToken cancellationToken)

@@ -38,22 +38,11 @@ public class Startup
 
         services.AddSpaStaticFiles(options => options.RootPath = environment.WebRootPath);
 
-        if (environment.IsDevelopment())
-        {
-            services.AddCors(options =>
-            {
-                options.AddDefaultPolicy(builder =>
-                {
-                    builder.AllowAnyOrigin();
-                    builder.AllowAnyMethod();
-                    builder.AllowAnyHeader();
-                });
-            });
-        }
-
         services.AddControllers();
 
         services.AddOpenApiDocument();
+
+        services.AddOpenIdConnectAuthentication(Configuration, environment);
 
         // Use Configuration manually because options are not available in ConfigureService
         // Instead of returning a fake service when disabled we don't register any hosted service at all
@@ -95,11 +84,9 @@ public class Startup
 
         app.UseRouting();
 
-        if (env.IsDevelopment())
-        {
-            app.UseCors();
-        }
+        app.UseKorgaCors();
 
+        app.UseAuthentication();
         app.UseAuthorization();
 
         app.UseEndpoints(endpoints =>
