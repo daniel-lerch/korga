@@ -5,8 +5,13 @@
         <BNavbarBrand to="/">Korga</BNavbarBrand>
         <BNavbarToggle target="nav-collapse" />
         <BCollapse id="nav-collapse" is-nav>
-          <BNavbarNav>
+          <BNavbarNav class="me-auto">
             <BNavItem to="/events">Events</BNavItem>
+          </BNavbarNav>
+          <BNavbarNav>
+            <BButton variant="outline-light" @click.prevent="login">
+              Login
+            </BButton>
           </BNavbarNav>
         </BCollapse>
       </BNavbar>
@@ -23,3 +28,15 @@
     </footer>
   </div>
 </template>
+
+<script setup lang="ts">
+
+interface UnauthorizedResponse {
+  openIdConnectRedirectUrl: string;
+}
+
+async function login() {
+  const response = await $fetch<UnauthorizedResponse>('https://lerchen.net/korga/api/challenge', { ignoreResponseError: true, credentials: 'include' })
+  window.location.href = response.openIdConnectRedirectUrl
+}
+</script>

@@ -10,13 +10,13 @@
     "postinstall": "nuxt prepare"
   },
   "devDependencies": {
-    "@bootstrap-vue-next/nuxt": "^0.14.7",
+    "@bootstrap-vue-next/nuxt": "^0.14.10",
     "@nuxt/devtools": "latest",
     "bootstrap": "^5.3.2",
-    "bootstrap-vue-next": "^0.14.7",
-    "nuxt": "^3.7.4",
-    "sass": "^1.68.0",
-    "vue": "^3.3.4",
+    "bootstrap-vue-next": "^0.14.10",
+    "nuxt": "^3.8.1",
+    "sass": "^1.69.5",
+    "vue": "^3.3.8",
     "vue-router": "^4.2.5"
   }
 }
