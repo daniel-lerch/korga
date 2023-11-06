@@ -35,8 +35,15 @@ interface UnauthorizedResponse {
   openIdConnectRedirectUrl: string;
 }
 
+const store = useProfileStore()
+
 async function login() {
   const response = await $fetch<UnauthorizedResponse>('https://lerchen.net/korga/api/challenge', { ignoreResponseError: true, credentials: 'include' })
-  window.location.href = response.openIdConnectRedirectUrl
+  if (response && response.openIdConnectRedirectUrl) {
+    window.location.href = response.openIdConnectRedirectUrl
+  } else {
+    // Logged in from another tab
+    await store.refresh()
+  }
 }
 </script>

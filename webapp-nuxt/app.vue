@@ -1,18 +1,12 @@
 <template>
-  <NuxtLayout :name="profile === null ? 'default' : 'authenticated'">
+  <NuxtLayout :name="store.profile === null ? 'default' : 'authenticated'">
     <NuxtPage />
   </NuxtLayout>
 </template>
 
 <script setup lang="ts">
 
-interface ProfileResponse {
-  id: string;
-  givenName: string;
-  familyName: string;
-  emailAddress: string;
-}
-
-const { data: profile } = useFetch<ProfileResponse | null>('https://lerchen.net/korga/api/profile', { credentials: 'include' })
+const store = useProfileStore()
+await store.init()
 
 </script>

@@ -9,7 +9,7 @@
             <BNavItem to="/events">Events</BNavItem>
           </BNavbarNav>
           <BNavbarNav>
-            <BNavItemDropdown text="Daniel">
+            <BNavItemDropdown :text="store.profile?.givenName">
               <BDropdownItem @click.prevent="logout">Abmelden</BDropdownItem>
             </BNavItemDropdown>
           </BNavbarNav>
@@ -30,7 +30,20 @@
 </template>
 
 <script setup lang="ts">
+
+interface UnauthorizedResponse {
+  openIdConnectRedirectUrl: string;
+}
+
+const store = useProfileStore()
+
 async function logout() {
-  await $fetch('https://lerchen.net/korga/api/logout', { ignoreResponseError: true, credentials: 'include' })
+  const response = await $fetch<UnauthorizedResponse>('https://lerchen.net/korga/api/logout', { ignoreResponseError: true, credentials: 'include' })
+  if (response && response.openIdConnectRedirectUrl) {
+    window.location.href = response.openIdConnectRedirectUrl
+  } else {
+    // Logged out from another tab
+    await store.refresh()
+  }
 }
 </script>
