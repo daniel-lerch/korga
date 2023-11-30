@@ -150,6 +150,7 @@ public class ChurchToolsApi : IChurchToolsApi, IDisposable
 
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
         httpClient.Dispose();
     }
 
