@@ -50,6 +50,7 @@ public class Startup
         {
             services.AddTransient<ChurchToolsSyncService>();
             services.AddHostedService<ChurchToolsSyncHostedService>();
+            services.AddHostedService<ChurchToolsPermissionsHostedService>();
         }
 
         if (Configuration.GetValue<bool>("EmailDelivery:Enable"))

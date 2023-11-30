@@ -143,6 +143,11 @@ public class ChurchToolsApi : IChurchToolsApi, IDisposable
         return InternalGetNonPaged<List<Event>>(path, cancellationToken);
     }
 
+    public ValueTask<GlobalPermissions> GetGlobalPermissions(CancellationToken cancellationToken = default)
+    {
+        return InternalGetNonPaged<GlobalPermissions>("/api/permissions/global", cancellationToken);
+    }
+
     public void Dispose()
     {
         httpClient.Dispose();
