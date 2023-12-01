@@ -9,10 +9,8 @@
   },
   "dependencies": {
     "@vueuse/core": "10.x",
-    "base64-arraybuffer": "1.0.x",
     "bootstrap": "5.2.x",
     "core-js": "3.x",
-    "ideal-password": "2.4.x",
     "vue": "3.x",
     "vue-router": "4.x",
     "webpack-require-from": "1.8.x"
@@ -31,10 +29,10 @@
     "eslint-config-prettier": "9.x",
     "eslint-plugin-prettier": "5.x",
     "eslint-plugin-vue": "9.x",
-    "prettier": "3.0.x",
+    "prettier": "3.1.x",
     "sass": "1.x",
     "sass-loader": "13.x",
-    "typescript": "5.2.x"
+    "typescript": "5.3.x"
   },
   "babel": {
     "presets": [

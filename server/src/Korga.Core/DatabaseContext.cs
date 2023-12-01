@@ -2,7 +2,6 @@
 using Korga.EmailDelivery.Entities;
 using Korga.EmailRelay.Entities;
 using Korga.EventRegistration.Entities;
-using Korga.Ldap.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korga;
@@ -37,8 +36,6 @@ public sealed class DatabaseContext : DbContext
     public DbSet<OutboxEmail> OutboxEmails => Set<OutboxEmail>();
     public DbSet<SentEmail> SentEmails => Set<SentEmail>();
 
-    public DbSet<PasswordReset> PasswordResets => Set<PasswordReset>();
-
 
     public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
 
@@ -53,8 +50,6 @@ public sealed class DatabaseContext : DbContext
         CreateEmailRelay(modelBuilder);
 
         CreateEmailDelivery(modelBuilder);
-
-        CreateLdap(modelBuilder);
     }
 
     private void CreateEvents(ModelBuilder modelBuilder)
@@ -157,11 +152,5 @@ public sealed class DatabaseContext : DbContext
         sentEmail.HasOne(e => e.InboxEmail).WithMany().HasForeignKey(e => e.InboxEmailId);
         sentEmail.HasIndex(e => e.DeliveryTime);
         sentEmail.Property(e => e.Id).ValueGeneratedNever();
-    }
-
-    private void CreateLdap(ModelBuilder modelBuilder)
-    {
-        var passwordReset = modelBuilder.Entity<PasswordReset>();
-        passwordReset.HasKey(r => r.Token);
     }
 }
