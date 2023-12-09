@@ -24,11 +24,6 @@ RUN dotnet publish -c Release -o /app/out Korga.Server
 FROM mcr.microsoft.com/dotnet/aspnet:7.0
 WORKDIR /app
 
-RUN set -x \
-    && apt-get update -yq \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends libldap-2.4-2 \
-    && rm -rf /var/lib/apt/list/*
-
 COPY --from=server /app/out .
 COPY --from=webapp /app/dist wwwroot/
 ENTRYPOINT ["dotnet", "Korga.Server.dll"]

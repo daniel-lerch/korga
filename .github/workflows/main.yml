@@ -12,7 +12,7 @@ jobs:
     name: Backend build and integration tests
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v3
       with:
@@ -28,31 +28,6 @@ jobs:
         # Launch and prepare MySQL server  
         sudo systemctl start mysql.service
         dotnet run -c Release --no-build --project server/src/Korga.Server -- database create --populate
-
-        # Install and configure OpenLDAP server
-        sudo apt-get update -yq
-        sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends slapd
-        cat <<EOF | sudo debconf-set-selections
-        slapd slapd/internal/generated_adminpw password admin
-        slapd slapd/internal/adminpw password admin
-        slapd slapd/password2 password admin
-        slapd slapd/password1 password admin
-        slapd slapd/dump_database_destdir string /var/backups/slapd-VERSION
-        slapd slapd/domain string example.com
-        slapd shared/organization string Example Church
-        slapd slapd/purge_database boolean true
-        slapd slapd/move_old_database boolean true
-        slapd slapd/allow_ldap_v2 boolean false
-        slapd slapd/no_configuration boolean false
-        EOF
-        sudo dpkg-reconfigure -f noninteractive slapd
-
-        # .NET attempts to load a specific version of libldap: https://github.com/dotnet/runtime/issues/69456
-        sudo ln -s /usr/lib/x86_64-linux-gnu/libldap-2.5.so.0 /usr/lib/x86_64-linux-gnu/libldap-2.4.so.2
-
-        # Launch and prepare OpenLDAP server
-        sudo systemctl start slapd.service
-        dotnet run -c Release --no-build --project server/src/Korga.Server -- ldap create --organizational-unit
     - name: Test
       run: dotnet test -c Release --no-build --verbosity normal
 
@@ -60,9 +35,9 @@ jobs:
     name: Frontend build
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup NodeJS
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
     - name: Restore NPM packages
@@ -76,10 +51,10 @@ jobs:
     name: Docker build
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Docker meta
       id: meta
-      uses: docker/metadata-action@v4
+      uses: docker/metadata-action@v5
       with:
         images: |
           ghcr.io/daniel-lerch/korga
@@ -88,13 +63,13 @@ jobs:
           type=ref,event=pr
     - name: Login to GitHub Container Registry
       if: ${{ github.event_name != 'pull_request' }}
-      uses: docker/login-action@v2
+      uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Build and push
-      uses: docker/build-push-action@v3
+      uses: docker/build-push-action@v5
       with:
         context: .
         push: ${{ github.event_name != 'pull_request' }}

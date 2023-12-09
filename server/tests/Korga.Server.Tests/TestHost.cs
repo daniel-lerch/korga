@@ -1,5 +1,4 @@
 ﻿using Korga.Server.Extensions;
-using Korga.Server.Services;
 using Korga.Server.Tests.Extensions;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.AspNetCore.Hosting;
@@ -25,9 +24,7 @@ public static class TestHost
 		var services = new ServiceCollection();
 		services.AddKorgaOptions(configuration);
 		services.AddSingleton<ILoggerFactory>(new NullLoggerFactory());
-		services.AddSingleton<LdapService>();
 		services.AddKorgaMySqlDatabase();
-		services.AddTransient<LdapUidService>();
 		return services;
 	}
 
@@ -59,9 +56,7 @@ public static class TestHost
 			{
 				services.AddKorgaOptions(context.Configuration);
 				services.AddSingleton<IConsole>(NullConsole.Singleton);
-				services.AddSingleton<LdapService>();
 				services.AddKorgaMySqlDatabase();
-				services.AddTransient<LdapUidService>();
 			});
 	}
 

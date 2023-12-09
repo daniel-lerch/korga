@@ -26,12 +26,6 @@ const routes: Array<RouteRecordRaw> = [
     props: true,
   },
   {
-    path: "/password",
-    name: "Password",
-    component: () =>
-      import(/* webpackChunkName: "password" */ "../views/PasswordHash.vue"),
-  },
-  {
     path: "/distribution-lists",
     name: "DistributionLists",
     component: () =>

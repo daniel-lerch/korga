@@ -3,7 +3,6 @@ using Korga.Server.ChurchTools.Hosting;
 using Korga.Server.EmailDelivery;
 using Korga.Server.EmailRelay;
 using Korga.Server.Extensions;
-using Korga.Server.Services;
 using Korga.Server.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -29,8 +28,6 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddKorgaOptions(Configuration);
-
-        services.AddSingleton<LdapService>();
 
         services.AddChurchToolsApi();
 

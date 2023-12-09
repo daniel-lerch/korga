@@ -1,6 +1,5 @@
 using Korga.Server.Commands;
 using Korga.Server.Extensions;
-using Korga.Server.Services;
 using Korga.Server.Utilities;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.AspNetCore.Hosting;
@@ -82,8 +81,6 @@ public class Program
             {
                 services.AddKorgaOptions(context.Configuration);
 				services.AddSingleton(PhysicalConsole.Singleton);
-				services.AddSingleton<LdapService>();
                 services.AddKorgaMySqlDatabase();
-                services.AddTransient<LdapUidService>();
             });
 }

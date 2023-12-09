@@ -34,9 +34,6 @@ public static class IServiceCollectionExtensions
         services.AddOptions<KorgaOpenIdConnectOptions>()
            .Bind(configuration.GetSection("OpenIdConnect"))
            .ValidateDataAnnotations();
-        services.AddOptions<LdapOptions>()
-            .Bind(configuration.GetSection("Ldap"))
-            .ValidateDataAnnotations();
         services.AddOptions<ChurchToolsOptions>()
             .Bind(configuration.GetSection("ChurchTools"))
             .Validate(options =>
