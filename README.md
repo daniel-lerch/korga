@@ -167,7 +167,6 @@ The following instructions are written for Windows but generally also apply to L
 - .NET SDK 7.0
 - EF Core CLI Tools _(e.g. `dotnet tool install -g dotnet-ef`)_
 - MySQL or MariaDB _(e.g. from [PSModules](https://github.com/daniel-lerch/psmodules))_
-- OpenLDAP server
 
 ### Frontend
 - Visual Studio Code
@@ -179,4 +178,4 @@ That means the backend can be running in Visual Studio with Debugger attached.
 
 If you just want to work on the frontend you can also use a public test server by creating a file `webapp/.env.development.local`
 to override the defaults with `VUE_APP_API_URL=https://lerchen.net/korga`.
-Then you don't have to setup a database server, LDAP server and the ASP.NET Core backend.
+Then you don't have to setup a database server and the ASP.NET Core backend.
