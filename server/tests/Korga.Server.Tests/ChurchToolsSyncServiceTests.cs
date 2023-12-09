@@ -309,5 +309,10 @@ public class ChurchToolsSyncServiceTests : DatabaseTestBase
         {
             throw new NotImplementedException();
         }
+
+        public ValueTask<GlobalPermissions> GetGlobalPermissions(CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
