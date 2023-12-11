@@ -27,7 +27,7 @@ jobs:
 
         # Launch and prepare MySQL server  
         sudo systemctl start mysql.service
-        dotnet run -c Release --no-build --project server/src/Korga.Server -- database create --populate
+        dotnet run -c Release --no-build --project server/src/Korga.Server -- database create
     - name: Test
       run: dotnet test -c Release --no-build --verbosity normal
 
