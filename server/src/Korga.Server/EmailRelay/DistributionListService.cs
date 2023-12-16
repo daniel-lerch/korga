@@ -34,7 +34,7 @@ public class DistributionListService
              .ToArray();
     }
 
-    public async ValueTask<ISet<Person>> GetPeopleRecursive(PersonFilter personFilter, CancellationToken cancellationToken)
+    public async ValueTask<ISet<Person>> GetPeopleRecursive(PersonFilter personFilter, CancellationToken cancellationToken = default)
     {
         HashSet<Person> people = new();
 
@@ -55,9 +55,14 @@ public class DistributionListService
                 .Where(filter => filter.ParentId == personFilter.Id)
                 .ToListAsync(cancellationToken);
 
-            foreach (PersonFilter child in children)
+            if (children.Count > 0)
             {
-                people.IntersectWith(await GetPeopleRecursive(child, cancellationToken));
+                people.UnionWith(await GetPeopleRecursive(children[0], cancellationToken));
+
+                for (int i = 1; i < children.Count; i++)
+                {
+                    people.IntersectWith(await GetPeopleRecursive(children[i], cancellationToken));
+                }
             }
         }
         else if (personFilter is GroupFilter groupFilter)
@@ -82,5 +87,25 @@ public class DistributionListService
         }
 
         return people;
+    }
+
+    public PersonFilter AddPersonFilter(PersonFilter? current, PersonFilter additional)
+    {
+        if (current == null)
+        {
+            return additional;
+        }
+        else if (current is LogicalOr)
+        {
+            additional.Parent = current;
+            return current;
+        }
+        else
+        {
+            LogicalOr logicalOr = new();
+            current.Parent = logicalOr;
+            additional.Parent = logicalOr;
+            return logicalOr;
+        }
     }
 }

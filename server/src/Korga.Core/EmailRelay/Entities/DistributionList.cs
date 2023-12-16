@@ -11,8 +11,6 @@ public class DistributionList
 	public string Alias { get; set; }
 	public DistributionListFlags Flags { get; set; }
 
-	public long? PermittedSendersId { get; set; }
-	public PersonFilter? PermittedSenders { get; set; }
 	public long? PermittedRecipientsId { get; set; }
 	public PersonFilter? PermittedRecipients { get; set; }
 }

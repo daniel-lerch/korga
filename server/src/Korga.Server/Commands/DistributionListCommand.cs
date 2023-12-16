@@ -1,4 +1,5 @@
 ﻿using Korga.EmailRelay.Entities;
+using Korga.Server.EmailRelay;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -10,8 +11,8 @@ using System.Threading.Tasks;
 
 namespace Korga.Server.Commands;
 
-[Command("distribution-list")]
-[Subcommand(typeof(Create), typeof(List))]
+[Command("dist")]
+[Subcommand(typeof(Create), typeof(AddRecipient), typeof(List))]
 public class DistributionListCommand
 {
     private int OnExecute(CommandLineApplication app)
@@ -24,32 +25,12 @@ public class DistributionListCommand
     public class Create
     {
         [Argument(0)] public string? Alias { get; set; }
-        [Option] public int? StatusId { get; set; }
-        [Option] public int? GroupId { get; set; }
-        [Option("--group-role-id")] public int? GroupRoleId { get; set; }
-        [Option] public int? PersonId { get; set; }
 
         private async Task<int> OnExecute(IConsole console, DatabaseContext database)
         {
             if (!string.IsNullOrWhiteSpace(Alias))
             {
-                PersonFilter? filter;
-                if (StatusId == null && GroupId == null && PersonId == null)
-                    filter = null;
-                else if (StatusId.HasValue && GroupId == null && PersonId == null)
-                    filter = new StatusFilter() { StatusId = StatusId.Value };
-                else if (StatusId == null && GroupId.HasValue && PersonId == null)
-                    filter = new GroupFilter() { GroupId = GroupId.Value, GroupRoleId = GroupRoleId };
-                else if (StatusId == null && GroupId == null && PersonId.HasValue)
-                    filter = new SinglePerson() { PersonId = PersonId.Value };
-                else
-                {
-                    console.Out.WriteLine("Status ID, Group ID and Person ID are mutually exclusive");
-                    return 1;
-                }
-
-                DistributionList distributionList = new(Alias) { PermittedRecipients = filter };
-                database.DistributionLists.Add(distributionList);
+                database.DistributionLists.Add(new(Alias));
                 await database.SaveChangesAsync();
 
                 return 0;
@@ -62,6 +43,64 @@ public class DistributionListCommand
         }
     }
 
+    [Command("add-recipient")]
+    public class AddRecipient
+    {
+        [Argument(0)] public string? Alias { get; set; }
+        [Option] public int? StatusId { get; set; }
+        [Option] public int? GroupId { get; set; }
+        [Option("--group-type-id")] public int? GroupTypeId { get; set; }
+        [Option("--group-role-id")] public int? GroupRoleId { get; set; }
+        [Option] public int? PersonId { get; set; }
+
+        private async Task<int> OnExecute(IConsole console, DatabaseContext database, DistributionListService distributionListService)
+        {
+            DistributionList? distributionList = await database.DistributionLists
+                .Include(dl => dl.PermittedRecipients)
+                .SingleOrDefaultAsync(dl => dl.Alias == Alias);
+
+            if (distributionList == null)
+            {
+                console.Out.WriteLine("Distribution list {0} not found", Alias);
+                return 1;
+            }
+
+            PersonFilter? additionalFilter = null;
+
+            if (StatusId == null && GroupId == null && GroupTypeId == null && PersonId == null)
+            {
+                console.Out.WriteLine("You must specify one of Status ID, Group ID, Group Type ID and Person ID");
+                return 1;
+            }
+            else if (StatusId.HasValue && GroupId == null && GroupTypeId == null && PersonId == null)
+            {
+                additionalFilter = new StatusFilter() { StatusId = StatusId.Value };
+            }
+            else if (StatusId == null && GroupId.HasValue && GroupTypeId == null && PersonId == null)
+            {
+                additionalFilter = new GroupFilter() { GroupId = GroupId.Value, GroupRoleId = GroupRoleId };
+            }
+            else if (StatusId == null && GroupId == null && GroupTypeId.HasValue && PersonId == null)
+            {
+                additionalFilter = new GroupTypeFilter() { GroupTypeId = GroupTypeId.Value, GroupRoleId = GroupRoleId };
+            }
+            else if (StatusId == null && GroupId == null && GroupTypeId == null && PersonId.HasValue)
+            {
+                additionalFilter = new SinglePerson() { PersonId = PersonId.Value };
+            }
+            else
+            {
+                console.Out.WriteLine("Status ID, Group ID, Group Type ID and Person ID are mutually exclusive");
+                return 1;
+            }
+
+            database.PersonFilters.Add(additionalFilter);
+            distributionList.PermittedRecipients = distributionListService.AddPersonFilter(distributionList.PermittedRecipients, additionalFilter);
+            await database.SaveChangesAsync();
+            return 0;
+        }
+    }
+
     [Command("list")]
     public class List
     {
@@ -71,30 +110,29 @@ public class DistributionListCommand
             foreach (DistributionList distributionList in distributionLists)
             {
                 console.Out.WriteLine("#{0} Alias: {1}", distributionList.Id, distributionList.Alias);
+                console.Out.WriteLine("Recipients:");
 
-                async Task printFiltersRecursive(PersonFilter filter)
+                async Task printFiltersRecursive(PersonFilter filter, int indentationLevel)
                 {
+                    console.Out.Write(new string(' ', 2 * indentationLevel));
+
                     if (filter is LogicalOr)
                     {
-                        console.Out.WriteLine("-- Begin OR");
+                        console.Out.WriteLine("- OR");
 
-                        foreach (PersonFilter child in await database.PersonFilters.Where(filter => filter.ParentId == filter.Id).ToListAsync())
+                        foreach (PersonFilter child in await database.PersonFilters.Where(child => child.ParentId == filter.Id).ToListAsync())
                         {
-                            await printFiltersRecursive(child);
+                            await printFiltersRecursive(child, indentationLevel + 1);
                         }
-
-                        console.Out.WriteLine("-- End OR");
                     }
                     else if (filter is LogicalAnd)
                     {
-                        console.Out.WriteLine("-- Begin AND");
+                        console.Out.WriteLine("- AND");
 
-                        foreach (PersonFilter child in await database.PersonFilters.Where(filter => filter.ParentId == filter.Id).ToListAsync())
+                        foreach (PersonFilter child in await database.PersonFilters.Where(child => child.ParentId == filter.Id).ToListAsync())
                         {
-                            await printFiltersRecursive(child);
+                            await printFiltersRecursive(child, indentationLevel + 1);
                         }
-
-                        console.Out.WriteLine("-- End AND");
                     }
                     else if (filter is GroupFilter groupFilter)
                     {
@@ -113,8 +151,8 @@ public class DistributionListCommand
                     }
                 }
 
-                if (distributionList.PermittedSenders != null)
-                    await printFiltersRecursive(distributionList.PermittedSenders);
+                if (distributionList.PermittedRecipients != null)
+                    await printFiltersRecursive(distributionList.PermittedRecipients, 0);
 
                 console.Out.WriteLine();
             }
