@@ -67,6 +67,12 @@ export default defineComponent({
             ? prefix + " (" + filter.groupRoleName + ")"
             : prefix;
         }
+        case "GroupTypeFilter": {
+          const prefix = "Gruppentyp: " + filter.groupTypeName;
+          return filter.groupRoleName
+            ? prefix + " (" + filter.groupRoleName + ")"
+            : prefix;
+        }
         case "SinglePerson":
           return "Person: " + filter.personFullName;
         default:

@@ -4,14 +4,16 @@ export interface DistributionList {
   id: number;
   alias: string;
   newsletter: boolean;
-  filters: PersonFilter[];
+  permittedRecipients: PersonFilter;
 }
 
 export interface PersonFilter {
   id: number;
   discriminator: string;
+  children: PersonFilter[];
   statusName: string | null;
   groupName: string | null;
+  groupTypeName: string | null;
   groupRoleName: string | null;
   personFullName: string | null;
 }

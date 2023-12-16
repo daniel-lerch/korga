@@ -62,6 +62,12 @@ namespace Korga.Server.Controllers
                 if (groupFilter.GroupRoleId.HasValue)
                     filter.GroupRoleName = await database.GroupRoles.Where(r => r.Id == groupFilter.GroupRoleId.Value).Select(r => r.Name).SingleAsync();
             }
+            else if (personFilter is GroupTypeFilter groupTypeFilter)
+            {
+                filter.GroupTypeName = await database.GroupTypes.Where(t => t.Id == groupTypeFilter.GroupTypeId).Select(t => t.Name).SingleAsync();
+                if (groupTypeFilter.GroupRoleId.HasValue)
+                    filter.GroupRoleName = await database.GroupRoles.Where(r => r.Id == groupTypeFilter.GroupRoleId.Value).Select(r => r.Name).SingleAsync();
+            }
             else if (personFilter is SinglePerson singlePerson)
             {
                 filter.PersonFullName = await database.People.Where(p => p.Id == singlePerson.PersonId).Select(p => $"{p.FirstName} {p.LastName}").SingleAsync();

@@ -23,6 +23,7 @@ public class DistributionListResponse
 		public List<PersonFilter> Children { get; set; } = new();
 		public string? StatusName { get; set; }
 		public string? GroupName { get; set; }
+        public string? GroupTypeName { get; set; }
 		public string? GroupRoleName { get; set; }
 		public string? PersonFullName { get; set; }
 	}
