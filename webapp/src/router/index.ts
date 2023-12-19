@@ -3,27 +3,13 @@ import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    redirect: "/events",
+    redirect: "/service",
   },
   {
-    path: "/events",
-    name: "Events",
+    path: "/service",
+    name: "Service",
     component: () =>
-      import(/* webpackChunkName: "events" */ "../views/EventList.vue"),
-  },
-  {
-    path: "/event/:id/register",
-    name: "Register",
-    component: () =>
-      import(/* webpackChunkName: "event" */ "../views/EventRegistration.vue"),
-    props: true,
-  },
-  {
-    path: "/event/:id",
-    name: "Event",
-    component: () =>
-      import(/* webpackChunkName: "event" */ "../views/EventDetails.vue"),
-    props: true,
+      import(/* webpackChunkName: "service" */ "../views/ServiceList.vue"),
   },
   {
     path: "/distribution-lists",
@@ -32,12 +18,6 @@ const routes: Array<RouteRecordRaw> = [
       import(
         /* webpackChunkName: "distribution-list" */ "../views/DistributionLists.vue"
       ),
-  },
-  {
-    path: "/service",
-    name: "Service",
-    component: () =>
-      import(/* webpackChunkName: "service" */ "../views/ServiceList.vue"),
   },
 ];
 

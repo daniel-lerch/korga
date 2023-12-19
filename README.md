@@ -20,14 +20,6 @@ There is no Web UI available yet to manage distribution lists so you must stick 
 
 This command creates a distribution list _kids@example.org_ which forwards emails to every member of group #137.
 
-### Event registration
-
-![Three screenshots of Korga's event registration](docs/assets/event_registration_overview.png)
-
-An event registration with multiple programs for each event. The list of participants is public as well as the possibility to delete registrations.
-
-Currently, there is neither an API endpoint nor a graphical user interface available to edit events and programs. Instead you have to write SQL queries.
-
 ## Installation
 
 The only officially supported distribution are Docker containers. An official image is available at [daniellerch/korga](https://hub.docker.com/r/daniellerch/korga).

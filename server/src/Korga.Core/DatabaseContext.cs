@@ -1,7 +1,6 @@
 ﻿using Korga.ChurchTools.Entities;
 using Korga.EmailDelivery.Entities;
 using Korga.EmailRelay.Entities;
-using Korga.EventRegistration.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Korga;
@@ -15,10 +14,6 @@ namespace Korga;
 /// </remarks>
 public sealed class DatabaseContext : DbContext
 {
-    public DbSet<Event> Events => Set<Event>();
-    public DbSet<EventProgram> EventPrograms => Set<EventProgram>();
-    public DbSet<EventParticipant> EventParticipants => Set<EventParticipant>();
-
     public DbSet<Person> People => Set<Person>();
     public DbSet<Group> Groups => Set<Group>();
     public DbSet<GroupMember> GroupMembers => Set<GroupMember>();
@@ -43,27 +38,11 @@ public sealed class DatabaseContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        CreateEvents(modelBuilder);
-
         CreateChurchTools(modelBuilder);
 
         CreateEmailRelay(modelBuilder);
 
         CreateEmailDelivery(modelBuilder);
-    }
-
-    private void CreateEvents(ModelBuilder modelBuilder)
-    {
-        var @event = modelBuilder.Entity<Event>();
-        @event.HasKey(e => e.Id);
-
-        var program = modelBuilder.Entity<EventProgram>();
-        program.HasKey(p => p.Id);
-        program.HasOne(p => p.Event).WithMany().HasForeignKey(p => p.EventId);
-
-        var participant = modelBuilder.Entity<EventParticipant>();
-        participant.HasKey(p => p.Id);
-        participant.HasOne(p => p.Program).WithMany(p => p.Participants).HasForeignKey(p => p.ProgramId);
     }
 
     private void CreateChurchTools(ModelBuilder modelBuilder)

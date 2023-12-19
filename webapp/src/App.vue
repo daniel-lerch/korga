@@ -2,7 +2,7 @@
   <header>
     <nav class="navbar navbar-expand-md navbar-dark bg-primary">
       <div class="container-fluid">
-        <router-link to="/events" class="navbar-brand">Korga</router-link>
+        <router-link to="/service" class="navbar-brand">Korga</router-link>
         <button
           class="navbar-toggler"
           type="button"
@@ -14,15 +14,10 @@
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav me-auto">
-            <li class="nav-item">
-              <router-link :to="{ name: 'Events' }" class="nav-link"
-                >Events</router-link
-              >
-            </li>
             <li class="nav-item" v-if="profile">
-              <router-link :to="{ name: 'Service' }" class="nav-link"
-                >Dienste</router-link
-              >
+              <router-link :to="{ name: 'Service' }" class="nav-link">
+                Dienste
+              </router-link>
             </li>
           </ul>
           <profile-nav></profile-nav>
@@ -35,8 +30,8 @@
   </main>
   <footer>
     <div>
-      <small
-        >Copyright &copy; 2022-2023 Daniel Lerch and Benjamin Stieler
+      <small>
+        Copyright &copy; 2022-2023 Daniel Lerch and Benjamin Stieler
       </small>
     </div>
   </footer>
