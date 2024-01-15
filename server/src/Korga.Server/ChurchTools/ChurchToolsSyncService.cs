@@ -102,8 +102,18 @@ public class ChurchToolsSyncService
             await churchTools.GetGroupMembers(cancellationToken),
             database.GroupMembers,
             await database.GroupMembers.OrderBy(x => x.PersonId).ThenBy(x => x.GroupId).ToListAsync(cancellationToken),
-            x => new() { PersonId = x.PersonId, GroupId = x.GroupId, GroupRoleId = x.GroupTypeRoleId },
-            (response, entity) => entity.GroupRoleId = response.GroupTypeRoleId,
+            x => new()
+            {
+                PersonId = x.PersonId,
+                GroupId = x.GroupId,
+                GroupRoleId = x.GroupTypeRoleId,
+                GroupMemberStatus = ParseGroupMemberStatus(x.GroupMemberStatus),
+            },
+            (response, entity) =>
+            {
+                entity.GroupRoleId = response.GroupTypeRoleId;
+                entity.GroupMemberStatus = ParseGroupMemberStatus(response.GroupMemberStatus);
+            },
             cancellationToken
         );
     }
@@ -169,5 +179,16 @@ public class ChurchToolsSyncService
             logger.LogInformation("Updated {Count} {EntityDisplayName} entities", rowsAffected, table.EntityType.DisplayName());
         else
             logger.LogDebug("No changes for {EntityDisplayName} entities", table.EntityType.DisplayName());
+    }
+
+    private static GroupMemberStatus ParseGroupMemberStatus(string groupMemberStatus)
+    {
+        return groupMemberStatus switch
+        {
+            "active" => GroupMemberStatus.Active,
+            "requested" => GroupMemberStatus.Requested,
+            "to_delete" => GroupMemberStatus.ToDelete,
+            _ => throw new ArgumentException($"Unknown GroupMemberStatus {groupMemberStatus}")
+        };
     }
 }

@@ -63,6 +63,7 @@ public sealed class DatabaseContext : DbContext
         groupMember.HasOne(gm => gm.Person).WithMany().HasForeignKey(gm => gm.PersonId);
         groupMember.HasOne(gm => gm.Group).WithMany().HasForeignKey(gm => gm.GroupId);
         groupMember.HasOne(gm => gm.GroupRole).WithMany().HasForeignKey(gm => gm.GroupRoleId);
+        groupMember.Property(gm => gm.GroupMemberStatus).HasConversion<int>();
 
         var groupType = modelBuilder.Entity<GroupType>();
         groupType.HasKey(x => x.Id);
