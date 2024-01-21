@@ -62,7 +62,8 @@ public class ServiceController : ControllerBase
              {
                  PersonId = person.Id,
                  FirstName = person.FirstName,
-                 LastName = person.LastName
+                 LastName = person.LastName,
+                 GroupMemberStatus = member.GroupMemberStatus,
              })
             .Distinct()
             .ToDictionaryAsync(x => x.PersonId);

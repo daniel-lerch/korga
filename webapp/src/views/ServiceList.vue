@@ -27,7 +27,14 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(person, index) in serviceHistory" :key="index">
+        <tr
+          v-for="(person, index) in serviceHistory"
+          :key="index"
+          :class="{
+            requested: person.groupMemberStatus === 'Requested',
+            todelete: person.groupMemberStatus === 'ToDelete',
+          }"
+        >
           <th scope="row">{{ index }}</th>
           <td>{{ person.firstName }}</td>
           <td>{{ person.lastName }}</td>
@@ -59,4 +66,13 @@ const fetchServiceHistory = async function (id: number) {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+tr.requested td {
+  color: var(--bs-secondary);
+}
+
+tr.todelete td {
+  color: var(--bs-danger);
+  text-decoration: line-through;
+}
+</style>

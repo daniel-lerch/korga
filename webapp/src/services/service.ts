@@ -10,6 +10,7 @@ export interface ServiceHistory {
   personId: number;
   firstName: string;
   lastName: string;
+  groupMemberStatus: "Active" | "Requested" | "ToDelete";
   serviceDates: string[];
 }
 
