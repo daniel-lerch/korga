@@ -9,7 +9,13 @@ export interface DistributionList {
 
 export interface PersonFilter {
   id: number;
-  discriminator: string;
+  discriminator:
+    | "LogicalOr"
+    | "LogicalAnd"
+    | "StatusFilter"
+    | "GroupFilter"
+    | "GroupTypeFilter"
+    | "SinglePerson";
   children: PersonFilter[];
   statusName: string | null;
   groupName: string | null;

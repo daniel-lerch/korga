@@ -20,11 +20,10 @@
           </span>
         </div>
         <div class="col-12 col-md-6">
-          <ul class="list-unstyled mb-2">
-            <li v-for="filter in dl.filters" :key="filter.id">
-              {{ shortText(filter) }}
-            </li>
-          </ul>
+          <FilterNode
+            v-if="dl.permittedRecipients !== null"
+            :filter="dl.permittedRecipients"
+          />
         </div>
       </div>
     </div>
@@ -39,9 +38,10 @@ import {
   getDistributionLists,
 } from "@/services/distribution-list";
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
+import FilterNode from "@/components/FilterNode.vue";
 
 export default defineComponent({
-  components: { LoadingSpinner },
+  components: { LoadingSpinner, FilterNode },
   setup() {
     const distributionLists = ref<DistributionList[]>([]);
     const loaded = ref(false);
