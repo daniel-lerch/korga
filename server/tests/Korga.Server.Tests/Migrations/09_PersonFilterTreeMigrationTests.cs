@@ -127,13 +127,93 @@ public class PersonFilterTreeMigrationTests : MigrationTestBase<GroupMemberStatu
     [Fact]
     public async Task TestDowngrade()
     {
-
+        PersonFilterTree.Status status = new()
+        {
+            Id = 1,
+            Name = "unknown",
+        };
+        PersonFilterTree.GroupStatus groupStatus = new()
+        {
+            Id = 1,
+            Name = "active",
+        };
+        PersonFilterTree.GroupType groupType = new()
+        {
+            Id = 1,
+            Name = "Kleingruppe",
+        };
+        PersonFilterTree.Group group = new()
+        {
+            Id = 1,
+            Name = "Hauskreis",
+            GroupTypeId = 1,
+            GroupStatusId = 1,
+        };
+        PersonFilterTree.Person person = new()
+        {
+            Id = 1,
+            StatusId = 1,
+            FirstName = "Max",
+            LastName = "Mustermann",
+            Email = "max.mustermann@example.org",
+        };
+        PersonFilterTree.StatusFilter statusFilter = new()
+        {
+            Id = 1,
+            StatusId = 1,
+        };
+        PersonFilterTree.DistributionList distToStatus = new()
+        {
+            Id = 1,
+            Alias = "unknown",
+            PermittedRecipientsId = 1,
+        };
+        PersonFilterTree.DistributionList distToNobody = new()
+        {
+            Id = 2,
+            Alias = "nobody",
+            PermittedRecipientsId = null,
+        };
+        PersonFilterTree.GroupFilter groupFilter = new()
+        {
+            Id = 2,
+            ParentId = 4,
+            GroupId = 1,
+        };
+        PersonFilterTree.SinglePerson singlePerson = new()
+        {
+            Id = 3,
+            ParentId = 4,
+            PersonId = 1,
+        };
+        PersonFilterTree.LogicalOr groupOrPerson = new()
+        {
+            Id = 4,
+        };
+        PersonFilterTree.DistributionList distToGroupAndSinglePerson = new()
+        {
+            Id = 3,
+            Alias = "kleingruppen",
+            PermittedRecipientsId = 4,
+        };
         IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
 
         // Create database schema of the migration to test
         await migrator.MigrateAsync("PersonFilterTree");
 
         // Add test data
+        after.Status.Add(status);
+        after.GroupStatuses.Add(groupStatus);
+        after.GroupTypes.Add(groupType);
+        after.Groups.Add(group);
+        after.People.Add(person);
+        after.PersonFilters.Add(statusFilter);
+        after.DistributionLists.Add(distToStatus);
+        after.DistributionLists.Add(distToNobody);
+        after.PersonFilters.Add(groupFilter);
+        after.PersonFilters.Add(singlePerson);
+        after.PersonFilters.Add(groupOrPerson);
+        after.DistributionLists.Add(distToGroupAndSinglePerson);
         await after.SaveChangesAsync();
 
         // Migrate to migration before the one to test and thereby revert it

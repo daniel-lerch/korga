@@ -142,6 +142,9 @@ WHERE `filter`.`Discriminator` = ""LogicalOr""
                 name: "PermittedRecipientsId",
                 table: "DistributionLists");
 
+            // Delete all person filters because we cannot convert a recursive tree to a flat list
+            migrationBuilder.Sql("DELETE FROM `PersonFilters`");
+
             migrationBuilder.AddColumn<long>(
                 name: "DistributionListId",
                 table: "PersonFilters",

@@ -6,4 +6,5 @@ public class DistributionList
     public required string Alias { get; set; }
     public int Flags { get; set; }
     public long? PermittedRecipientsId { get; set; }
+    public PersonFilter? PermittedRecipients { get; set; }
 }
