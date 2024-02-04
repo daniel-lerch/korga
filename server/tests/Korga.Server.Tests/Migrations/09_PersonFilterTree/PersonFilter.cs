@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Korga.EmailRelay.Entities;
+namespace Korga.Server.Tests.Migrations.PersonFilterTree;
 
 public abstract class PersonFilter
 {

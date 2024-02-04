@@ -101,18 +101,29 @@ public sealed class DatabaseContext : DbContext
         inboxEmail.HasIndex(e => e.ProcessingCompletedTime);
         inboxEmail.Property(e => e.DownloadTime).HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
 
-        var distributionList = modelBuilder.Entity<DistributionList>();
-        distributionList.HasKey(dl => dl.Id);
-        distributionList.HasAlternateKey(dl => dl.Alias);
+		var distributionList = modelBuilder.Entity<DistributionList>();
+		distributionList.HasKey(dl => dl.Id);
+		distributionList.HasAlternateKey(dl => dl.Alias);
+        distributionList.HasOne(dl => dl.PermittedRecipients).WithMany().HasForeignKey(dl => dl.PermittedRecipientsId);
         distributionList.Property(dl => dl.Flags).HasConversion<int>();
 
-        var personFilter = modelBuilder.Entity<PersonFilter>();
-        personFilter.HasKey(f => f.Id);
-        personFilter.HasOne(f => f.DistributionList).WithMany(dl => dl.Filters).HasForeignKey(f => f.DistributionListId);
+		var personFilter = modelBuilder.Entity<PersonFilter>();
+		personFilter.HasKey(f => f.Id);
+		personFilter.HasOne(f => f.Parent).WithMany(p => p.Children).HasForeignKey(f => f.ParentId);
+
+        var logicalOr = modelBuilder.Entity<LogicalOr>();
+
+        var logicalAnd = modelBuilder.Entity<LogicalAnd>();
 
         var groupFilter = modelBuilder.Entity<GroupFilter>();
         groupFilter.HasOne(f => f.Group).WithMany().HasForeignKey(f => f.GroupId);
         groupFilter.HasOne(f => f.GroupRole).WithMany().HasForeignKey(f => f.GroupRoleId);
+        groupFilter.Property(f => f.GroupRoleId).HasColumnName(nameof(GroupFilter.GroupRoleId));
+
+        var groupTypeFilter = modelBuilder.Entity<GroupTypeFilter>();
+        groupTypeFilter.HasOne(f => f.GroupType).WithMany().HasForeignKey(f => f.GroupTypeId);
+        groupTypeFilter.HasOne(f => f.GroupRole).WithMany().HasForeignKey(f => f.GroupRoleId);
+        groupTypeFilter.Property(f => f.GroupRoleId).HasColumnName(nameof(GroupTypeFilter.GroupRoleId));
 
         var statusFilter = modelBuilder.Entity<StatusFilter>();
         statusFilter.HasOne(s => s.Status).WithMany().HasForeignKey(s => s.StatusId);

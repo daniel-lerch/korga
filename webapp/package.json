@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@vueuse/core": "10.x",
-    "bootstrap": "5.2.x",
+    "bootstrap": "5.3.x",
     "core-js": "3.x",
     "vue": "3.x",
     "vue-router": "4.x",
@@ -29,9 +29,9 @@
     "eslint-config-prettier": "9.x",
     "eslint-plugin-prettier": "5.x",
     "eslint-plugin-vue": "9.x",
-    "prettier": "3.1.x",
+    "prettier": "3.2.x",
     "sass": "1.x",
-    "sass-loader": "13.x",
+    "sass-loader": "14.x",
     "typescript": "5.3.x"
   },
   "babel": {

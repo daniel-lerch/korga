@@ -1,4 +1,5 @@
 using Korga.Server.Commands;
+using Korga.Server.EmailRelay;
 using Korga.Server.Extensions;
 using Korga.Server.Utilities;
 using McMaster.Extensions.CommandLineUtils;
@@ -82,5 +83,6 @@ public class Program
                 services.AddKorgaOptions(context.Configuration);
 				services.AddSingleton(PhysicalConsole.Singleton);
                 services.AddKorgaMySqlDatabase();
+                services.AddScoped<DistributionListService>();
             });
 }
