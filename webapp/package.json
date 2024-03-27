@@ -17,8 +17,8 @@
   },
   "devDependencies": {
     "@types/bootstrap": "5.2.x",
-    "@typescript-eslint/eslint-plugin": "6.x",
-    "@typescript-eslint/parser": "6.x",
+    "@typescript-eslint/eslint-plugin": "7.x",
+    "@typescript-eslint/parser": "7.x",
     "@vue/cli-plugin-babel": "5.x",
     "@vue/cli-plugin-eslint": "5.x",
     "@vue/cli-plugin-router": "5.x",
@@ -29,10 +29,10 @@
     "eslint-config-prettier": "9.x",
     "eslint-plugin-prettier": "5.x",
     "eslint-plugin-vue": "9.x",
-    "prettier": "3.1.x",
+    "prettier": "3.2.x",
     "sass": "1.x",
-    "sass-loader": "13.x",
-    "typescript": "5.3.x"
+    "sass-loader": "14.x",
+    "typescript": "5.4.x"
   },
   "babel": {
     "presets": [

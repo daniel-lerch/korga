@@ -1,4 +1,4 @@
-FROM node:18 AS webapp
+FROM node:20 AS webapp
 WORKDIR /app
 
 # Copy package definition and restore node modules as distinct layers
@@ -9,7 +9,7 @@ RUN npm install
 COPY webapp ./
 RUN npm run build
 
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS server
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS server
 WORKDIR /app
 
 # Copy csproj and restore as distinct layers
@@ -21,7 +21,7 @@ COPY server/src ./
 RUN dotnet publish -c Release -o /app/out Korga.Server
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:7.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 
 COPY --from=server /app/out .
