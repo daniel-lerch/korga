@@ -19,6 +19,14 @@ const routes: Array<RouteRecordRaw> = [
         /* webpackChunkName: "distribution-list" */ "../views/DistributionLists.vue"
       ),
   },
+  {
+    path: "/oidc-callback",
+    name: "OidcCallback",
+    component: () =>
+      import(
+        /* webpackChunkName: "oidc-callback" */ "../views/OidcCallback.vue"
+      ),
+  },
 ];
 
 const router = createRouter({

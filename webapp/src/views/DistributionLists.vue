@@ -36,7 +36,7 @@ import { defineComponent, onMounted, ref } from "vue";
 import {
   DistributionList,
   PersonFilter,
-  getDistributionLists,
+  //getDistributionLists,
 } from "@/services/distribution-list";
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
 
@@ -49,7 +49,7 @@ export default defineComponent({
 
     onMounted(async () => {
       try {
-        distributionLists.value.push(...(await getDistributionLists()));
+        //distributionLists.value.push(...(await getDistributionLists()));
         loaded.value = true;
       } catch (e) {
         error.value =

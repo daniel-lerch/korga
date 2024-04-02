@@ -1,8 +1,7 @@
+import { useUserManagerStore } from "./usermanager";
+
 const baseUrl =
   process.env.VUE_APP_API_URL ?? window.resourceBasePath.slice(0, -1);
-const getInfo: RequestInit = {
-  credentials: "include",
-};
 const postInfo: RequestInit = {
   method: "POST",
   credentials: "include",
@@ -17,7 +16,11 @@ const deleteInfo: RequestInit = {
 
 export default {
   async get<T>(path: string) {
-    const response = await fetch(baseUrl + path, getInfo);
+    const store = useUserManagerStore();
+    const user = await store.userManager.getUser();
+    const response = await fetch(baseUrl + path, {
+      headers: { Authorization: `Bearer ${user?.access_token}` },
+    });
     if (response.ok === false) {
       if (response.status === 401) {
         const responseData = await response.json();
@@ -28,7 +31,11 @@ export default {
     return (await response.json()) as T;
   },
   async getResponse(path: string) {
-    const response = await fetch(baseUrl + path, getInfo);
+    const store = useUserManagerStore();
+    const user = await store.userManager.getUser();
+    const response = await fetch(baseUrl + path, {
+      headers: { Authorization: `Bearer ${user?.access_token}` },
+    });
     if (response.ok === false) {
       if (response.status === 401) {
         const responseData = await response.json();

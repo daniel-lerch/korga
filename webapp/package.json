@@ -11,6 +11,8 @@
     "@vueuse/core": "10.x",
     "bootstrap": "5.2.x",
     "core-js": "3.x",
+    "oidc-client-ts": "3.x",
+    "pinia": "2.x",
     "vue": "3.x",
     "vue-router": "4.x",
     "webpack-require-from": "1.8.x"

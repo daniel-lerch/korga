@@ -3,7 +3,7 @@ using Korga.Server.Configuration;
 using Korga.Server.EmailDelivery;
 using Korga.Server.EmailRelay;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +16,6 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using OpenIdConnectOptions = Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions;
 using KorgaOpenIdConnectOptions = Korga.Server.Configuration.OpenIdConnectOptions;
 
 namespace Korga.Server.Extensions;
@@ -82,105 +81,19 @@ public static class IServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddOpenIdConnectAuthentication(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
+    public static IServiceCollection AddOpenIdConnectAuthentication(this IServiceCollection services, IWebHostEnvironment environment)
     {
-        SameSiteMode sameSiteMode = environment.IsDevelopment() ? SameSiteMode.None : SameSiteMode.Strict;
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer();
 
-        services
-            .AddAuthentication(options =>
-            {
-                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
-            })
-            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-            {
-                options.ExpireTimeSpan = TimeSpan.FromDays(1);
-                options.Cookie.SameSite = sameSiteMode;
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                options.Cookie.HttpOnly = true;
-                options.LoginPath = PathString.Empty;
-            })
-            .AddOpenIdConnect();
-
-        services.AddOptions<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme)
+        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
             .Configure<ILogger<Startup>, IOptions<KorgaOpenIdConnectOptions>>((options, logger, openIdConnectOptions) =>
             {
-                if (string.IsNullOrEmpty(openIdConnectOptions.Value.Authority)
-                    || string.IsNullOrEmpty(openIdConnectOptions.Value.ClientId)
-                    || string.IsNullOrEmpty(openIdConnectOptions.Value.ClientSecret))
-                {
+                if (string.IsNullOrEmpty(openIdConnectOptions.Value.Authority))
                     logger.LogWarning("OpenID Connect configuration is incomplete. Login will not work.");
-                }
 
-                options.CorrelationCookie.SameSite = sameSiteMode;
-                options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
-                options.NonceCookie.SameSite = sameSiteMode;
-                options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
-                options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.Authority = openIdConnectOptions.Value.Authority;
-                options.ClientId = openIdConnectOptions.Value.ClientId;
-                options.ClientSecret = openIdConnectOptions.Value.ClientSecret;
-                options.ResponseType = OpenIdConnectResponseType.Code;
-                options.SaveTokens = true;
-                options.GetClaimsFromUserInfoEndpoint = true;
-                options.Scope.Add("openid");
-                options.Scope.Add("profile");
-                options.Scope.Add("email");
-                options.Events.OnRedirectToIdentityProvider = context =>
-                {
-                    context.HandleResponse();
-
-                    string? redirectUri = context.Request.Headers.Referer.FirstOrDefault();
-
-                    if (string.IsNullOrEmpty(redirectUri))
-                        redirectUri = context.Request.Headers.Origin.FirstOrDefault();
-
-                    if (string.IsNullOrEmpty(redirectUri))
-                        redirectUri = (context.Request.IsHttps ? "https://" : "http://") + context.Request.Host + context.Request.PathBase;
-
-                    context.Properties.RedirectUri = redirectUri;
-
-                    #region Code ported from OpenIdConnectHandler.cs
-                    if (!string.IsNullOrEmpty(context.ProtocolMessage.State))
-                    {
-                        context.Properties.Items[OpenIdConnectDefaults.UserstatePropertiesKey] = context.ProtocolMessage.State;
-                    }
-
-                    // When redeeming a 'code' for an AccessToken, this value is needed
-                    context.Properties.Items.Add(OpenIdConnectDefaults.RedirectUriForCodePropertiesKey, context.ProtocolMessage.RedirectUri);
-
-                    context.ProtocolMessage.State = options.StateDataFormat.Protect(context.Properties);
-                    #endregion
-
-                    context.Response.StatusCode = 401;
-                    return context.Response.WriteAsJsonAsync(new { OpenIdConnectRedirectUrl = context.ProtocolMessage.CreateAuthenticationRequestUrl() });
-                };
-                options.Events.OnRedirectToIdentityProviderForSignOut = context =>
-                {
-                    context.HandleResponse();
-
-                    string? redirectUri = context.Request.Headers.Referer.FirstOrDefault();
-
-                    if (string.IsNullOrEmpty(redirectUri))
-                        redirectUri = context.Request.Headers.Origin.FirstOrDefault();
-
-                    if (string.IsNullOrEmpty(redirectUri))
-                        redirectUri = (context.Request.IsHttps ? "https://" : "http://") + context.Request.Host + context.Request.PathBase;
-
-                    context.Properties.RedirectUri = redirectUri;
-
-                    #region Code ported from OpenIdConnectHandler.cs
-                    if (!string.IsNullOrEmpty(context.ProtocolMessage.State))
-                    {
-                        context.Properties.Items[OpenIdConnectDefaults.UserstatePropertiesKey] = context.ProtocolMessage.State;
-                    }
-
-                    context.ProtocolMessage.State = options.StateDataFormat.Protect(context.Properties);
-                    #endregion
-
-                    context.Response.StatusCode = 401;
-                    return context.Response.WriteAsJsonAsync(new { OpenIdConnectRedirectUrl = context.ProtocolMessage.CreateLogoutRequestUrl() });
-                };
+                options.Audience = "account";
             });
 
         return services;

@@ -1,12 +1,15 @@
 <template>
   <ul class="navbar-nav">
-    <li v-if="profile !== null" class="nav-item dropdown">
+    <li
+      v-if="user !== null && user.expired === false"
+      class="nav-item dropdown"
+    >
       <button
         class="btn btn-link nav-link dropdown-toggle"
         type="button"
         data-bs-toggle="dropdown"
       >
-        {{ profile.givenName }}
+        {{ user.profile.given_name }}
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
         <li>
@@ -24,37 +27,44 @@
 
 <script lang="ts">
 import { defineComponent, onMounted, ref } from "vue";
-import korga, { ProfileResponse } from "@/services/profile";
+import { User } from "oidc-client-ts";
+import { useUserManagerStore } from "@/services/usermanager";
+//import korga, { ProfileResponse } from "@/services/profile";
 
 export default defineComponent({
   setup() {
-    const profile = ref<ProfileResponse | null>(null);
+    //const profile = ref<ProfileResponse | null>(null);
+    const user = ref<User | null>(null);
+    const store = useUserManagerStore();
 
     onMounted(async () => {
-      try {
-        profile.value = await korga.getProfile();
-      } catch (error) {
-        profile.value = null;
-      }
+      user.value = await store.userManager.getUser();
+      //try {
+      //  profile.value = await korga.getProfile();
+      //} catch (error) {
+      //  profile.value = null;
+      //}
     });
 
     async function login() {
-      try {
-        await korga.challengeLogin();
-      } catch (error) {
-        profile.value = null;
-      }
+      await store.userManager.signinRedirect();
+      //try {
+      //  await korga.challengeLogin();
+      //} catch (error) {
+      //  profile.value = null;
+      //}
     }
 
     async function logout() {
-      try {
-        await korga.logout();
-      } catch (error) {
-        profile.value = null;
-      }
+      await store.userManager.signoutRedirect();
+      //try {
+      //  await korga.logout();
+      //} catch (error) {
+      //  profile.value = null;
+      //}
     }
 
-    return { login, logout, profile };
+    return { login, logout, user };
   },
 });
 </script>
