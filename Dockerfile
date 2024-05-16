@@ -13,12 +13,12 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS server
 WORKDIR /app
 
 # Copy csproj and restore as distinct layers
-COPY server/src/Korga.Server/Korga.Server.csproj ./Korga.Server/
-RUN dotnet restore Korga.Server
+COPY server/Korga/Korga.csproj ./Korga/
+RUN dotnet restore Korga
 
 # Copy everything else and build
-COPY server/src ./
-RUN dotnet publish -c Release -o /app/out Korga.Server
+COPY server ./
+RUN dotnet publish -c Release -o /app/out Korga
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
@@ -26,4 +26,4 @@ WORKDIR /app
 
 COPY --from=server /app/out .
 COPY --from=webapp /app/dist wwwroot/
-ENTRYPOINT ["dotnet", "Korga.Server.dll"]
+ENTRYPOINT ["dotnet", "Korga.dll"]

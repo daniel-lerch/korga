@@ -15,7 +15,7 @@ Once configured, Korga automatically synchronizes people and groups from ChurchT
 There is no Web UI available yet to manage distribution lists so you must stick to the CLI inside the Docker container:
 
 ```
-./Korga.Server distribution-list create --group 137 kids
+./Korga distribution-list create --group 137 kids
 ```
 
 This command creates a distribution list _kids@example.org_ which forwards emails to every member of group #137.
@@ -32,7 +32,7 @@ Korga has multiple modules that must be enabled via configuration to use them:
 
 Configuration can set as enviroment variables or by creating a custom config file.
 I recommend to use environment variables and will explain them in the following sections.
-However, if you prefer a config file, copy the default [appsettings.json](server/src/Korga.Server/appsettings.json), edit it as required, and mount it at `/app/appsettings.json`.
+However, if you prefer a config file, copy the default [appsettings.json](server/src/Korga/appsettings.json), edit it as required, and mount it at `/app/appsettings.json`.
 
 ### OpenID Connect authentication
 
