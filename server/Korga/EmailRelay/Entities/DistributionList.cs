@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using Korga.Filters.Entities;
 
 namespace Korga.EmailRelay.Entities;
 
@@ -13,5 +13,6 @@ public class DistributionList
 	public string Alias { get; set; }
 	public DistributionListFlags Flags { get; set; }
 
-	public IEnumerable<PersonFilter>? Filters { get; set; }
+	public long? PermittedRecipientsId { get; set; }
+	public PersonFilterList? PermittedRecipients { get; set; }
 }

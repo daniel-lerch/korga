@@ -1,5 +1,6 @@
 ﻿using Korga.ChurchTools.Entities;
 using Korga.EmailRelay.Entities;
+using Korga.Filters.Entities;
 using Microsoft.EntityFrameworkCore;
 using Korga.EmailDelivery.Entities;
 
@@ -26,6 +27,7 @@ public sealed class DatabaseContext : DbContext
 
     public DbSet<InboxEmail> InboxEmails => Set<InboxEmail>();
     public DbSet<DistributionList> DistributionLists => Set<DistributionList>();
+    public DbSet<PersonFilterList> PersonFilterLists => Set<PersonFilterList>();
     public DbSet<PersonFilter> PersonFilters => Set<PersonFilter>();
 
     public DbSet<OutboxEmail> OutboxEmails => Set<OutboxEmail>();
@@ -39,6 +41,8 @@ public sealed class DatabaseContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         CreateChurchTools(modelBuilder);
+
+        CreateFilters(modelBuilder);
 
         CreateEmailRelay(modelBuilder);
 
@@ -92,6 +96,44 @@ public sealed class DatabaseContext : DbContext
         status.Property(x => x.Id).ValueGeneratedNever();
     }
 
+    private void CreateFilters(ModelBuilder modelBuilder)
+    {
+        var personFilterList = modelBuilder.Entity<PersonFilterList>();
+        personFilterList.HasKey(l => l.Id);
+
+        var personFilter = modelBuilder.Entity<PersonFilter>();
+        personFilter.HasKey(f => f.Id);
+        personFilter.HasOne(f => f.PersonFilterList).WithMany(l => l.Filters).HasForeignKey(f => f.PersonFilterListId);
+        personFilter.HasIndex(f => f.EqualityKey).IsUnique();
+        // Unique composite indices including null values are ignored by SQL databases.
+        // Therefore we use a computed column which contains values for a unique index to avoid duplicate filters.
+        personFilter.Property(f => f.EqualityKey).HasComputedColumnSql(@"
+CONCAT(
+    `Discriminator`,
+    LPAD(HEX(IFNULL(`GroupId`, 0)), 8, '0'),
+    LPAD(HEX(IFNULL(`GroupRoleId`, 0)), 8, '0'),
+    LPAD(HEX(IFNULL(`GroupTypeId`, 0)), 8, '0'),
+    LPAD(HEX(IFNULL(`PersonId`, 0)), 8, '0'),
+    LPAD(HEX(IFNULL(`StatusId`, 0)), 8, '0'))
+");
+
+        var groupFilter = modelBuilder.Entity<GroupFilter>();
+        groupFilter.HasOne(f => f.Group).WithMany().HasForeignKey(f => f.GroupId);
+        groupFilter.HasOne(f => f.GroupRole).WithMany().HasForeignKey(f => f.GroupRoleId);
+        groupFilter.Property(f => f.GroupRoleId).HasColumnName(nameof(GroupFilter.GroupRoleId));
+
+        var groupTypeFilter = modelBuilder.Entity<GroupTypeFilter>();
+        groupTypeFilter.HasOne(f => f.GroupType).WithMany().HasForeignKey(f => f.GroupTypeId);
+        groupTypeFilter.HasOne(f => f.GroupRole).WithMany().HasForeignKey(f => f.GroupRoleId);
+        groupTypeFilter.Property(f => f.GroupRoleId).HasColumnName(nameof(GroupTypeFilter.GroupRoleId));
+
+        var statusFilter = modelBuilder.Entity<StatusFilter>();
+        statusFilter.HasOne(f => f.Status).WithMany().HasForeignKey(f => f.StatusId);
+
+        var singlePerson = modelBuilder.Entity<SinglePerson>();
+        singlePerson.HasOne(f => f.Person).WithMany().HasForeignKey(f => f.PersonId);
+    }
+
     private void CreateEmailRelay(ModelBuilder modelBuilder)
     {
         var inboxEmail = modelBuilder.Entity<InboxEmail>();
@@ -105,20 +147,7 @@ public sealed class DatabaseContext : DbContext
         distributionList.HasKey(dl => dl.Id);
         distributionList.HasAlternateKey(dl => dl.Alias);
         distributionList.Property(dl => dl.Flags).HasConversion<int>();
-
-        var personFilter = modelBuilder.Entity<PersonFilter>();
-        personFilter.HasKey(f => f.Id);
-        personFilter.HasOne(f => f.DistributionList).WithMany(dl => dl.Filters).HasForeignKey(f => f.DistributionListId);
-
-        var groupFilter = modelBuilder.Entity<GroupFilter>();
-        groupFilter.HasOne(f => f.Group).WithMany().HasForeignKey(f => f.GroupId);
-        groupFilter.HasOne(f => f.GroupRole).WithMany().HasForeignKey(f => f.GroupRoleId);
-
-        var statusFilter = modelBuilder.Entity<StatusFilter>();
-        statusFilter.HasOne(s => s.Status).WithMany().HasForeignKey(s => s.StatusId);
-
-        var singlePerson = modelBuilder.Entity<SinglePerson>();
-        singlePerson.HasOne(p => p.Person).WithMany().HasForeignKey(p => p.PersonId);
+        distributionList.HasOne(dl => dl.PermittedRecipients).WithMany().HasForeignKey(dl => dl.PermittedRecipientsId);
     }
 
     private void CreateEmailDelivery(ModelBuilder modelBuilder)
