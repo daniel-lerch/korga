@@ -1,13 +1,12 @@
 using Korga.ChurchTools.Entities;
 using Korga.Filters;
 using Korga.Filters.Entities;
-using Korga.Tests;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Korga.Server.Tests;
+namespace Korga.Tests;
 
 public class PersonFilterServiceTests : DatabaseTestBase
 {
@@ -195,6 +194,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
         bool inserted = await personFilterService.AddFilter(filterList.Id, new SinglePerson { PersonId = 1 });
         Assert.False(inserted);
     }
+
     [Fact]
     public async Task TestAddFilter_Status_AlreadyExists()
     {
@@ -210,6 +210,24 @@ public class PersonFilterServiceTests : DatabaseTestBase
 
         bool inserted = await personFilterService.AddFilter(filterList.Id, new StatusFilter { StatusId = 3 });
         Assert.False(inserted);
+    }
+
+    [Fact]
+    public async Task TestRemoveFilter()
+    {
+        await InitializeSampleDataset();
+
+        // Create sample filter
+        PersonFilterList filterList = new()
+        {
+            Filters = [new StatusFilter { StatusId = 3 }]
+        };
+        databaseContext.PersonFilterLists.Add(filterList);
+        await databaseContext.SaveChangesAsync();
+
+        bool deleted = await personFilterService.RemoveFilter(filterList.Id, new StatusFilter { StatusId = 3 });
+        Assert.True(deleted);
+        Assert.Empty(filterList.Filters);
     }
 
 

@@ -31,7 +31,7 @@ public class PersonFilterService
             .Where(f => f.PersonFilterListId == filterListId)
             .ToListAsync(cancellationToken);
 
-        if (personFilters.Count == 0) return Enumerable.Empty<Person>();
+        if (personFilters.Count == 0) return [];
 
         IQueryable<Person> query = FilterToQuery(personFilters[0]);
 
@@ -88,12 +88,13 @@ public class PersonFilterService
 
     public async ValueTask<bool> RemoveFilter(long filterListId, PersonFilter filter)
     {
-        PersonFilter? toDelete = await database.PersonFilters
-            .SingleOrDefaultAsync(f => f.PersonFilterListId == filterListId && f.FilterConditionEquals(filter));
+        string equalityKey = filter.GetEqualityKey().ToString();
 
-        if (toDelete == null) return false;
+        PersonFilter? entity = await database.PersonFilters.SingleOrDefaultAsync(f => f.EqualityKey == equalityKey);
 
-        database.PersonFilters.Remove(toDelete);
+        if (entity == null) return false;
+
+        database.PersonFilters.Remove(entity);
         await database.SaveChangesAsync();
         return true;
     }

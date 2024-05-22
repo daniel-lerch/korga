@@ -10,8 +10,8 @@ public class GroupFilter : PersonFilter
     public GroupRole? GroupRole { get; set; }
     public int? GroupRoleId { get; set; }
 
-    public override bool FilterConditionEquals(PersonFilter other)
+    public override PersonFilterEqualityKey GetEqualityKey()
     {
-        return other is GroupFilter o && GroupId == o.GroupId && GroupRoleId == o.GroupRoleId;
+        return new PersonFilterEqualityKey(nameof(GroupFilter), GroupId: GroupId, GroupRoleId: GroupRoleId);
     }
 }

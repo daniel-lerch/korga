@@ -7,8 +7,8 @@ public class StatusFilter : PersonFilter
 	public Status? Status { get; set; }
 	public int StatusId { get; set; }
 
-    public override bool FilterConditionEquals(PersonFilter other)
+    public override PersonFilterEqualityKey GetEqualityKey()
     {
-        return other is StatusFilter o && StatusId == o.StatusId;
+        return new PersonFilterEqualityKey(nameof(StatusFilter), StatusId: StatusId);
     }
 }
