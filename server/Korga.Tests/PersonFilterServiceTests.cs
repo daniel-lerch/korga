@@ -1,6 +1,7 @@
 using Korga.ChurchTools.Entities;
 using Korga.Filters;
 using Korga.Filters.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using System.Threading.Tasks;
@@ -233,9 +234,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
     private async ValueTask InitializeSampleDataset()
     {
         // Initialize database
-        // TODO: Use migrations again
-        //await databaseContext.Database.MigrateAsync();
-        await databaseContext.Database.EnsureCreatedAsync();
+        await databaseContext.Database.MigrateAsync();
 
         databaseContext.Status.AddRange(
         [

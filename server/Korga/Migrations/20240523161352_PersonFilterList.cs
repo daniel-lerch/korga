@@ -91,7 +91,7 @@ namespace Korga.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_PersonFilters_PersonFilterListId_Discriminator_EqualityKey",
                 table: "PersonFilters",
-                columns: ["PersonFilterListId", "Discriminator", "EqualityKey"],
+                columns: ["DistributionListId", "Discriminator", "EqualityKey"],
                 unique: true);
 
             // Create new table first to migrate filter mappings later on
