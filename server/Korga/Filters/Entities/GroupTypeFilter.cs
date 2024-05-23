@@ -9,9 +9,4 @@ public class GroupTypeFilter : PersonFilter
 
     public GroupRole? GroupRole { get; set; }
     public int? GroupRoleId { get; set; }
-
-    public override PersonFilterEqualityKey GetEqualityKey()
-    {
-        return new PersonFilterEqualityKey(nameof(GroupTypeFilter), GroupTypeId: GroupTypeId, GroupRoleId: GroupRoleId);
-    }
 }

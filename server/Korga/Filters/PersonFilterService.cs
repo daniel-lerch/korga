@@ -85,17 +85,4 @@ public class PersonFilterService
             return false;
         }
     }
-
-    public async ValueTask<bool> RemoveFilter(long filterListId, PersonFilter filter)
-    {
-        string equalityKey = filter.GetEqualityKey().ToString();
-
-        PersonFilter? entity = await database.PersonFilters.SingleOrDefaultAsync(f => f.EqualityKey == equalityKey);
-
-        if (entity == null) return false;
-
-        database.PersonFilters.Remove(entity);
-        await database.SaveChangesAsync();
-        return true;
-    }
 }

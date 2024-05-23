@@ -145,6 +145,23 @@ public class PersonFilterServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task TestAddFilter_Group_Different_Lists()
+    {
+        await InitializeSampleDataset();
+
+        PersonFilterList filterList1 = new();
+        PersonFilterList filterList2 = new();
+        databaseContext.PersonFilterLists.AddRange(filterList1, filterList2);
+        await databaseContext.SaveChangesAsync();
+
+        bool inserted1 = await personFilterService.AddFilter(filterList1.Id, new GroupFilter { GroupId = 1 });
+        Assert.True(inserted1);
+
+        bool inserted2 = await personFilterService.AddFilter(filterList2.Id, new GroupFilter { GroupId = 1 });
+        Assert.True(inserted2);
+    }
+
+    [Fact]
     public async Task TestAddFilter_Group_AlreadyExists()
     {
         await InitializeSampleDataset();
@@ -210,24 +227,6 @@ public class PersonFilterServiceTests : DatabaseTestBase
 
         bool inserted = await personFilterService.AddFilter(filterList.Id, new StatusFilter { StatusId = 3 });
         Assert.False(inserted);
-    }
-
-    [Fact]
-    public async Task TestRemoveFilter()
-    {
-        await InitializeSampleDataset();
-
-        // Create sample filter
-        PersonFilterList filterList = new()
-        {
-            Filters = [new StatusFilter { StatusId = 3 }]
-        };
-        databaseContext.PersonFilterLists.Add(filterList);
-        await databaseContext.SaveChangesAsync();
-
-        bool deleted = await personFilterService.RemoveFilter(filterList.Id, new StatusFilter { StatusId = 3 });
-        Assert.True(deleted);
-        Assert.Empty(filterList.Filters);
     }
 
 

@@ -104,12 +104,12 @@ public sealed class DatabaseContext : DbContext
         var personFilter = modelBuilder.Entity<PersonFilter>();
         personFilter.HasKey(f => f.Id);
         personFilter.HasOne(f => f.PersonFilterList).WithMany(l => l.Filters).HasForeignKey(f => f.PersonFilterListId);
-        personFilter.HasIndex(f => f.EqualityKey).IsUnique();
+        personFilter.HasDiscriminator(f => f.Discriminator);
+        personFilter.HasIndex(f => new { f.PersonFilterListId, f.Discriminator, f.EqualityKey }).IsUnique();
         // Unique composite indices including null values are ignored by SQL databases.
         // Therefore we use a computed column which contains values for a unique index to avoid duplicate filters.
         personFilter.Property(f => f.EqualityKey).HasComputedColumnSql(@"
 CONCAT(
-    `Discriminator`,
     LPAD(HEX(IFNULL(`GroupId`, 0)), 8, '0'),
     LPAD(HEX(IFNULL(`GroupRoleId`, 0)), 8, '0'),
     LPAD(HEX(IFNULL(`GroupTypeId`, 0)), 8, '0'),
