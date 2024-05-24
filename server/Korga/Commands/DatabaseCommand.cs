@@ -1,5 +1,7 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 
 #pragma warning disable CA1822 // Mark members as static
@@ -22,9 +24,16 @@ public class DatabaseCommand
     [Command("migrate")]
     public class Migrate
     {
+        [Option(Description = "Target migration")]
+        public string? To { get; set; }
+
         private async Task OnExecute(DatabaseContext database)
         {
-            await database.Database.MigrateAsync();
+            if (To == null || Prompt.GetYesNo("Do you really want to apply a specific migration? This will result in significant data loss for many migrations", false))
+            {
+                IMigrator migrator = database.GetInfrastructure().GetRequiredService<IMigrator>();
+                await migrator.MigrateAsync(To);
+            }
         }
     }
 

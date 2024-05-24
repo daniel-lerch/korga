@@ -170,49 +170,106 @@ WHERE `dist`.`Id` = `filterlist`.`Id`");
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_DistributionLists_PersonFilterLists_PermittedRecipientsId",
-                table: "DistributionLists");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_PersonFilters_GroupTypes_GroupTypeId",
-                table: "PersonFilters");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_PersonFilters_PersonFilterLists_PersonFilterListId",
-                table: "PersonFilters");
-
-            migrationBuilder.DropTable(
-                name: "PersonFilterLists");
-
-            migrationBuilder.DropIndex(
-                name: "IX_PersonFilters_GroupTypeId",
-                table: "PersonFilters");
+            // Remove equality key first because it depends on new columns which are removed later
+            migrationBuilder.CreateIndex(
+                name: "IX_PersonFilters_DistributionListId",
+                table: "PersonFilters",
+                column: "PersonFilterListId");
 
             migrationBuilder.DropIndex(
                 name: "IX_PersonFilters_PersonFilterListId_Discriminator_EqualityKey",
                 table: "PersonFilters");
 
-            migrationBuilder.DropIndex(
-                name: "IX_DistributionLists_PermittedRecipientsId",
-                table: "DistributionLists");
-
             migrationBuilder.DropColumn(
                 name: "EqualityKey",
+                table: "PersonFilters");
+
+            // Then remove group type because it is a trivial operation
+            migrationBuilder.Sql(@"DELETE FROM `PersonFilters` WHERE `Discriminator` = ""GroupTypeFilter""");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_PersonFilters_GroupTypes_GroupTypeId",
+                table: "PersonFilters");
+
+            migrationBuilder.DropIndex(
+                name: "IX_PersonFilters_GroupTypeId",
                 table: "PersonFilters");
 
             migrationBuilder.DropColumn(
                 name: "GroupTypeId",
                 table: "PersonFilters");
 
+            // Remove all filter lists that are not referenced by a distribution list
+            migrationBuilder.Sql(
+@"DELETE FROM `PersonFilterLists`
+WHERE `Id` NOT IN
+    (SELECT DISTINCT `PermittedRecipientsId` FROM `DistributionLists`
+    WHERE `PermittedRecipientsId` <> NULL)");
+
+            // Change filter list IDs to match their distribution list's ID
+
+            // This UPDATE SELECT query might not work with databases other than MySQL/MariaDB
+            // Furthermore, the inner query must not filter rows because of optimization problems:
+            // https://dev.mysql.com/doc/refman/8.0/en/update.html
+
+            migrationBuilder.Sql(
+@"UPDATE `PersonFilterLists` AS `filterlist`,
+        (SELECT `Id`,`PermittedRecipientsId` FROM `DistributionLists`) AS `dist`
+SET `filterlist`.`Id` = `dist`.`Id`
+WHERE `filterlist`.`Id` = `dist`.`PermittedRecipientsId`");
+
+            // Now that filter list IDs match distribution list IDs, we don't need permitted recipients anymore
+            migrationBuilder.DropForeignKey(
+                name: "FK_DistributionLists_PersonFilterLists_PermittedRecipientsId",
+                table: "DistributionLists");
+
+            migrationBuilder.DropIndex(
+                name: "IX_DistributionLists_PermittedRecipientsId",
+                table: "DistributionLists");
+
             migrationBuilder.DropColumn(
                 name: "PermittedRecipientsId",
                 table: "DistributionLists");
 
+            migrationBuilder.DropForeignKey(
+                name: "FK_PersonFilters_PersonFilterLists_PersonFilterListId",
+                table: "PersonFilters");
+
+            // Rename foreign key and make it point to distribution lists again
             migrationBuilder.RenameColumn(
                 name: "PersonFilterListId",
                 table: "PersonFilters",
                 newName: "DistributionListId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_PersonFilters_DistributionLists_DistributionListId",
+                table: "PersonFilters",
+                column: "DistributionListId",
+                principalTable: "DistributionLists",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.DropTable(
+                name: "PersonFilterLists");
+
+            // These annotation changes seem to be part of a new EF Core version
+            migrationBuilder.AlterColumn<long>(
+                name: "Id",
+                table: "DistributionLists",
+                type: "bigint",
+                nullable: false,
+                oldClrType: typeof(long),
+                oldType: "bigint")
+                .OldAnnotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn);
+
+            migrationBuilder.AlterColumn<long>(
+                name: "Id",
+                table: "PersonFilters",
+                type: "bigint",
+                nullable: false,
+                oldClrType: typeof(long),
+                oldType: "bigint")
+                .OldAnnotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn);
 
             migrationBuilder.AlterColumn<string>(
                 name: "Discriminator",
@@ -227,7 +284,7 @@ WHERE `dist`.`Id` = `filterlist`.`Id`");
 
             migrationBuilder.AlterColumn<long>(
                 name: "Id",
-                table: "PersonFilters",
+                table: "InboxEmails",
                 type: "bigint",
                 nullable: false,
                 oldClrType: typeof(long),
@@ -242,37 +299,6 @@ WHERE `dist`.`Id` = `filterlist`.`Id`");
                 oldClrType: typeof(long),
                 oldType: "bigint")
                 .OldAnnotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn);
-
-            migrationBuilder.AlterColumn<long>(
-                name: "Id",
-                table: "InboxEmails",
-                type: "bigint",
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint")
-                .OldAnnotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn);
-
-            migrationBuilder.AlterColumn<long>(
-                name: "Id",
-                table: "DistributionLists",
-                type: "bigint",
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint")
-                .OldAnnotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PersonFilters_DistributionListId",
-                table: "PersonFilters",
-                column: "DistributionListId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_PersonFilters_DistributionLists_DistributionListId",
-                table: "PersonFilters",
-                column: "DistributionListId",
-                principalTable: "DistributionLists",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
         }
     }
 }

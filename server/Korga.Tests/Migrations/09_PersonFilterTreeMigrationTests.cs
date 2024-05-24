@@ -113,7 +113,7 @@ public class PersonFilterListMigrationTests : MigrationTestBase<GroupMemberStatu
         Assert.Null(distributionLists[1].PermittedRecipientsId);
 
         var fl2 = await after.PersonFilterLists.Include(fl => fl.Filters).SingleAsync(fl => fl.Id == distributionLists[2].PermittedRecipientsId);
-        Assert.NotNull (fl2);
+        Assert.NotNull(fl2);
         Assert.NotNull(fl2.Filters);
         Assert.Equal(2, fl2.Filters.Count);
         var or2_filter0 = fl2.Filters.Single(f => f is PersonFilterList.GroupFilter) as PersonFilterList.GroupFilter;
@@ -124,7 +124,7 @@ public class PersonFilterListMigrationTests : MigrationTestBase<GroupMemberStatu
         Assert.Equal(1, or2_filter1.PersonId);
     }
 
-    /*[Fact]
+    [Fact]
     public async Task TestDowngrade()
     {
         PersonFilterList.Status status = new()
@@ -157,10 +157,10 @@ public class PersonFilterListMigrationTests : MigrationTestBase<GroupMemberStatu
             LastName = "Mustermann",
             Email = "max.mustermann@example.org",
         };
-        PersonFilterList.StatusFilter statusFilter = new()
+        PersonFilterList.PersonFilterList statusFilterList = new()
         {
             Id = 1,
-            StatusId = 1,
+            Filters = [new PersonFilterList.StatusFilter { Id = 1, StatusId = 1 }]
         };
         PersonFilterList.DistributionList distToStatus = new()
         {
@@ -174,27 +174,25 @@ public class PersonFilterListMigrationTests : MigrationTestBase<GroupMemberStatu
             Alias = "nobody",
             PermittedRecipientsId = null,
         };
-        PersonFilterList.GroupFilter groupFilter = new()
+        PersonFilterList.PersonFilterList groupAndSinglePersonFilterList = new()
         {
             Id = 2,
-            ParentId = 4,
-            GroupId = 1,
-        };
-        PersonFilterList.SinglePerson singlePerson = new()
-        {
-            Id = 3,
-            ParentId = 4,
-            PersonId = 1,
-        };
-        PersonFilterList.LogicalOr groupOrPerson = new()
-        {
-            Id = 4,
+            Filters = [
+                new PersonFilterList.GroupFilter { Id = 2, GroupId = 1 },
+                new PersonFilterList.SinglePerson { Id = 3, PersonId = 1 },
+                new PersonFilterList.GroupTypeFilter { Id = 4, GroupTypeId = 1 },
+            ]
         };
         PersonFilterList.DistributionList distToGroupAndSinglePerson = new()
         {
             Id = 3,
             Alias = "kleingruppen",
-            PermittedRecipientsId = 4,
+            PermittedRecipientsId = 2,
+        };
+        PersonFilterList.PersonFilterList danglingStatusFilterList = new()
+        {
+            Id = 4,
+            Filters = [new PersonFilterList.StatusFilter { Id = 5, StatusId = 1 }]
         };
         IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
 
@@ -207,16 +205,22 @@ public class PersonFilterListMigrationTests : MigrationTestBase<GroupMemberStatu
         after.GroupTypes.Add(groupType);
         after.Groups.Add(group);
         after.People.Add(person);
-        after.PersonFilters.Add(statusFilter);
+        after.PersonFilterLists.Add(statusFilterList);
         after.DistributionLists.Add(distToStatus);
         after.DistributionLists.Add(distToNobody);
-        after.PersonFilters.Add(groupFilter);
-        after.PersonFilters.Add(singlePerson);
-        after.PersonFilters.Add(groupOrPerson);
+        after.PersonFilterLists.Add(groupAndSinglePersonFilterList);
         after.DistributionLists.Add(distToGroupAndSinglePerson);
+        after.PersonFilterLists.Add(danglingStatusFilterList);
         await after.SaveChangesAsync();
 
         // Migrate to migration before the one to test and thereby revert it
         await migrator.MigrateAsync("GroupMemberStatus");
-    }*/
+
+        // Verify that data has been migrated as expected
+        List<GroupMemberStatus.DistributionList> distributionLists = await before.DistributionLists.ToListAsync();
+        Assert.Equal(3, distributionLists.Count);
+
+        List<GroupMemberStatus.PersonFilter> personFilters = await before.PersonFilters.ToListAsync();
+        Assert.Equal(3, personFilters.Count);
+    }
 }
