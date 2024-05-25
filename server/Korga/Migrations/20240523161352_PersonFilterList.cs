@@ -204,21 +204,37 @@ WHERE `dist`.`Id` = `filterlist`.`Id`");
 @"DELETE FROM `PersonFilterLists`
 WHERE `Id` NOT IN
     (SELECT DISTINCT `PermittedRecipientsId` FROM `DistributionLists`
-    WHERE `PermittedRecipientsId` <> NULL)");
+    WHERE `PermittedRecipientsId` IS NOT NULL)");
 
-            // Change filter list IDs to match their distribution list's ID
+            // Rename foreign key and make it point to distribution lists again
+            migrationBuilder.DropForeignKey(
+                name: "FK_PersonFilters_PersonFilterLists_PersonFilterListId",
+                table: "PersonFilters");
+
+            migrationBuilder.RenameColumn(
+                name: "PersonFilterListId",
+                table: "PersonFilters",
+                newName: "DistributionListId");
 
             // This UPDATE SELECT query might not work with databases other than MySQL/MariaDB
             // Furthermore, the inner query must not filter rows because of optimization problems:
             // https://dev.mysql.com/doc/refman/8.0/en/update.html
 
             migrationBuilder.Sql(
-@"UPDATE `PersonFilterLists` AS `filterlist`,
+@"UPDATE `PersonFilters` AS `filter`,
         (SELECT `Id`,`PermittedRecipientsId` FROM `DistributionLists`) AS `dist`
-SET `filterlist`.`Id` = `dist`.`Id`
-WHERE `filterlist`.`Id` = `dist`.`PermittedRecipientsId`");
+SET `filter`.`DistributionListId` = `dist`.`Id`
+WHERE `filter`.`DistributionListId` = `dist`.`PermittedRecipientsId`");
 
-            // Now that filter list IDs match distribution list IDs, we don't need permitted recipients anymore
+            migrationBuilder.AddForeignKey(
+                name: "FK_PersonFilters_DistributionLists_DistributionListId",
+                table: "PersonFilters",
+                column: "DistributionListId",
+                principalTable: "DistributionLists",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+
+            // Now that filters are linked to distribution lists again, we can remove the filter list table
             migrationBuilder.DropForeignKey(
                 name: "FK_DistributionLists_PersonFilterLists_PermittedRecipientsId",
                 table: "DistributionLists");
@@ -231,45 +247,11 @@ WHERE `filterlist`.`Id` = `dist`.`PermittedRecipientsId`");
                 name: "PermittedRecipientsId",
                 table: "DistributionLists");
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_PersonFilters_PersonFilterLists_PersonFilterListId",
-                table: "PersonFilters");
-
-            // Rename foreign key and make it point to distribution lists again
-            migrationBuilder.RenameColumn(
-                name: "PersonFilterListId",
-                table: "PersonFilters",
-                newName: "DistributionListId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_PersonFilters_DistributionLists_DistributionListId",
-                table: "PersonFilters",
-                column: "DistributionListId",
-                principalTable: "DistributionLists",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
-
             migrationBuilder.DropTable(
                 name: "PersonFilterLists");
 
-            // These annotation changes seem to be part of a new EF Core version
-            migrationBuilder.AlterColumn<long>(
-                name: "Id",
-                table: "DistributionLists",
-                type: "bigint",
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint")
-                .OldAnnotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn);
-
-            migrationBuilder.AlterColumn<long>(
-                name: "Id",
-                table: "PersonFilters",
-                type: "bigint",
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint")
-                .OldAnnotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn);
+            // The annotation changes from a new EF Core version must not be reverted
+            // Otherwise the auto_increment attribute would be lost
 
             migrationBuilder.AlterColumn<string>(
                 name: "Discriminator",
@@ -281,24 +263,6 @@ WHERE `filterlist`.`Id` = `dist`.`PermittedRecipientsId`");
                 oldMaxLength: 21)
                 .Annotation("MySql:CharSet", "utf8mb4")
                 .OldAnnotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.AlterColumn<long>(
-                name: "Id",
-                table: "InboxEmails",
-                type: "bigint",
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint")
-                .OldAnnotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn);
-
-            migrationBuilder.AlterColumn<long>(
-                name: "Id",
-                table: "OutboxEmails",
-                type: "bigint",
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint")
-                .OldAnnotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn);
         }
     }
 }

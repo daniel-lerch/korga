@@ -6,11 +6,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Korga.Tests.Migrations;
 
 public class PersonFilterListMigrationTests : MigrationTestBase<GroupMemberStatus.DatabaseContext, PersonFilterList.DatabaseContext>
 {
+    public PersonFilterListMigrationTests(ITestOutputHelper testOutput) : base(testOutput) { }
+
     [Fact]
     public async Task TestUpgrade()
     {
@@ -213,6 +216,9 @@ public class PersonFilterListMigrationTests : MigrationTestBase<GroupMemberStatu
         after.PersonFilterLists.Add(danglingStatusFilterList);
         await after.SaveChangesAsync();
 
+        // Reset change tracker before upgrading the schema again to avoid caching
+        after.ChangeTracker.Clear();
+
         // Migrate to migration before the one to test and thereby revert it
         await migrator.MigrateAsync("GroupMemberStatus");
 
@@ -222,5 +228,8 @@ public class PersonFilterListMigrationTests : MigrationTestBase<GroupMemberStatu
 
         List<GroupMemberStatus.PersonFilter> personFilters = await before.PersonFilters.ToListAsync();
         Assert.Equal(3, personFilters.Count);
+
+        // Upgrade database again to verify rollback worked
+        await migrator.MigrateAsync("PersonFilterList");
     }
 }

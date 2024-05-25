@@ -7,6 +7,7 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Korga.Tests.Migrations;
 
@@ -17,6 +18,8 @@ public class SplitOutboxEmailMigrationTests : MigrationTestBase<ForwardMode.Data
     private readonly DateTime outboxEmail1_DeliveryTime = DateTime.Parse("2023-08-13 18:57:21");
     private const string outboxEmail2_EmailAddress = "bob@example.org";
     private readonly byte[] outboxEmail2_Content = Encoding.ASCII.GetBytes("");
+
+    public SplitOutboxEmailMigrationTests(ITestOutputHelper testOutput) : base(testOutput) { }
 
     [Fact]
     public async Task TestUpgrade()
@@ -114,6 +117,9 @@ public class SplitOutboxEmailMigrationTests : MigrationTestBase<ForwardMode.Data
         after.OutboxEmails.Add(beforeDowngradePending);
         await after.SaveChangesAsync();
 
+        // Reset change tracker before upgrading the schema again to avoid caching
+        after.ChangeTracker.Clear();
+
         // Migrate to migration before the one to test and thereby revert it
         await migrator.MigrateAsync("ForwardMode");
 
@@ -128,5 +134,11 @@ public class SplitOutboxEmailMigrationTests : MigrationTestBase<ForwardMode.Data
             await using MySqlDataReader reader = await command.ExecuteReaderAsync();
             Assert.False(await reader.ReadAsync());
         }
+
+        // Upgrade database again to verify rollback worked
+        await migrator.MigrateAsync("SplitOutboxEmail");
+
+        SplitOutboxEmail.OutboxEmail afterUpgrade = await after.OutboxEmails.SingleAsync();
+        Assert.Equivalent(beforeDowngradePending, afterUpgrade);
     }
 }

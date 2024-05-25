@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using MySqlConnector;
 using System;
+using Xunit.Abstractions;
 
 namespace Korga.Tests;
 
@@ -15,7 +17,7 @@ public abstract class DatabaseTestBase : IDisposable
     protected readonly IServiceScope serviceScope;
     protected readonly DatabaseContext databaseContext;
 
-    public DatabaseTestBase()
+    public DatabaseTestBase(ITestOutputHelper? testOutput = null)
     {
         databaseName = "Korga_" + GetType().Name.Replace("Tests", string.Empty);
         shortConnectionString = "Server=localhost;Port=3306;User=root;Password=root;";
@@ -35,6 +37,8 @@ public abstract class DatabaseTestBase : IDisposable
                     connectionString,
                     ServerVersion.AutoDetect(shortConnectionString),
                     builder => builder.EnableRetryOnFailure());
+                if (testOutput != null)
+                    optionsBuilder.LogTo(testOutput.WriteLine, LogLevel.Information);
             });
         ConfigureServices(serviceCollection);
         serviceProvider = serviceCollection.BuildServiceProvider();

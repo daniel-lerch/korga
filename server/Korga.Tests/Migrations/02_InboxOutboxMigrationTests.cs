@@ -7,6 +7,7 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Korga.Tests.Migrations;
 
@@ -73,6 +74,8 @@ Cheers,
 Daniel");
     private static readonly DateTime inboxEmail_DownloadTime = DateTime.Parse("2023-08-03 22:42:00.797007");
     private static readonly DateTime inboxEmail_ProcessingCompletedTime = DateTime.Parse("2023-08-04 05:42:00.881735");
+
+    public InboxOutboxMigrationTests(ITestOutputHelper testOutput) : base(testOutput) { }
 
     /// <summary>
     /// Tests custom migration code from Emails table to InboxEmails.
@@ -192,6 +195,9 @@ Daniel");
         after.InboxEmails.Add(beforeDowngrade);
         await after.SaveChangesAsync();
 
+        // Reset change tracker before upgrading the schema again to avoid caching
+        after.ChangeTracker.Clear();
+
         // Migrate to migration before the one to test and thereby revert it
         await migrator.MigrateAsync("AddSinglePersonFilter");
 
@@ -206,5 +212,15 @@ Daniel");
             await using MySqlDataReader reader = await command.ExecuteReaderAsync();
             Assert.False(await reader.ReadAsync());
         }
+
+        // Upgrade database again to verify rollback worked
+        await migrator.MigrateAsync("InboxOutbox");
+
+        // By downgrading and upgrading again we loose the unique id and header
+        beforeDowngrade.UniqueId = 0u;
+        beforeDowngrade.Header = null;
+
+        InboxOutbox.InboxEmail afterUpgrade = await after.InboxEmails.SingleAsync();
+        Assert.Equivalent(beforeDowngrade, afterUpgrade);
     }
 }
