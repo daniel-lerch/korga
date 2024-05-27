@@ -4,7 +4,7 @@ export interface DistributionList {
   id: number;
   alias: string;
   newsletter: boolean;
-  filters: PersonFilter[];
+  permittedRecipients: PersonFilter[];
 }
 
 export interface PersonFilter {
@@ -13,6 +13,7 @@ export interface PersonFilter {
   statusName: string | null;
   groupName: string | null;
   groupRoleName: string | null;
+  groupTypeName: string | null;
   personFullName: string | null;
 }
 

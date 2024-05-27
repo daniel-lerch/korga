@@ -31,7 +31,7 @@
   <footer>
     <div>
       <small>
-        Copyright &copy; 2022-2023 Daniel Lerch and Benjamin Stieler
+        Copyright &copy; 2022-2024 Daniel Lerch and Benjamin Stieler
       </small>
     </div>
   </footer>
