@@ -1,5 +1,6 @@
 using Korga.Commands;
 using Korga.Extensions;
+using Korga.Filters;
 using Korga.Utilities;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.AspNetCore.Hosting;
@@ -20,7 +21,7 @@ public class Program
         if (Debugger.IsAttached && !NativeMethods.IsRunningInProcessIIS())
         {
             Console.Write("Korga server is running in debug mode. Please enter your command: ");
-            args = Console.ReadLine()?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+            args = Console.ReadLine()?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? [];
             Console.WriteLine();
         }
 #endif
@@ -82,5 +83,6 @@ public class Program
                 services.AddKorgaOptions(context.Configuration);
 				services.AddSingleton(PhysicalConsole.Singleton);
                 services.AddKorgaMySqlDatabase();
+                services.AddTransient<PersonFilterService>();
             });
 }

@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Korga.EmailDelivery;
+using Korga.Filters;
 
 namespace Korga;
 
@@ -32,6 +33,8 @@ public class Startup
         services.AddChurchToolsApi();
 
         services.AddKorgaMySqlDatabase();
+
+        services.AddTransient<PersonFilterService>();
 
         services.AddSpaStaticFiles(options => options.RootPath = environment.WebRootPath);
 

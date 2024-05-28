@@ -15,7 +15,8 @@ Once configured, Korga automatically synchronizes people and groups from ChurchT
 There is no Web UI available yet to manage distribution lists so you must stick to the CLI inside the Docker container:
 
 ```
-./Korga distribution-list create --group 137 kids
+./Korga dist create kids
+./Korga dist add-recipient kids -g 137
 ```
 
 This command creates a distribution list _kids@example.org_ which forwards emails to every member of group #137.

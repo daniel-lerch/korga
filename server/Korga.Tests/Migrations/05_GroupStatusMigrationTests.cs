@@ -4,11 +4,14 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Korga.Tests.Migrations;
 
 public class GroupStatusMigrationTests : MigrationTestBase<SplitOutboxEmail.DatabaseContext, GroupStatus.DatabaseContext>
 {
+    public GroupStatusMigrationTests(ITestOutputHelper testOutput) : base(testOutput) { }
+
     [Fact]
     public async Task TestUpgrade()
     {
@@ -111,6 +114,9 @@ public class GroupStatusMigrationTests : MigrationTestBase<SplitOutboxEmail.Data
         after.Groups.Add(groupBeforeDowngrade);
         await after.SaveChangesAsync();
 
+        // Reset change tracker before upgrading the schema again to avoid caching
+        after.ChangeTracker.Clear();
+
         // Migrate to migration before the one to test and thereby revert it
         await migrator.MigrateAsync("SplitOutboxEmail");
 
@@ -119,5 +125,20 @@ public class GroupStatusMigrationTests : MigrationTestBase<SplitOutboxEmail.Data
         Assert.Equivalent(expectedGroupType, groupType);
         SplitOutboxEmail.Group group = await before.Groups.SingleAsync();
         Assert.Equivalent(expected, group);
+
+        // Upgrade database again to verify rollback worked
+        await migrator.MigrateAsync("GroupStatus");
+
+        // By downgrading and upgrading again we loose the group status name
+        groupStatusBeforeDowngrade.Name = "default";
+
+        GroupStatus.Group groupAfterUpgrade = await after.Groups.Include(x => x.GroupType).Include(x => x.GroupStatus).SingleAsync();
+        Assert.Equivalent(groupBeforeDowngrade, groupAfterUpgrade);
+
+        GroupStatus.GroupType groupTypeAfterUpgrade = await after.GroupTypes.SingleAsync();
+        Assert.Equivalent(groupTypeBeforeDowngrade, groupTypeAfterUpgrade);
+
+        GroupStatus.GroupStatus groupStatusAfterUpgrade = await after.GroupStatuses.SingleAsync();
+        Assert.Equivalent(groupStatusBeforeDowngrade, groupStatusAfterUpgrade);
     }
 }

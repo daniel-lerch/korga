@@ -1,6 +1,6 @@
 ﻿using Korga.ChurchTools.Entities;
 
-namespace Korga.EmailRelay.Entities;
+namespace Korga.Filters.Entities;
 
 public class StatusFilter : PersonFilter
 {

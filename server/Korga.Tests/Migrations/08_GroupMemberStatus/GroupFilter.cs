@@ -1,6 +1,4 @@
-﻿using Korga.ChurchTools.Entities;
-
-namespace Korga.EmailRelay.Entities;
+﻿namespace Korga.Tests.Migrations.GroupMemberStatus;
 
 public class GroupFilter : PersonFilter
 {

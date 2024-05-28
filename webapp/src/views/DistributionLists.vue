@@ -21,7 +21,7 @@
         </div>
         <div class="col-12 col-md-6">
           <ul class="list-unstyled mb-2">
-            <li v-for="filter in dl.filters" :key="filter.id">
+            <li v-for="filter in dl.permittedRecipients" :key="filter.id">
               {{ shortText(filter) }}
             </li>
           </ul>
@@ -63,6 +63,12 @@ export default defineComponent({
           return "Status: " + filter.statusName;
         case "GroupFilter": {
           const prefix = "Gruppe: " + filter.groupName;
+          return filter.groupRoleName
+            ? prefix + " (" + filter.groupRoleName + ")"
+            : prefix;
+        }
+        case "GroupTypeFilter": {
+          const prefix = "Gruppentyp: " + filter.groupTypeName;
           return filter.groupRoleName
             ? prefix + " (" + filter.groupRoleName + ")"
             : prefix;
