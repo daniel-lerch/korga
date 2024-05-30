@@ -34,6 +34,12 @@ RUN set -x \
 COPY --from=server /app/out .
 COPY --from=webapp /app/dist wwwroot/
 
-HEALTHCHECK CMD curl --fail http://localhost:8080/healthz || exit 1
+HEALTHCHECK \
+    --interval=1m \
+    --timeout=10s \
+    --start-period=15s \
+    --start-interval=5s \
+    --retries=3 \
+    CMD curl --fail http://localhost:8080/healthz || exit 1
 
 ENTRYPOINT ["dotnet", "Korga.dll"]
