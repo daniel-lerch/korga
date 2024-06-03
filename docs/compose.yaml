@@ -1,9 +1,8 @@
-version: '2.1'
-
 services:
   app:
     image: daniellerch/korga:latest
     restart: unless-stopped
+    mem_limit: 512m
     environment:
       # Change this according to your database settings
       - Database__ConnectionString=Server=db;Port=3306;Database=korga;User=korga;Password=korga;
@@ -38,9 +37,13 @@ services:
       #- EmailRelay__ImapHost=imap.example.org
       #- EmailRelay__ImapUsername=catchall@example.org
       #- EmailRelay__ImapPassword=RKXMaQWm8k7QKFnmijma
+    depends_on:
+      db:
+        condition: service_healthy
   db:
     image: mariadb:latest
     restart: unless-stopped
+    mem_limit: 512m
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=korga
@@ -48,3 +51,13 @@ services:
       - MYSQL_PASSWORD=korga
     volumes:
       - ./data/mysql:/var/lib/mysql
+
+    # This healthcheck will only work for newly initialized databases with a healthcheck user
+    # To configure it manually, refer to https://stackoverflow.com/a/76089040/7075733
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized" ]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+      start_interval: 1s

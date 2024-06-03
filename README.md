@@ -24,7 +24,7 @@ This command creates a distribution list _kids@example.org_ which forwards email
 ## Installation
 
 The only officially supported distribution are Docker containers. An official image is available at [daniellerch/korga](https://hub.docker.com/r/daniellerch/korga).
-If you are using Docker Compose, take a look our [example compose file](docs/docker-compose.yml) in the `docs` folder.
+If you are using Docker Compose, take a look our [example compose file](docs/compose.yaml) in the `docs` folder.
 
 Korga has multiple modules that must be enabled via configuration to use them:
 - ChurchTools sync
@@ -33,7 +33,7 @@ Korga has multiple modules that must be enabled via configuration to use them:
 
 Configuration can set as enviroment variables or by creating a custom config file.
 I recommend to use environment variables and will explain them in the following sections.
-However, if you prefer a config file, copy the default [appsettings.json](server/src/Korga/appsettings.json), edit it as required, and mount it at `/app/appsettings.json`.
+However, if you prefer a config file, copy the default [appsettings.json](server/Korga/appsettings.json), edit it as required, and mount it at `/app/appsettings.json`.
 
 ### OpenID Connect authentication
 
@@ -157,16 +157,16 @@ The following instructions are written for Windows but generally also apply to L
 
 ### Backend
 - Visual Studio 2022
-- .NET SDK 7.0
+- .NET SDK 8.0
 - EF Core CLI Tools _(e.g. `dotnet tool install -g dotnet-ef`)_
 - MySQL or MariaDB _(e.g. from [PSModules](https://github.com/daniel-lerch/psmodules))_
 
 ### Frontend
 - Visual Studio Code
 - Vue Language Features (Volar) Extension
-- NodeJS 18 LTS
+- NodeJS 20 LTS
 
-During development the frontend running on the Vue CLI development server will use _http://localhost:50805_ as API endpoint.
+During development the frontend running on the Vue CLI development server will use _http://localhost:10501_ as API endpoint.
 That means the backend can be running in Visual Studio with Debugger attached.
 
 If you just want to work on the frontend you can also use a public test server by creating a file `webapp/.env.development.local`

@@ -42,6 +42,8 @@ public class Startup
 
         services.AddOpenApiDocument();
 
+        services.AddHealthChecks();
+
         services.AddOpenIdConnectAuthentication(Configuration, environment);
 
         // Use Configuration manually because options are not available in ConfigureService
@@ -93,6 +95,7 @@ public class Startup
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
+            endpoints.MapHealthChecks("/healthz").RequireHost("localhost:*");
         });
 
         app.UseOpenApi();
