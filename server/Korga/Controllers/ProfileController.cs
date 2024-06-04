@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using System;
 using System.Security.Claims;
 
 namespace Korga.Controllers;
@@ -11,6 +13,13 @@ namespace Korga.Controllers;
 [ApiController]
 public class ProfileController : ControllerBase
 {
+    private readonly IOptions<Configuration.OpenIdConnectOptions> openIdConnectOptions;
+
+    public ProfileController(IOptions<Configuration.OpenIdConnectOptions> openIdConnectOptions)
+    {
+        this.openIdConnectOptions = openIdConnectOptions;
+    }
+
     [HttpGet("~/api/profile")]
     [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
     public IActionResult Profile()
@@ -22,12 +31,20 @@ public class ProfileController : ControllerBase
 
         if (id == null || givenName == null || familyName == null || emailAddress == null) return new JsonResult(null);
 
+        string prefix = openIdConnectOptions.Value.ChurchToolsPersonIdPrefix;
+
+        int? churchToolsPersonId = null;
+
+        if (id.StartsWith(prefix) && int.TryParse(id.AsSpan(prefix.Length), out int personId))
+            churchToolsPersonId = personId;
+
         return new JsonResult(new ProfileResponse
         {
             Id = id,
             GivenName = givenName,
             FamilyName = familyName,
-            EmailAddress = emailAddress
+            EmailAddress = emailAddress,
+            ChurchToolsPersonId = churchToolsPersonId
         });
     }
 
@@ -41,10 +58,10 @@ public class ProfileController : ControllerBase
     [HttpGet("~/api/logout")]
     public IActionResult Logout()
     {
-        return new SignOutResult(new[]
-        {
+        return new SignOutResult(
+        [
             CookieAuthenticationDefaults.AuthenticationScheme,
             OpenIdConnectDefaults.AuthenticationScheme
-        });
+        ]);
     }
 }

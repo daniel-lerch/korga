@@ -6,4 +6,5 @@ public class ProfileResponse
     public required string GivenName { get; init; }
     public required string FamilyName { get; init; }
     public required string EmailAddress { get; init; }
+    public int? ChurchToolsPersonId { get; init; }
 }
