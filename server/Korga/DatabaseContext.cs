@@ -3,6 +3,7 @@ using Korga.EmailRelay.Entities;
 using Korga.Filters.Entities;
 using Microsoft.EntityFrameworkCore;
 using Korga.EmailDelivery.Entities;
+using Korga.Configuration.Entities;
 
 namespace Korga;
 
@@ -25,10 +26,13 @@ public sealed class DatabaseContext : DbContext
     public DbSet<DepartmentMember> DepartmentMembers => Set<DepartmentMember>();
     public DbSet<Status> Status => Set<Status>();
 
-    public DbSet<InboxEmail> InboxEmails => Set<InboxEmail>();
-    public DbSet<DistributionList> DistributionLists => Set<DistributionList>();
     public DbSet<PersonFilterList> PersonFilterLists => Set<PersonFilterList>();
     public DbSet<PersonFilter> PersonFilters => Set<PersonFilter>();
+
+    public DbSet<Permission> Permissions => Set<Permission>();
+
+    public DbSet<InboxEmail> InboxEmails => Set<InboxEmail>();
+    public DbSet<DistributionList> DistributionLists => Set<DistributionList>();
 
     public DbSet<OutboxEmail> OutboxEmails => Set<OutboxEmail>();
     public DbSet<SentEmail> SentEmails => Set<SentEmail>();
@@ -43,6 +47,8 @@ public sealed class DatabaseContext : DbContext
         CreateChurchTools(modelBuilder);
 
         CreateFilters(modelBuilder);
+
+        CreateConfiguration(modelBuilder);
 
         CreateEmailRelay(modelBuilder);
 
@@ -132,6 +138,14 @@ CONCAT(
 
         var singlePerson = modelBuilder.Entity<SinglePerson>();
         singlePerson.HasOne(f => f.Person).WithMany().HasForeignKey(f => f.PersonId);
+    }
+
+    private void CreateConfiguration(ModelBuilder modelBuilder)
+    {
+        var permission = modelBuilder.Entity<Permission>();
+        permission.HasKey(p => p.Key);
+        permission.HasOne(p => p.PersonFilterList).WithMany().HasForeignKey(p => p.PersonFilterListId);
+        permission.Property(p => p.Key).ValueGeneratedNever();
     }
 
     private void CreateEmailRelay(ModelBuilder modelBuilder)
