@@ -1,5 +1,7 @@
-const baseUrl =
-  process.env.VUE_APP_API_URL ?? window.resourceBasePath.slice(0, -1);
+//const baseUrl =
+//  process.env.VUE_APP_API_URL ?? window.resourceBasePath.slice(0, -1);
+const baseUrl = "";
+
 const getInfo: RequestInit = {
   credentials: "include",
 };

@@ -8,4 +8,8 @@ module.exports = {
       }),
     ],
   },
+  devServer: {
+    //proxy: "https://lerchen.net/korga",
+    proxy: "http://localhost:10501",
+  },
 };
