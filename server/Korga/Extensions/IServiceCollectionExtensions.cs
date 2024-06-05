@@ -1,5 +1,6 @@
 ﻿using Korga.ChurchTools;
 using Korga.Configuration;
+using Korga.EmailDelivery;
 using Korga.EmailRelay;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -15,9 +16,9 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+
 using OpenIdConnectOptions = Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions;
 using KorgaOpenIdConnectOptions = Korga.Configuration.OpenIdConnectOptions;
-using Korga.EmailDelivery;
 
 namespace Korga.Extensions;
 

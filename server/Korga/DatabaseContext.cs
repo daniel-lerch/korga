@@ -3,7 +3,6 @@ using Korga.EmailRelay.Entities;
 using Korga.Filters.Entities;
 using Microsoft.EntityFrameworkCore;
 using Korga.EmailDelivery.Entities;
-using Korga.Configuration.Entities;
 
 namespace Korga;
 
@@ -47,8 +46,6 @@ public sealed class DatabaseContext : DbContext
         CreateChurchTools(modelBuilder);
 
         CreateFilters(modelBuilder);
-
-        CreateConfiguration(modelBuilder);
 
         CreateEmailRelay(modelBuilder);
 
@@ -138,10 +135,7 @@ CONCAT(
 
         var singlePerson = modelBuilder.Entity<SinglePerson>();
         singlePerson.HasOne(f => f.Person).WithMany().HasForeignKey(f => f.PersonId);
-    }
 
-    private void CreateConfiguration(ModelBuilder modelBuilder)
-    {
         var permission = modelBuilder.Entity<Permission>();
         permission.HasKey(p => p.Key);
         permission.HasOne(p => p.PersonFilterList).WithMany().HasForeignKey(p => p.PersonFilterListId);
@@ -162,6 +156,7 @@ CONCAT(
         distributionList.HasAlternateKey(dl => dl.Alias);
         distributionList.Property(dl => dl.Flags).HasConversion<int>();
         distributionList.HasOne(dl => dl.PermittedRecipients).WithMany().HasForeignKey(dl => dl.PermittedRecipientsId);
+        distributionList.HasOne(dl => dl.PermittedSenders).WithMany().HasForeignKey(dl => dl.PermittedSendersId);
     }
 
     private void CreateEmailDelivery(ModelBuilder modelBuilder)

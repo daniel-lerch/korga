@@ -60,6 +60,8 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
             return;
         }
 
+        // TODO: Check whether sender is permitted to send to this distribution list
+
         if (email.Header == null)
         {
             await SendErrorMessage(email, emailRelay.TooManyHeaders(email), cancellationToken);

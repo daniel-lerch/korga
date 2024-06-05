@@ -1,6 +1,4 @@
-﻿using Korga.Filters.Entities;
-
-namespace Korga.Configuration.Entities;
+﻿namespace Korga.Filters.Entities;
 
 public class Permission
 {
@@ -11,6 +9,7 @@ public class Permission
 
     public string Key { get; set; }
 
-    public long PersonFilterListId { get; set; }
+    // If PersonFilterList is null or empty, users might only transitively have this permission
+    public long? PersonFilterListId { get; set; }
     public PersonFilterList? PersonFilterList { get; set; }
 }

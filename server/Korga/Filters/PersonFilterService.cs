@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using Korga.ChurchTools.Entities;
@@ -13,10 +14,12 @@ namespace Korga.Filters;
 public class PersonFilterService
 {
     private readonly DatabaseContext database;
+    private readonly PersonLookupService lookupService;
 
-    public PersonFilterService(DatabaseContext database)
+    public PersonFilterService(DatabaseContext database, PersonLookupService lookupService)
     {
         this.database = database;
+        this.lookupService = lookupService;
     }
 
     /// <summary>
@@ -41,6 +44,23 @@ public class PersonFilterService
         }
 
         return await query.Distinct().ToListAsync(cancellationToken);
+    }
+
+    public async ValueTask<bool> HasPermission(ClaimsPrincipal user, string permissionKey)
+    {
+        Person? person = await lookupService.GetPerson(user);
+        if (person == null) return false;
+
+        List<PersonFilter> personFilters = await database.Permissions.Where(p => p.Key == permissionKey)
+            .Join(database.PersonFilters, p => p.PersonFilterListId, f => f.PersonFilterListId, (p, f) => f)
+            .ToListAsync();
+
+        foreach (PersonFilter filter in personFilters)
+        {
+            if (await FilterToQuery(filter).AnyAsync(p => p.Id == person.Id)) return true;
+        }
+
+        return false;
     }
 
     private IQueryable<Person> FilterToQuery(PersonFilter filter)

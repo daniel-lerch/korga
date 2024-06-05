@@ -1,5 +1,6 @@
 ﻿using Korga.EmailRelay;
 using Korga.EmailRelay.Entities;
+using Korga.Filters;
 using Korga.Filters.Entities;
 using Korga.Models.Json;
 using Microsoft.AspNetCore.Authorization;
@@ -16,10 +17,12 @@ namespace Korga.Controllers
 	public class DistributionListController : ControllerBase
 	{
 		private readonly DatabaseContext database;
+        private readonly PersonFilterService filterService;
 
-		public DistributionListController(DatabaseContext database)
+		public DistributionListController(DatabaseContext database, PersonFilterService filterService)
 		{
 			this.database = database;
+            this.filterService = filterService;
 		}
 
 		[Authorize]
@@ -27,6 +30,9 @@ namespace Korga.Controllers
 		[ProducesResponseType(typeof(DistributionListResponse[]), StatusCodes.Status200OK)]
 		public async Task<IActionResult> GetDistributionLists()
 		{
+            if (!await filterService.HasPermission(User, "distribution-lists:view"))
+                return StatusCode(StatusCodes.Status403Forbidden);
+
 			List<DistributionList> distributionLists = await database.DistributionLists
 				.Include(dl => dl.PermittedRecipients)
 				.ThenInclude(fl => fl!.Filters)
