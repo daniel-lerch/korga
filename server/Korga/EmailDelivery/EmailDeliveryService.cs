@@ -1,4 +1,5 @@
-﻿using Korga.Utilities;
+﻿using Korga.EmailDelivery.Entities;
+using Korga.Utilities;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
 using System;
@@ -35,8 +36,15 @@ public class EmailDeliveryService
             content = memoryStream.ToArray();
         }
 
-        database.OutboxEmails.Add(new(emailAddress, content) { InboxEmailId = inboxEmailId });
+        OutboxEmail outboxEmail = new(emailAddress, content) { InboxEmailId = inboxEmailId };
+        database.OutboxEmails.Add(outboxEmail);
         await database.SaveChangesAsync(cancellationToken);
+
+        // Explicitly free entity for garbage collection because our DbContext won't be disposed soon enough
+        // Without this line, Korga takes gigabytes of memory when sending large messages to many recipients
+        database.Entry(outboxEmail).State = EntityState.Detached;
+
+        var entries = database.ChangeTracker.Entries();
         jobQueue.EnsureRunning();
         return true;
     }

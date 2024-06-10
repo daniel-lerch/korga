@@ -38,10 +38,8 @@ public class EmailDeliveryJobController : OneAtATimeJobController<OutboxEmail>, 
     {
         SmtpClient smtp = await GetConnection(cancellationToken);
 
-        MimeMessage mimeMessage;
-
-        using (MemoryStream memoryStream = new(outboxEmail.Content))
-            mimeMessage = MimeMessage.Load(memoryStream, CancellationToken.None);
+        using MemoryStream memoryStream = new(outboxEmail.Content);
+        using MimeMessage mimeMessage = MimeMessage.Load(memoryStream, CancellationToken.None);
 
         try
         {
