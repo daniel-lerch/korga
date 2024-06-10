@@ -44,7 +44,6 @@ public class EmailDeliveryService
         // Without this line, Korga takes gigabytes of memory when sending large messages to many recipients
         database.Entry(outboxEmail).State = EntityState.Detached;
 
-        var entries = database.ChangeTracker.Entries();
         jobQueue.EnsureRunning();
         return true;
     }
