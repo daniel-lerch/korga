@@ -57,6 +57,7 @@ public sealed class DatabaseContext : DbContext
         var person = modelBuilder.Entity<Person>();
         person.HasKey(p => p.Id);
         person.HasOne(p => p.Status).WithMany().HasForeignKey(p => p.StatusId);
+        person.HasIndex(p => p.Email);
         person.Property(p => p.Id).ValueGeneratedNever();
 
         var group = modelBuilder.Entity<Group>();

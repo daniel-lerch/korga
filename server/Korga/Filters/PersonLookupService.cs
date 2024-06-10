@@ -37,16 +37,16 @@ public class PersonLookupService
 
         if (!id.StartsWith(prefix))
         {
-            logger.LogError("Name identifier claim does not start with the expected prefix: \"{}\". " +
-                $"This is likely caused by a wrong configuration of " +
+            logger.LogError("Name identifier claim {SubClaim} does not start with the expected prefix: \"{Prefix}\". " +
+                "This is likely caused by a wrong configuration of " +
                 $"{nameof(OpenIdConnectOptions)}.{nameof(OpenIdConnectOptions.ChurchToolsPersonIdPrefix)} " +
-                $"which does not match your OpenID Connect provider's sub claim format.", prefix);
+                "which does not match your OpenID Connect provider's sub claim format.", id, prefix);
             return null;
         }
 
         if (!int.TryParse(id.AsSpan(prefix.Length), out int personId))
         {
-            logger.LogError("Name identifier claim final part {} could not be parsed as an integer. " +
+            logger.LogError("Name identifier claim final part {SubClaimSuffix} could not be parsed as an integer. " +
                 "Your OpenID Connect provider is likely not compatible with Korga.", id[prefix.Length..]);
             return null;
         }
@@ -54,7 +54,7 @@ public class PersonLookupService
         Person? person = await database.People.SingleOrDefaultAsync(p => p.Id == personId, cancellationToken);
         if (person == null)
         {
-            logger.LogWarning("Person with ID {} not found in database. " +
+            logger.LogWarning("Person with ID {PersonId} not found in database. " +
                 "Synchronization between Korga and ChurchTools might be lagging behind " +
                 "or Korga's ChurchTools user might not have sufficient permissions to access all users.", personId);
         }

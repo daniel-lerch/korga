@@ -63,7 +63,7 @@ public class PersonFilterService
         return false;
     }
 
-    private IQueryable<Person> FilterToQuery(PersonFilter filter)
+    public IQueryable<Person> FilterToQuery(PersonFilter filter)
     {
         if (filter is GroupFilter groupFilter)
         {
