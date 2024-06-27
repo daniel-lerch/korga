@@ -2,7 +2,16 @@
   <header>
     <nav class="navbar navbar-expand-md navbar-dark bg-primary">
       <div class="container-fluid">
-        <router-link to="/service" class="navbar-brand">Korga</router-link>
+        <router-link to="/service" class="navbar-brand">
+          <img
+            src="/brand.png"
+            alt="Logo"
+            width="24"
+            height="24"
+            class="d-inline-block align-text-top mx-1"
+          />
+          Korga
+        </router-link>
         <button
           class="navbar-toggler"
           type="button"
