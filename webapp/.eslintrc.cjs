@@ -16,15 +16,5 @@ module.exports = {
     "no-console": process.env.NODE_ENV === "production" ? "warn" : "off",
     "no-debugger": process.env.NODE_ENV === "production" ? "warn" : "off",
     "vue/multi-word-component-names": ["warn"],
-    "prettier/prettier": [
-      "error",
-      {
-        endOfLine: "auto",
-        semi: false,
-        singleQuote: false,
-        tabWidth: 2,
-        trailingComma: "es5",
-      },
-    ],
   },
 }
