@@ -10,6 +10,13 @@ module.exports = {
   },
   devServer: {
     //proxy: "https://lerchen.net/korga",
-    proxy: "http://localhost:10501",
+    proxy: {
+      "^/api": {
+        target: "http://localhost:10501",
+      },
+      "^/signin-oidc": {
+        target: "http://localhost:10501",
+      },
+    },
   },
 };

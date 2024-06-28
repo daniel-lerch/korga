@@ -1,5 +1,6 @@
 ﻿using Korga.ChurchTools;
 using Korga.Configuration;
+using Korga.EmailDelivery;
 using Korga.EmailRelay;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -15,9 +16,9 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+
 using OpenIdConnectOptions = Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions;
 using KorgaOpenIdConnectOptions = Korga.Configuration.OpenIdConnectOptions;
-using Korga.EmailDelivery;
 
 namespace Korga.Extensions;
 
@@ -115,6 +116,11 @@ public static class IServiceCollectionExtensions
                 options.ClientId = openIdConnectOptions.Value.ClientId;
                 options.ClientSecret = openIdConnectOptions.Value.ClientSecret;
                 options.ResponseType = OpenIdConnectResponseType.Code;
+
+                // response_mode=form_post only works when backend and identity provider are on the same site (same effective TLD)
+                // because the Nonce and Correlation cookies won't be sent with a request initiated by the identity provider unless SameSite=None
+                options.ResponseMode = OpenIdConnectResponseMode.Query;
+
                 options.SaveTokens = true;
                 options.GetClaimsFromUserInfoEndpoint = true;
                 options.Scope.Add("openid");
