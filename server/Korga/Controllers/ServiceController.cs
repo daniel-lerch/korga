@@ -4,7 +4,6 @@ using Korga.Models.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,12 +15,10 @@ namespace Korga.Controllers;
 [ApiController]
 public class ServiceController : ControllerBase
 {
-    private readonly DatabaseContext database;
     private readonly IChurchToolsApi churchTools;
 
-    public ServiceController(DatabaseContext database, IChurchToolsApi churchTools)
+    public ServiceController(IChurchToolsApi churchTools)
     {
-        this.database = database;
         this.churchTools = churchTools;
     }
 
@@ -47,26 +44,9 @@ public class ServiceController : ControllerBase
     [ProducesResponseType(typeof(ServiceHistoryResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetServiceHistory(int id, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to)
     {
-        Service service = await churchTools.GetService(id);
+        Dictionary<int, ServiceHistoryResponse> people = (await GetServiceMembers(id)).ToDictionary(x => x.PersonId);
 
-        if (service.GroupIds == null) return new JsonResult(Array.Empty<ServiceHistoryResponse>());
-
-        List<int> groupIds = service.GroupIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(int.Parse)
-            .ToList();
-
-        var people = await
-            (from member in database.GroupMembers.Where(member => groupIds.Contains(member.GroupId))
-             join person in database.People on member.PersonId equals person.Id
-             select new ServiceHistoryResponse
-             {
-                 PersonId = person.Id,
-                 FirstName = person.FirstName,
-                 LastName = person.LastName,
-                 GroupMemberStatus = member.GroupMemberStatus,
-             })
-            .Distinct()
-            .ToDictionaryAsync(x => x.PersonId);
+        if (people.Count == 0) return new JsonResult(Array.Empty<ServiceHistoryResponse>());
 
         from ??= DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(-12));
         to ??= DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(3));
@@ -89,5 +69,40 @@ public class ServiceController : ControllerBase
         List<ServiceHistoryResponse> peopleList = people.Values.ToList();
         peopleList.Sort((a, b) => a.ServiceDates.LastOrDefault().CompareTo(b.ServiceDates.LastOrDefault()));
         return new JsonResult(peopleList);
+    }
+
+    private async ValueTask<IEnumerable<ServiceHistoryResponse>> GetServiceMembers(int serviceId)
+    {
+        Service service = await churchTools.GetService(serviceId);
+        if (service.GroupIds == null) return [];
+
+        var assignableGroups = service.GroupIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(int.Parse);
+
+        List<GroupMember>[] groupsMembers = await Task.WhenAll(assignableGroups
+            .Select(groupId => churchTools.GetGroupMembers(groupId).AsTask()));
+
+        return groupsMembers.SelectMany(x => x).GroupBy(
+            x => x.PersonId,
+            x => new
+            {
+                FirstName = x.Person.DomainAttributes["firstName"].GetValue<string>(),
+                LastName = x.Person.DomainAttributes["lastName"].GetValue<string>(),
+                GroupName = x.Group.Title,
+                x.GroupMemberStatus,
+                x.Comment
+            },
+            (key, x) => new ServiceHistoryResponse
+            {
+                PersonId = key,
+                FirstName = x.First().FirstName,
+                LastName = x.First().LastName,
+                Groups = x.Select(y => new ServiceHistoryResponse.GroupInfo()
+                {
+                    GroupName = y.GroupName,
+                    GroupMemberStatus = y.GroupMemberStatus,
+                    Comment = y.Comment
+                }).ToList()
+            });
     }
 }
