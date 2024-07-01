@@ -5,7 +5,7 @@
     <select
       class="form-select"
       aria-label="Default select example"
-      @change="fetchServiceHistory($event.target.value)"
+      @change="fetchServiceHistory(($event.target as HTMLSelectElement).value)"
     >
       <option disabled selected>Bitte auswählen</option>
       <option
@@ -46,24 +46,20 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
-import {
-  getServiceHistory,
-  getServices,
-  ServiceHistory,
-  Services,
-} from "@/services/service";
+import type { ServiceHistory, Services } from "@/services/service"
+import { onMounted, ref } from "vue"
+import { getServiceHistory, getServices } from "@/services/service"
 
-const services = ref<Services[] | null>(null);
-const serviceHistory = ref<ServiceHistory[] | null>(null);
+const services = ref<Services[] | null>(null)
+const serviceHistory = ref<ServiceHistory[] | null>(null)
 
 onMounted(async () => {
-  services.value = await getServices();
-});
+  services.value = await getServices()
+})
 
-const fetchServiceHistory = async function (id: number) {
-  serviceHistory.value = await getServiceHistory(id);
-};
+const fetchServiceHistory = async function (id: string) {
+  serviceHistory.value = await getServiceHistory(parseInt(id))
+}
 </script>
 
 <style scoped>

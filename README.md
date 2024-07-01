@@ -170,5 +170,5 @@ During development the frontend running on the Vue CLI development server will u
 That means the backend can be running in Visual Studio with Debugger attached.
 
 If you just want to work on the frontend you can also use a public test server by creating a file `webapp/.env.development.local`
-to override the defaults with `VUE_APP_API_URL=https://lerchen.net/korga`.
+to override the defaults with `VITE_API_URL=https://lerchen.net/korga`.
 Then you don't have to setup a database server and the ASP.NET Core backend.
