@@ -66,20 +66,8 @@ public class VueSpaFileProvider : IFileProvider
 
     private MemoryFileInfo CreateCache(DateTime lastWrite, string? pathBase)
     {
-        byte[] buffer;
-
-        if (string.IsNullOrEmpty(pathBase))
-        {
-            buffer = File.ReadAllBytes(path);
-        }
-        else
-        {
-            buffer = Encoding.UTF8.GetBytes(
-                File.ReadAllText(path)
-                    .Replace("\"/", $"\"{pathBase}/")
-                    .Replace("'/'", $"'{pathBase}/'")
-            );
-        }
+        byte[] buffer = Encoding.UTF8.GetBytes(
+            File.ReadAllText(path).Replace("/__base_path__/", $"{pathBase}/"));
 
         return new MemoryFileInfo("index.html", buffer, lastWrite, pathBase);
     }

@@ -2,16 +2,18 @@
 
 // Colors
 $primary: #223859; // Please update theme-color in index.html when changing this variable
-$secondary: #A4ABBD;
+$secondary: #a4abbd;
 $success: #2d734f;
 $danger: #954537;
-$body-bg: #F7F7F7;
+$body-bg: #f7f7f7;
 $body-color: #444;
 
-@import 'bootstrap/scss/bootstrap.scss';
+@import "bootstrap/scss/bootstrap.scss";
 
 .shadow {
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.03), 0 3px 6px rgba(0, 0, 0, 0.05) !important;
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.03),
+    0 3px 6px rgba(0, 0, 0, 0.05) !important;
 }
 
 .btn {

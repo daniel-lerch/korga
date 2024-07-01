@@ -1,48 +1,39 @@
 {
   "name": "korga",
-  "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "dev": "vite",
+    "build": "run-p type-check \"build-only {@}\" --",
+    "preview": "vite preview",
+    "build-only": "vite build",
+    "type-check": "vue-tsc --build --force",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "format": "prettier --write src/"
   },
   "dependencies": {
-    "@vueuse/core": "10.x",
     "bootstrap": "5.2.x",
     "core-js": "3.x",
-    "vue": "3.x",
-    "vue-router": "4.x",
-    "webpack-require-from": "1.8.x"
+    "vue": "^3.4.29",
+    "vue-router": "^4.3.3"
   },
   "devDependencies": {
+    "@rushstack/eslint-patch": "^1.8.0",
+    "@tsconfig/node20": "^20.1.4",
     "@types/bootstrap": "5.2.x",
-    "@typescript-eslint/eslint-plugin": "7.x",
-    "@typescript-eslint/parser": "7.x",
-    "@vue/cli-plugin-babel": "5.x",
-    "@vue/cli-plugin-eslint": "5.x",
-    "@vue/cli-plugin-router": "5.x",
-    "@vue/cli-plugin-typescript": "5.x",
-    "@vue/cli-service": "5.x",
-    "@vue/eslint-config-typescript": "12.x",
-    "eslint": "8.x",
-    "eslint-config-prettier": "9.x",
-    "eslint-plugin-prettier": "5.x",
-    "eslint-plugin-vue": "9.x",
-    "prettier": "3.2.x",
+    "@types/node": "^20.14.5",
+    "@vitejs/plugin-vue": "^5.0.5",
+    "@vue/eslint-config-prettier": "^9.0.0",
+    "@vue/eslint-config-typescript": "^13.0.0",
+    "@vue/tsconfig": "^0.5.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.23.0",
+    "npm-run-all2": "^6.2.0",
+    "prettier": "^3.2.5",
     "sass": "1.x",
     "sass-loader": "14.x",
-    "typescript": "5.4.x"
-  },
-  "babel": {
-    "presets": [
-      "@vue/cli-plugin-babel/preset"
-    ]
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead",
-    "not ie 11"
-  ]
+    "typescript": "~5.4.0",
+    "vite": "^5.3.1",
+    "vue-tsc": "^2.0.21"
+  }
 }
