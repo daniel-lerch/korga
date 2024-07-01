@@ -246,7 +246,7 @@ public class ChurchToolsSyncServiceTests : DatabaseTestBase
         public PersonMasterdata PersonMasterdata { get; } = new();
         public List<Person> People { get; } = [];
         public List<Group> Groups { get; } = [];
-        public List<GroupMember> GroupMembers { get; } = [];
+        public List<GroupsMember> GroupMembers { get; } = [];
 
         public void Dispose() { }
 
@@ -260,9 +260,14 @@ public class ChurchToolsSyncServiceTests : DatabaseTestBase
             return ValueTask.FromResult(Groups);
         }
 
-        public ValueTask<List<GroupMember>> GetGroupMembers(CancellationToken cancellationToken = default)
+        public ValueTask<List<GroupsMember>> GetGroupMembers(CancellationToken cancellationToken = default)
         {
             return ValueTask.FromResult(GroupMembers);
+        }
+
+        public ValueTask<List<GroupMember>> GetGroupMembers(int groupId, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
         }
 
         public ValueTask<List<Person>> GetPeople(CancellationToken cancellationToken = default)

@@ -98,7 +98,7 @@ public class ChurchToolsSyncService
 
     private async ValueTask SynchronizeGroupMembers(CancellationToken cancellationToken)
     {
-        await Synchronize<GroupMember, DbGroupMember, long>(
+        await Synchronize<GroupsMember, DbGroupMember, long>(
             await churchTools.GetGroupMembers(cancellationToken),
             database.GroupMembers,
             await database.GroupMembers.OrderBy(x => x.PersonId).ThenBy(x => x.GroupId).ToListAsync(cancellationToken),
@@ -187,7 +187,8 @@ public class ChurchToolsSyncService
         {
             "active" => GroupMemberStatus.Active,
             "requested" => GroupMemberStatus.Requested,
-            "to_delete" => GroupMemberStatus.ToDelete,
+            "waiting" => GroupMemberStatus.Waiting,
+            "to_delete" => GroupMemberStatus.To_Delete,
             _ => throw new ArgumentException($"Unknown GroupMemberStatus {groupMemberStatus}")
         };
     }
