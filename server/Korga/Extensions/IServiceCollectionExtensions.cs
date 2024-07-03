@@ -107,9 +107,7 @@ public static class IServiceCollectionExtensions
                     logger.LogWarning("OpenID Connect configuration is incomplete. Login will not work.");
                 }
 
-                options.CorrelationCookie.SameSite = SameSiteMode.Strict;
                 options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
-                options.NonceCookie.SameSite = SameSiteMode.Strict;
                 options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.Authority = openIdConnectOptions.Value.Authority;
@@ -129,7 +127,6 @@ public static class IServiceCollectionExtensions
                 options.Events.OnRedirectToIdentityProvider = context =>
                 {
                     context.HandleResponse();
-
                     SetFrontendRedirectUri(context);
                     SetBackendRedirectUri(context, environment);
 
@@ -153,7 +150,7 @@ public static class IServiceCollectionExtensions
                     context.HandleResponse();
 
                     SetFrontendRedirectUri(context);
-                    //SetBackendLogoutRedirectUri(context, environment);
+                    SetBackendLogoutRedirectUri(context, environment);
 
                     #region Code ported from OpenIdConnectHandler.cs
                     if (!string.IsNullOrEmpty(context.ProtocolMessage.State))
@@ -197,7 +194,7 @@ public static class IServiceCollectionExtensions
             if (!string.IsNullOrEmpty(backendUri))
             {
                 Uri uri = new(backendUri);
-                context.ProtocolMessage.RedirectUri = uri.Scheme + Uri.SchemeDelimiter + uri.Authority + context.Options.CallbackPath;
+                context.ProtocolMessage.RedirectUri = uri.Scheme + Uri.SchemeDelimiter + uri.Authority + context.Request.PathBase + context.Options.CallbackPath;
             }
         }
     }
@@ -214,7 +211,7 @@ public static class IServiceCollectionExtensions
             if (!string.IsNullOrEmpty(backendUri))
             {
                 Uri uri = new(backendUri);
-                context.ProtocolMessage.PostLogoutRedirectUri = uri.Scheme + Uri.SchemeDelimiter + uri.Authority + context.Options.SignedOutCallbackPath;
+                context.ProtocolMessage.PostLogoutRedirectUri = uri.Scheme + Uri.SchemeDelimiter + uri.Authority + context.Request.PathBase + context.Options.SignedOutCallbackPath;
             }
         }
     }
