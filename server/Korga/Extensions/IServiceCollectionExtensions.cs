@@ -107,7 +107,9 @@ public static class IServiceCollectionExtensions
                     logger.LogWarning("OpenID Connect configuration is incomplete. Login will not work.");
                 }
 
+                options.CorrelationCookie.SameSite = SameSiteMode.Lax;
                 options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.NonceCookie.SameSite = SameSiteMode.Lax;
                 options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.Authority = openIdConnectOptions.Value.Authority;
