@@ -1,4 +1,7 @@
-const baseUrl = import.meta.env.VITE_API_URL ?? window.basePath.slice(0, -1)
+const baseUrl = import.meta.env.PROD
+  ? window.basePath.slice(0, -1)
+  : import.meta.env.VITE_API_BASE_PATH.slice(0, -1)
+
 const getInfo: RequestInit = {
   credentials: "include",
 }
