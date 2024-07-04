@@ -2,7 +2,16 @@
   <header>
     <nav class="navbar navbar-expand-md navbar-dark bg-primary">
       <div class="container-fluid">
-        <router-link to="/service" class="navbar-brand">Korga</router-link>
+        <router-link to="/service" class="navbar-brand">
+          <img
+            src="/brand.png"
+            alt="Logo"
+            width="24"
+            height="24"
+            class="d-inline-block align-text-top mx-1"
+          />
+          Korga
+        </router-link>
         <button
           class="navbar-toggler"
           type="button"
@@ -38,19 +47,20 @@
 </template>
 
 <script setup lang="ts">
-import ProfileNav from "@/components/ProfileNav.vue";
-import korga, { ProfileResponse } from "@/services/profile";
-import { onMounted, ref } from "vue";
+import type { ProfileResponse } from "@/services/profile"
+import ProfileNav from "@/components/ProfileNav.vue"
+import korga from "@/services/profile"
+import { onMounted, ref } from "vue"
 
-const profile = ref<ProfileResponse | null>(null);
+const profile = ref<ProfileResponse | null>(null)
 
 onMounted(async () => {
   try {
-    profile.value = await korga.getProfile();
+    profile.value = await korga.getProfile()
   } catch (error) {
-    console.log(error);
+    console.log(error)
   }
-});
+})
 </script>
 
 <style>
