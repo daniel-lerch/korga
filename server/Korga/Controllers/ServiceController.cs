@@ -40,11 +40,14 @@ public class ServiceController : ControllerBase
         }));
     }
 
-    [HttpGet("~/api/services/{id}/history")]
+    [HttpGet("~/api/services/history")]
     [ProducesResponseType(typeof(ServiceHistoryResponse[]), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetServiceHistory(int id, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to)
+    public async Task<IActionResult> GetServiceHistory([FromQuery] HashSet<int> serviceId, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to)
     {
-        Dictionary<int, ServiceHistoryResponse> people = (await GetServiceMembers(id)).ToDictionary(x => x.PersonId);
+        var groupIds = await GetServiceGroups(serviceId);
+        var groupMembers = await GetGroupMembers(groupIds);
+
+        Dictionary<int, ServiceHistoryResponse> people = groupMembers.ToDictionary(x => x.PersonId);
 
         if (people.Count == 0) return new JsonResult(Array.Empty<ServiceHistoryResponse>());
 
@@ -56,30 +59,39 @@ public class ServiceController : ControllerBase
         {
             foreach (Event.Service eventService in @event.EventServices)
             {
-                if (eventService.ServiceId == id
+                if (serviceId.Contains(eventService.ServiceId)
                     && eventService.PersonId.HasValue
                     && eventService.Agreed
                     && people.TryGetValue(eventService.PersonId.Value, out var person))
                 {
-                    person.ServiceDates.Add(DateOnly.FromDateTime(@event.StartDate));
+                    person.ServiceDates.Add(new()
+                    {
+                        ServiceId = eventService.ServiceId,
+                        Date = DateOnly.FromDateTime(@event.StartDate)
+                    });
                 }
             }
         }
 
-        List<ServiceHistoryResponse> peopleList = people.Values.ToList();
-        peopleList.Sort((a, b) => a.ServiceDates.LastOrDefault().CompareTo(b.ServiceDates.LastOrDefault()));
-        return new JsonResult(peopleList);
+        return new JsonResult(people.Values.ToList());
     }
 
-    private async ValueTask<IEnumerable<ServiceHistoryResponse>> GetServiceMembers(int serviceId)
+    private async ValueTask<IEnumerable<int>> GetServiceGroups(IEnumerable<int> serviceIds)
     {
-        Service service = await churchTools.GetService(serviceId);
-        if (service.GroupIds == null) return [];
+        Service[] services = await Task.WhenAll(serviceIds.Select(id => churchTools.GetService(id).AsTask()));
 
-        var assignableGroups = service.GroupIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(int.Parse);
+        HashSet<int> groupIds = [];
+        foreach (Service service in services)
+        {
+            if (service.GroupIds == null) continue;
+            groupIds.UnionWith(service.GroupIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse));
+        }
+        return groupIds;
+    }
 
-        List<GroupMember>[] groupsMembers = await Task.WhenAll(assignableGroups
+    private async ValueTask<IEnumerable<ServiceHistoryResponse>> GetGroupMembers(IEnumerable<int> groupIds)
+    {
+        List<GroupMember>[] groupsMembers = await Task.WhenAll(groupIds
             .Select(groupId => churchTools.GetGroupMembers(groupId).AsTask()));
 
         return groupsMembers.SelectMany(x => x).GroupBy(
@@ -88,6 +100,7 @@ public class ServiceController : ControllerBase
             {
                 FirstName = x.Person.DomainAttributes["firstName"].GetValue<string>(),
                 LastName = x.Person.DomainAttributes["lastName"].GetValue<string>(),
+                GroupId = int.Parse(x.Group.DomainIdentifier),
                 GroupName = x.Group.Title,
                 x.GroupMemberStatus,
                 x.Comment
@@ -99,6 +112,7 @@ public class ServiceController : ControllerBase
                 LastName = x.First().LastName,
                 Groups = x.Select(y => new ServiceHistoryResponse.GroupInfo()
                 {
+                    GroupId = y.GroupId,
                     GroupName = y.GroupName,
                     GroupMemberStatus = y.GroupMemberStatus,
                     Comment = y.Comment

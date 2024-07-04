@@ -12,14 +12,21 @@ public class ServiceHistoryResponse
     public required string LastName { get; init; }
     public required List<GroupInfo> Groups { get; init; }
 
-    public List<DateOnly> ServiceDates { get; } = [];
+    public List<ServiceDate> ServiceDates { get; } = [];
 
     public readonly struct GroupInfo
     {
+        public required int GroupId { get; init; }
         public required string GroupName { get; init; }
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public required GroupMemberStatus GroupMemberStatus { get; init; }
         public required string Comment { get; init; }
+    }
+
+    public readonly struct ServiceDate
+    {
+        public required int ServiceId { get; init; }
+        public required DateOnly Date { get; init; }
     }
 }
