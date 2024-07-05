@@ -24,6 +24,7 @@
           <th scope="col">Vorname</th>
           <th scope="col">Nachname</th>
           <th scope="col">Datum</th>
+          <th scope="col">Kommentar</th>
         </tr>
       </thead>
       <tbody>
@@ -31,14 +32,17 @@
           v-for="(person, index) in serviceHistory"
           :key="index"
           :class="{
-            requested: person.groupMemberStatus === 'Requested',
-            todelete: person.groupMemberStatus === 'ToDelete',
+            requested: person.groups[0].groupMemberStatus === 'Requested',
+            todelete: person.groups[0].groupMemberStatus === 'ToDelete',
           }"
         >
           <th scope="row">{{ index }}</th>
           <td>{{ person.firstName }}</td>
           <td>{{ person.lastName }}</td>
-          <td>{{ person.serviceDates.join(", ") }}</td>
+          <td>
+            {{ person.serviceDates.map((ele) => ele.date).join(", ") }}
+          </td>
+          <td>{{ person.groups[0].comment }}</td>
         </tr>
       </tbody>
     </table>
@@ -58,7 +62,7 @@ onMounted(async () => {
 })
 
 const fetchServiceHistory = async function (id: string) {
-  serviceHistory.value = await getServiceHistory(parseInt(id))
+  serviceHistory.value = await getServiceHistory([parseInt(id)])
 }
 </script>
 

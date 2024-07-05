@@ -10,14 +10,24 @@ export interface ServiceHistory {
   personId: number
   firstName: string
   lastName: string
-  groupMemberStatus: "Active" | "Requested" | "ToDelete"
-  serviceDates: string[]
+  groups: {
+    groupId: number
+    groupName: string
+    groupMemberStatus: "Active" | "Requested" | "ToDelete"
+    comment: string
+  }[]
+  serviceDates: {
+    serviceId: number
+    date: string
+  }[]
 }
 
 export function getServices(): Promise<Services[]> {
   return client.get("/api/services")
 }
 
-export function getServiceHistory(id: number): Promise<ServiceHistory[]> {
-  return client.get(`/api/services/${id}/history`)
+export function getServiceHistory(ids: number[]): Promise<ServiceHistory[]> {
+  return client.get(
+    `/api/services/history/?${ids.map((id) => `serviceId=${id}`).join("&")}`
+  )
 }
