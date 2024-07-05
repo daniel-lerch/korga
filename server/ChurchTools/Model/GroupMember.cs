@@ -10,4 +10,4 @@ public record GroupMember(
     GroupMemberStatus GroupMemberStatus,
     DateOnly MemberStartDate,
     DateOnly? MemberEndDate,
-    string Comment);
+    string? Comment);
