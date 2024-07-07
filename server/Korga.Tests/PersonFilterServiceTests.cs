@@ -20,6 +20,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
 
     protected override void ConfigureServices(IServiceCollection services)
     {
+        services.AddScoped<PersonLookupService>();
         services.AddScoped<PersonFilterService>();
     }
 
