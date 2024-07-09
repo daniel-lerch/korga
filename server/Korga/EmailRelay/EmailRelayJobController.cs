@@ -45,7 +45,8 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
     {
         if (email.Receiver == null)
         {
-            await SendErrorMessage(email, errorMessage.InvalidServerConfiguration(email), cancellationToken);
+            using MimeMessage? mimeMessage = errorMessage.InvalidServerConfiguration(email);
+            await SendErrorMessage(email, mimeMessage, cancellationToken);
 
             logger.LogWarning("Could not determine receiver for message #{Id} from {From} to {To}. This message will not be forwarded." +
                 "Please make sure your email provider specifies the receiver in the Received, Envelope-To, or X-Envelope-To header", email.Id, email.From, email.To);
@@ -59,7 +60,8 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
 
         if (distributionList == null)
         {
-            await SendErrorMessage(email, errorMessage.InvalidAlias(email), cancellationToken);
+            using MimeMessage? mimeMessage = errorMessage.InvalidAlias(email);
+            await SendErrorMessage(email, mimeMessage, cancellationToken);
 
             logger.LogInformation("No group found with alias {Receiver} for email #{Id} from {From}", email.Receiver, email.Id, email.From);
             return;
@@ -75,7 +77,8 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
 
         if (email.Header == null)
         {
-            await SendErrorMessage(email, errorMessage.TooManyHeaders(email), cancellationToken);
+            using MimeMessage? mimeMessage = errorMessage.TooManyHeaders(email);
+            await SendErrorMessage(email, mimeMessage, cancellationToken);
 
             logger.LogInformation("Email #{Id} from {From} to {Receiver} exceeded the header size limit", email.Id, email.From, email.Receiver);
             return;
@@ -83,7 +86,8 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
 
         if (email.Body == null)
         {
-            await SendErrorMessage(email, errorMessage.TooBigMessage(email), cancellationToken);
+            using MimeMessage? mimeMessage = errorMessage.TooBigMessage(email);
+            await SendErrorMessage(email, mimeMessage, cancellationToken);
 
             logger.LogInformation("Email #{Id} from {From} to {Receiver} exceeded the body size limit", email.Id, email.From, email.Receiver);
             return;
@@ -92,7 +96,7 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
         MailboxAddress[] recipients = await distributionListService.GetRecipients(distributionList, cancellationToken);
         foreach (MailboxAddress address in recipients)
         {
-            MimeMessage preparedMessage = distributionList.Flags.HasFlag(DistributionListFlags.Newsletter)
+            using MimeMessage preparedMessage = distributionList.Flags.HasFlag(DistributionListFlags.Newsletter)
                 ? await errorMessage.PrepareForForwardTo(email, address, cancellationToken)
                 : errorMessage.PrepareForResentTo(email, address);
             await emailDelivery.Enqueue(address.Address, preparedMessage, email.Id, cancellationToken);

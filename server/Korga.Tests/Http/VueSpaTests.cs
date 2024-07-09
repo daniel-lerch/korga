@@ -23,6 +23,6 @@ public class VueSpaTests
         Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
         string body = await response.Content.ReadAsStringAsync();
         Assert.True(body.StartsWith("<!DOCTYPE html>"), "Body is missing DOCTYPE");
-        Assert.True(body.Contains($"window.resourceBasePath = '{pathbase}/'"), "Body is missing pathbase");
+        Assert.True(body.Contains($"window.basePath = '{pathbase}/'"), "Body is missing pathbase");
     }
 }
