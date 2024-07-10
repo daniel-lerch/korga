@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace Korga.Controllers
 {
+    [Authorize]
     [ApiController]
     public class DistributionListController : ControllerBase
     {
@@ -25,7 +26,6 @@ namespace Korga.Controllers
             this.filterService = filterService;
         }
 
-        [Authorize]
         [HttpGet("~/api/distribution-lists")]
         [ProducesResponseType(typeof(DistributionListResponse[]), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetDistributionLists()
@@ -73,6 +73,69 @@ namespace Korga.Controllers
             }
 
             return new JsonResult(response);
+        }
+
+        [HttpPost("~/api/distribution-lists")]
+        public async Task<IActionResult> CreateDistributionList(DistributionListRequest request)
+        {
+            if (!await filterService.HasPermission(User, "distribution-lists:modify"))
+                return StatusCode(StatusCodes.Status403Forbidden);
+
+            DistributionList distributionList = new(request.Alias)
+            {
+                Flags = request.Newsletter ? DistributionListFlags.Newsletter : DistributionListFlags.None,
+            };
+
+            database.DistributionLists.Add(distributionList);
+            await database.SaveChangesAsync();
+
+            return StatusCode(StatusCodes.Status201Created);
+        }
+
+        [HttpPut("~/api/distribution-list/{id}")]
+        public async Task<IActionResult> UpdateDistributionList(long id, DistributionListRequest request)
+        {
+            if (!await filterService.HasPermission(User, "distribution-lists:modify"))
+                return StatusCode(StatusCodes.Status403Forbidden);
+
+            DistributionList? distributionList = await database.DistributionLists.SingleOrDefaultAsync(l => l.Id == id);
+
+            if (distributionList == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+
+            distributionList.Alias = request.Alias;
+            distributionList.Flags = request.Newsletter ? DistributionListFlags.Newsletter : DistributionListFlags.None;
+
+            await database.SaveChangesAsync();
+
+            return StatusCode(StatusCodes.Status204NoContent);
+        }
+
+        [HttpDelete("~/api/distribution-list/{id}")]
+        public async Task<IActionResult> DeleteDistributionList(long id)
+        {
+            if (!await filterService.HasPermission(User, "distribution-lists:modify"))
+                return StatusCode(StatusCodes.Status403Forbidden);
+
+            DistributionList? distributionList = await database.DistributionLists
+                .Include(l => l.PermittedRecipients)
+                .Include(l => l.PermittedSenders)
+                .SingleOrDefaultAsync(l => l.Id == id);
+
+            if (distributionList == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+
+            database.DistributionLists.Remove(distributionList);
+
+            if (distributionList.PermittedSenders != null)
+                database.PersonFilterLists.Remove(distributionList.PermittedSenders);
+
+            if (distributionList.PermittedRecipients != null)
+                database.PersonFilterLists.Remove(distributionList.PermittedRecipients);
+
+            await database.SaveChangesAsync();
+
+            return StatusCode(StatusCodes.Status204NoContent);
         }
     }
 }
