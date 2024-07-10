@@ -76,6 +76,7 @@ namespace Korga.Controllers
         }
 
         [HttpPost("~/api/distribution-lists")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> CreateDistributionList([FromBody] DistributionListRequest request)
         {
             if (!await filterService.HasPermission(User, "distribution-lists:modify"))
@@ -89,10 +90,12 @@ namespace Korga.Controllers
             database.DistributionLists.Add(distributionList);
             await database.SaveChangesAsync();
 
-            return StatusCode(StatusCodes.Status201Created);
+            return StatusCode(StatusCodes.Status204NoContent);
         }
 
         [HttpPut("~/api/distribution-list/{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateDistributionList(long id, [FromBody] DistributionListRequest request)
         {
             if (!await filterService.HasPermission(User, "distribution-lists:modify"))
@@ -112,6 +115,8 @@ namespace Korga.Controllers
         }
 
         [HttpDelete("~/api/distribution-list/{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteDistributionList(long id)
         {
             if (!await filterService.HasPermission(User, "distribution-lists:modify"))

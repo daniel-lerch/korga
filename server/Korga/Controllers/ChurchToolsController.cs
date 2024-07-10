@@ -22,7 +22,27 @@ public class ChurchToolsController : ControllerBase
         this.filterService = filterService;
     }
 
+    [HttpGet("~/api/statuses")]
+    [ProducesResponseType(typeof(StatusResponse[]), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetStatuses()
+    {
+        if (!await filterService.HasPermission(User, "distribution-lists:modify") && !await filterService.HasPermission(User, "permissions:modify"))
+            return StatusCode(StatusCodes.Status403Forbidden);
+
+        var statuses = await database.Status
+            .Where(s => s.DeletionTime == default)
+            .Select(s => new StatusResponse
+            {
+                Id = s.Id,
+                Name = s.Name,
+            })
+            .ToListAsync();
+
+        return new JsonResult(statuses);
+    }
+
     [HttpGet("~/api/groups")]
+    [ProducesResponseType(typeof(GroupResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetGroups()
     {
         if (!await filterService.HasPermission(User, "distribution-lists:modify") && !await filterService.HasPermission(User, "permissions:modify"))
@@ -42,6 +62,7 @@ public class ChurchToolsController : ControllerBase
     }
 
     [HttpGet("~/api/group-types")]
+    [ProducesResponseType(typeof(GroupTypeResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetGroupTypes()
     {
         if (!await filterService.HasPermission(User, "distribution-lists:modify") && !await filterService.HasPermission(User, "permissions:modify"))
@@ -60,6 +81,7 @@ public class ChurchToolsController : ControllerBase
     }
 
     [HttpGet("~/api/group-roles")]
+    [ProducesResponseType(typeof(GroupRoleResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetGroupRoles()
     {
         if (!await filterService.HasPermission(User, "distribution-lists:modify") && !await filterService.HasPermission(User, "permissions:modify"))
@@ -79,6 +101,7 @@ public class ChurchToolsController : ControllerBase
     }
 
     [HttpGet("~/api/people")]
+    [ProducesResponseType(typeof(PersonResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPeople()
     {
         if (!await filterService.HasPermission(User, "distribution-lists:modify") && !await filterService.HasPermission(User, "permissions:modify"))

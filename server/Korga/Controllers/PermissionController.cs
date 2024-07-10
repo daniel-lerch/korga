@@ -25,12 +25,13 @@ public class PermissionController : ControllerBase
     }
 
     [HttpGet("~/api/permissions")]
+    [ProducesResponseType(typeof(PermissionResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> Get()
     {
         if (!await filterService.HasPermission(User, "permissions:view") && !await filterService.HasPermission(User, "permissions:modify"))
             return StatusCode(StatusCodes.Status403Forbidden);
 
-        List<Permission> permissions = await database.Permissions.Include(p => p.PersonFilterList).ToListAsync();
+        List<Permission> permissions = await database.Permissions.Include(p => p.PersonFilterList).ThenInclude(l => l!.Filters).ToListAsync();
 
         List<PermissionResponse> response = [];
 
@@ -54,6 +55,10 @@ public class PermissionController : ControllerBase
     }
 
     [HttpPost("~/api/permission/{key}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> AddFilter(string key, [FromBody] PersonFilterRequest request)
     {
         if (!await filterService.HasPermission(User, "permissions:modify"))
@@ -82,11 +87,17 @@ public class PermissionController : ControllerBase
         {
             return StatusCode(StatusCodes.Status400BadRequest);
         }
+        catch (DbUpdateException ex) when (ex.IsUniqueConstraintViolation())
+        {
+            return StatusCode(StatusCodes.Status409Conflict);
+        }
 
         return StatusCode(StatusCodes.Status204NoContent);
     }
 
     [HttpDelete("~/api/permission/{key}/{filterId}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RemoveFilter(string key, int filterId)
     {
         if (!await filterService.HasPermission(User, "permissions:modify"))
