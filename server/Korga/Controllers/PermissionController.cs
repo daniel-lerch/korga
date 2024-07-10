@@ -1,4 +1,5 @@
-﻿using Korga.Filters;
+﻿using Korga.Extensions;
+using Korga.Filters;
 using Korga.Filters.Entities;
 using Korga.Models.Json;
 using Microsoft.AspNetCore.Authorization;
@@ -50,5 +51,60 @@ public class PermissionController : ControllerBase
         }
 
         return new JsonResult(response);
+    }
+
+    [HttpPost("~/api/permission/{key}")]
+    public async Task<IActionResult> AddFilter(string key, [FromBody] PersonFilterRequest request)
+    {
+        if (!await filterService.HasPermission(User, "permissions:modify"))
+            return StatusCode(StatusCodes.Status403Forbidden);
+
+        Permission? permission = await database.Permissions.Include(p => p.PersonFilterList).FirstOrDefaultAsync(p => p.Key == key);
+
+        if (permission == null)
+            return StatusCode(StatusCodes.Status404NotFound);
+
+        try
+        {
+            PersonFilter filter = request.ToEntity();
+            if (permission.PersonFilterList == null)
+            {
+                permission.PersonFilterList = new() { Filters = [filter] };
+            }
+            else
+            {
+                filter.PersonFilterListId = permission.PersonFilterList.Id;
+                database.PersonFilters.Add(filter);
+            }
+            await database.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex.IsForeignKeyConstraintViolation())
+        {
+            return StatusCode(StatusCodes.Status400BadRequest);
+        }
+
+        return StatusCode(StatusCodes.Status204NoContent);
+    }
+
+    [HttpDelete("~/api/permission/{key}/{filterId}")]
+    public async Task<IActionResult> RemoveFilter(string key, int filterId)
+    {
+        if (!await filterService.HasPermission(User, "permissions:modify"))
+            return StatusCode(StatusCodes.Status403Forbidden);
+
+        Permission? permission = await database.Permissions.FirstOrDefaultAsync(p => p.Key == key);
+
+        if (permission == null)
+            return StatusCode(StatusCodes.Status404NotFound);
+
+        PersonFilter? filter = await database.PersonFilters.SingleOrDefaultAsync(f => f.Id == filterId && f.PersonFilterListId == permission.PersonFilterListId);
+
+        if (filter == null)
+            return StatusCode(StatusCodes.Status404NotFound);
+
+        database.PersonFilters.Remove(filter);
+        await database.SaveChangesAsync();
+
+        return StatusCode(StatusCodes.Status204NoContent);
     }
 }
