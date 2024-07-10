@@ -26,7 +26,7 @@ public class PermissionController : ControllerBase
     [HttpGet("~/api/permissions")]
     public async Task<IActionResult> Get()
     {
-        if (!await filterService.HasPermission(User, "permissions:view"))
+        if (!await filterService.HasPermission(User, "permissions:view") && !await filterService.HasPermission(User, "permissions:modify"))
             return StatusCode(StatusCodes.Status403Forbidden);
 
         List<Permission> permissions = await database.Permissions.Include(p => p.PersonFilterList).ToListAsync();

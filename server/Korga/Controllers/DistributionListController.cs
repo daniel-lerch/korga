@@ -30,7 +30,7 @@ namespace Korga.Controllers
         [ProducesResponseType(typeof(DistributionListResponse[]), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetDistributionLists()
         {
-            if (!await filterService.HasPermission(User, "distribution-lists:view"))
+            if (!await filterService.HasPermission(User, "distribution-lists:view") && !await filterService.HasPermission(User, "distribution-lists:modify"))
                 return StatusCode(StatusCodes.Status403Forbidden);
 
             List<DistributionList> distributionLists = await database.DistributionLists
@@ -76,7 +76,7 @@ namespace Korga.Controllers
         }
 
         [HttpPost("~/api/distribution-lists")]
-        public async Task<IActionResult> CreateDistributionList(DistributionListRequest request)
+        public async Task<IActionResult> CreateDistributionList([FromBody] DistributionListRequest request)
         {
             if (!await filterService.HasPermission(User, "distribution-lists:modify"))
                 return StatusCode(StatusCodes.Status403Forbidden);
@@ -93,7 +93,7 @@ namespace Korga.Controllers
         }
 
         [HttpPut("~/api/distribution-list/{id}")]
-        public async Task<IActionResult> UpdateDistributionList(long id, DistributionListRequest request)
+        public async Task<IActionResult> UpdateDistributionList(long id, [FromBody] DistributionListRequest request)
         {
             if (!await filterService.HasPermission(User, "distribution-lists:modify"))
                 return StatusCode(StatusCodes.Status403Forbidden);
