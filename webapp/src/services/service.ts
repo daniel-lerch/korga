@@ -16,10 +16,12 @@ export interface ServiceHistory {
     groupMemberStatus: "Active" | "Requested" | "ToDelete"
     comment: string
   }[]
-  serviceDates: {
-    serviceId: number
-    date: string
-  }[]
+  serviceDates: ServiceDate[]
+}
+
+export interface ServiceDate {
+  serviceId: number
+  date: string
 }
 
 export function getServices(): Promise<Services[]> {

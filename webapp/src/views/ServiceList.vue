@@ -10,7 +10,7 @@
       :multiple="true"
       @select="fetchServiceHistory"
       @remove="fetchServiceHistory"
-      v-if="services?.length > 0"
+      v-if="services != null && services?.length > 0"
     ></multiselect>
 
     <div>
@@ -69,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ServiceHistory, Services } from "@/services/service"
+import type { ServiceDate, ServiceHistory, Services } from "@/services/service"
 import { onMounted, ref } from "vue"
 import { getServiceHistory, getServices } from "@/services/service"
 import Multiselect from "vue-multiselect"
@@ -100,24 +100,31 @@ const fetchServiceHistory = async function () {
 }
 
 const sortServiceHistory = function () {
-  serviceHistory.value = serviceHistory.value?.sort((a, b) => {
+  if (!serviceHistory.value) {
+    return
+  }
+
+  serviceHistory.value = serviceHistory.value.sort((a, b) => {
     // Helper function to find the most recent past date
-    const getLastPastServiceDate = (serviceDates) => {
+    const getLastPastServiceDate = (serviceDates: ServiceDate[]): Date => {
+      // Filter out all dates that are in the future
       const pastDates = serviceDates
         .map((dateObj) => new Date(dateObj.date))
         .filter((date) => date <= new Date())
 
+      // If there are no past dates, return a very old date
       if (pastDates.length === 0) {
-        return new Date(0) // Return a very old date if there are no past dates
+        return new Date(0)
       }
 
-      return new Date(Math.max(...pastDates))
+      // Return the most recent past date
+      return new Date(Math.max(...pastDates.map((date) => date.getTime())))
     }
 
     const lastPastDateA = getLastPastServiceDate(a.serviceDates)
     const lastPastDateB = getLastPastServiceDate(b.serviceDates)
 
-    return lastPastDateA - lastPastDateB
+    return lastPastDateA.getTime() - lastPastDateB.getTime()
   })
   if (selectedOption.value.id === 1) {
     serviceHistory.value = serviceHistory.value?.sort((a, b) => {
