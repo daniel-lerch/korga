@@ -1,6 +1,6 @@
 import client from "./client"
 
-export interface Services {
+export interface Service {
   id: number
   name: string
   serviceGroup: string | null
@@ -24,7 +24,7 @@ export interface ServiceDate {
   date: string
 }
 
-export function getServices(): Promise<Services[]> {
+export function getServices(): Promise<Service[]> {
   return client.get("/api/services")
 }
 

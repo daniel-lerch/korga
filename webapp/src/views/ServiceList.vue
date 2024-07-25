@@ -69,14 +69,14 @@
 </template>
 
 <script setup lang="ts">
-import type { ServiceDate, ServiceHistory, Services } from "@/services/service"
+import type { ServiceDate, ServiceHistory, Service } from "@/services/service"
 import { onMounted, ref } from "vue"
 import { getServiceHistory, getServices } from "@/services/service"
 import Multiselect from "vue-multiselect"
 
-const services = ref<Services[] | null>(null)
+const services = ref<Service[] | null>(null)
 const serviceHistory = ref<ServiceHistory[] | null>(null)
-const selectedServices = ref<Services[]>([])
+const selectedServices = ref<Service[]>([])
 
 const sortOptions = [
   { id: 0, text: "am längsten ohne Dienst" },
