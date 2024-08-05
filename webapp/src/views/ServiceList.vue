@@ -1,32 +1,35 @@
 <template>
   <div class="container">
     <h1>Dienstzuteilung</h1>
-    <multiselect
-      v-model="selectedServices"
-      placeholder="Bitte Auswählen"
-      label="name"
-      track-by="id"
-      :options="services"
-      :multiple="true"
-      :close-on-select="false"
-      @select="fetchServiceHistory"
-      @remove="fetchServiceHistory"
-      v-if="services != null && services.length > 0"
-    ></multiselect>
-
-    <div>
-      <label>Sortieren nach:</label>
+    <div class="selection-bar">
       <multiselect
-        v-model="selectedOption"
-        :options="sortOptions"
-        label="text"
+        class="selection-service"
+        v-model="selectedServices"
+        placeholder="Bitte Auswählen"
+        label="name"
         track-by="id"
-        :searchable="false"
-        :show-labels="false"
-        :allow-empty="false"
-        @select="sortServiceHistory"
-        placeholder="Pick a value"
+        :options="services"
+        :multiple="true"
+        :close-on-select="false"
+        @select="fetchServiceHistory"
+        @remove="fetchServiceHistory"
+        v-if="services != null && services.length > 0"
       ></multiselect>
+
+      <div class="selection-sort">
+        <label>Sortieren nach:</label>
+        <multiselect
+          v-model="selectedOption"
+          :options="sortOptions"
+          label="text"
+          track-by="id"
+          :searchable="false"
+          :show-labels="false"
+          :allow-empty="false"
+          @select="sortServiceHistory"
+          placeholder="Pick a value"
+        ></multiselect>
+      </div>
     </div>
 
     <table class="table table-striped" v-if="serviceHistory">
@@ -152,5 +155,22 @@ tr.requested td {
 tr.todelete td {
   color: var(--bs-danger);
   text-decoration: line-through;
+}
+
+.selection-bar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.selection-sort {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  width: 400px;
+}
+
+.selection-service {
+  flex-grow: 2;
 }
 </style>
