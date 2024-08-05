@@ -21,7 +21,7 @@ public class ServiceHistoryResponse
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public required GroupMemberStatus GroupMemberStatus { get; init; }
-        public required string? Comment { get; init; }
+        public required string Comment { get; init; }
     }
 
     public readonly struct ServiceDate

@@ -8,9 +8,10 @@
       track-by="id"
       :options="services"
       :multiple="true"
+      :close-on-select="false"
       @select="fetchServiceHistory"
       @remove="fetchServiceHistory"
-      v-if="services != null && services?.length > 0"
+      v-if="services != null && services.length > 0"
     ></multiselect>
 
     <div>
@@ -56,9 +57,7 @@
           <td>
             {{
               person.groups
-                .filter(
-                  (group) => group.comment != null && group.comment !== ""
-                )
+                .filter((group) => group.comment !== "")
                 .map((group) => `${group.groupName}: ${group.comment}`)
                 .join(", ")
             }}

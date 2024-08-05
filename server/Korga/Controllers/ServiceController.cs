@@ -115,7 +115,7 @@ public class ServiceController : ControllerBase
                     GroupId = y.GroupId,
                     GroupName = y.GroupName,
                     GroupMemberStatus = y.GroupMemberStatus,
-                    Comment = y.Comment
+                    Comment = y.Comment ?? string.Empty,
                 }).ToList()
             });
     }
