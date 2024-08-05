@@ -14,7 +14,7 @@
     ></multiselect>
 
     <div>
-      <label class="typo__label">Sortieren nach:</label>
+      <label>Sortieren nach:</label>
       <multiselect
         v-model="selectedOption"
         :options="sortOptions"
@@ -53,7 +53,16 @@
           <td>
             {{ person.serviceDates.map((ele) => ele.date).join(", ") }}
           </td>
-          <td>{{ person.groups[0].comment }}</td>
+          <td>
+            {{
+              person.groups
+                .filter(
+                  (group) => group.comment != null && group.comment !== ""
+                )
+                .map((group) => `${group.groupName}: ${group.comment}`)
+                .join(", ")
+            }}
+          </td>
         </tr>
       </tbody>
     </table>
