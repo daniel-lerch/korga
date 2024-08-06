@@ -1,8 +1,8 @@
 ﻿using Korga.ChurchTools.Entities;
+using Korga.EmailDelivery.Entities;
 using Korga.EmailRelay.Entities;
 using Korga.Filters.Entities;
 using Microsoft.EntityFrameworkCore;
-using Korga.EmailDelivery.Entities;
 
 namespace Korga;
 
@@ -140,7 +140,7 @@ CONCAT(
         var permission = modelBuilder.Entity<Permission>();
         permission.HasKey(p => p.Key);
         permission.HasOne(p => p.PersonFilterList).WithMany().HasForeignKey(p => p.PersonFilterListId);
-        permission.Property(p => p.Key).ValueGeneratedNever();
+        permission.Property(p => p.Key).HasConversion<string>().ValueGeneratedNever();
     }
 
     private void CreateEmailRelay(ModelBuilder modelBuilder)

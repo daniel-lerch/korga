@@ -26,7 +26,7 @@ public class ChurchToolsController : ControllerBase
     [ProducesResponseType(typeof(StatusResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStatuses()
     {
-        if (!await filterService.HasPermission(User, "distribution-lists:modify") && !await filterService.HasPermission(User, "permissions:modify"))
+        if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin) && !await filterService.HasPermission(User, Permissions.Permissions_Admin))
             return StatusCode(StatusCodes.Status403Forbidden);
 
         var statuses = await database.Status
@@ -45,7 +45,7 @@ public class ChurchToolsController : ControllerBase
     [ProducesResponseType(typeof(GroupResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetGroups()
     {
-        if (!await filterService.HasPermission(User, "distribution-lists:modify") && !await filterService.HasPermission(User, "permissions:modify"))
+        if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin) && !await filterService.HasPermission(User, Permissions.Permissions_Admin))
             return StatusCode(StatusCodes.Status403Forbidden);
 
         var groups = await database.Groups
@@ -65,7 +65,7 @@ public class ChurchToolsController : ControllerBase
     [ProducesResponseType(typeof(GroupTypeResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetGroupTypes()
     {
-        if (!await filterService.HasPermission(User, "distribution-lists:modify") && !await filterService.HasPermission(User, "permissions:modify"))
+        if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin) && !await filterService.HasPermission(User, Permissions.Permissions_Admin))
             return StatusCode(StatusCodes.Status403Forbidden);
 
         var groupTypes = await database.GroupTypes
@@ -84,7 +84,7 @@ public class ChurchToolsController : ControllerBase
     [ProducesResponseType(typeof(GroupRoleResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetGroupRoles()
     {
-        if (!await filterService.HasPermission(User, "distribution-lists:modify") && !await filterService.HasPermission(User, "permissions:modify"))
+        if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin) && !await filterService.HasPermission(User, Permissions.Permissions_Admin))
             return StatusCode(StatusCodes.Status403Forbidden);
 
         var groupRoles = await database.GroupRoles
@@ -104,7 +104,7 @@ public class ChurchToolsController : ControllerBase
     [ProducesResponseType(typeof(PersonResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPeople()
     {
-        if (!await filterService.HasPermission(User, "distribution-lists:modify") && !await filterService.HasPermission(User, "permissions:modify"))
+        if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin) && !await filterService.HasPermission(User, Permissions.Permissions_Admin))
             return StatusCode(StatusCodes.Status403Forbidden);
 
         var people = await database.People

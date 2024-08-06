@@ -15,7 +15,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{28945597-DB66-4C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{2ED6D7FB-8B8A-4139-98C3-854E00A38490}"
 	ProjectSection(SolutionItems) = preProject
-		docs\authorization.md = docs\authorization.md
 		docs\docker-compose.yml = docs\docker-compose.yml
 		docs\email-processing-pipeline.md = docs\email-processing-pipeline.md
 		docs\frontend.md = docs\frontend.md

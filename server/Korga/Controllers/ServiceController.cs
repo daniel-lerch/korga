@@ -32,7 +32,7 @@ public class ServiceController : ControllerBase
     [ProducesResponseType(typeof(ServiceResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetServices()
     {
-        if (!await filterService.HasPermission(User, "event-history:view"))
+        if (!await filterService.HasPermission(User, Permissions.ServiceHistory_View))
             return StatusCode(StatusCodes.Status403Forbidden);
 
         var serviceGroupsTask = churchTools.GetServiceGroups();
@@ -53,7 +53,7 @@ public class ServiceController : ControllerBase
     [ProducesResponseType(typeof(ServiceHistoryResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetServiceHistory(int id, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to)
     {
-        if (!await filterService.HasPermission(User, "event-history:view"))
+        if (!await filterService.HasPermission(User, Permissions.ServiceHistory_View))
             return StatusCode(StatusCodes.Status403Forbidden);
 
         Service service = await churchTools.GetService(id);

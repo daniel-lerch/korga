@@ -1,4 +1,7 @@
-﻿namespace Korga.Models.Json;
+﻿using Korga.Filters;
+using System.Collections.Generic;
+
+namespace Korga.Models.Json;
 
 public class ProfileResponse
 {
@@ -6,5 +9,5 @@ public class ProfileResponse
     public required string GivenName { get; init; }
     public required string FamilyName { get; init; }
     public required string EmailAddress { get; init; }
-    public int? ChurchToolsPersonId { get; init; }
+    public Dictionary<Permissions, bool> Permissions { get; init; } = [];
 }

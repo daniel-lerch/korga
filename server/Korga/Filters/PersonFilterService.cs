@@ -47,12 +47,12 @@ public class PersonFilterService
         return await query.Distinct().ToListAsync(cancellationToken);
     }
 
-    public async ValueTask<bool> HasPermission(ClaimsPrincipal user, string permissionKey)
+    public async ValueTask<bool> HasPermission(ClaimsPrincipal user, Permissions permission)
     {
         Person? person = await lookupService.GetPerson(user);
         if (person == null) return false;
 
-        List<PersonFilter> personFilters = await database.Permissions.Where(p => p.Key == permissionKey)
+        List<PersonFilter> personFilters = await database.Permissions.Where(p => p.Key == permission)
             .Join(database.PersonFilters, p => p.PersonFilterListId, f => f.PersonFilterListId, (p, f) => f)
             .ToListAsync();
 

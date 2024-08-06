@@ -30,7 +30,7 @@ namespace Korga.Controllers
         [ProducesResponseType(typeof(DistributionListResponse[]), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetDistributionLists()
         {
-            if (!await filterService.HasPermission(User, "distribution-lists:view") && !await filterService.HasPermission(User, "distribution-lists:modify"))
+            if (!await filterService.HasPermission(User, Permissions.DistributionLists_View) && !await filterService.HasPermission(User, Permissions.DistributionLists_Admin))
                 return StatusCode(StatusCodes.Status403Forbidden);
 
             List<DistributionList> distributionLists = await database.DistributionLists
@@ -79,7 +79,7 @@ namespace Korga.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> CreateDistributionList([FromBody] DistributionListRequest request)
         {
-            if (!await filterService.HasPermission(User, "distribution-lists:modify"))
+            if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin))
                 return StatusCode(StatusCodes.Status403Forbidden);
 
             DistributionList distributionList = new(request.Alias)
@@ -98,7 +98,7 @@ namespace Korga.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateDistributionList(long id, [FromBody] DistributionListRequest request)
         {
-            if (!await filterService.HasPermission(User, "distribution-lists:modify"))
+            if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin))
                 return StatusCode(StatusCodes.Status403Forbidden);
 
             DistributionList? distributionList = await database.DistributionLists.SingleOrDefaultAsync(l => l.Id == id);
@@ -119,7 +119,7 @@ namespace Korga.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteDistributionList(long id)
         {
-            if (!await filterService.HasPermission(User, "distribution-lists:modify"))
+            if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin))
                 return StatusCode(StatusCodes.Status403Forbidden);
 
             DistributionList? distributionList = await database.DistributionLists
