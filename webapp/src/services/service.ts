@@ -13,7 +13,7 @@ export interface ServiceHistory {
   groups: {
     groupId: number
     groupName: string
-    groupMemberStatus: "Active" | "Requested" | "ToDelete"
+    groupMemberStatus: "Active" | "Requested" | "To_Delete"
     comment: string
   }[]
   serviceDates: ServiceDate[]

@@ -47,8 +47,9 @@
           v-for="(person, index) in serviceHistory"
           :key="index"
           :class="{
-            requested: person.groups[0].groupMemberStatus === 'Requested',
-            todelete: person.groups[0].groupMemberStatus === 'ToDelete',
+            inactive: person.groups.some(
+              (group) => group.groupMemberStatus !== 'Active'
+            ),
           }"
         >
           <th scope="row">{{ index }}</th>
@@ -56,6 +57,19 @@
           <td>{{ person.lastName }}</td>
           <td>
             {{ person.serviceDates.map((ele) => ele.date).join(", ") }}
+            <span
+              v-for="group in person.groups.filter(
+                (g) => g.groupMemberStatus !== 'Active'
+              )"
+              v-bind:key="group.groupName"
+              class="badge rounded-pill"
+              :class="{
+                'text-bg-danger': group.groupMemberStatus === 'To_Delete',
+                'text-bg-secondary': group.groupMemberStatus === 'Requested',
+              }"
+            >
+              {{ group.groupName }}: {{ group.groupMemberStatus }}
+            </span>
           </td>
           <td>
             {{
@@ -148,7 +162,7 @@ const sortServiceHistory = function () {
 <style src="node_modules/vue-multiselect/dist/vue-multiselect.css"></style>
 
 <style scoped>
-tr.requested td {
+tr.inactive td {
   color: var(--bs-secondary);
 }
 
