@@ -71,6 +71,9 @@ namespace Korga.ChurchTools
 
         private void CheckServiceHistoryPermissions(GlobalPermissions permissions)
         {
+            if (!permissions.ChurchDb.EditGroupMemberships)
+                // https://forum.church.tools/topic/10368/berechtigungen-f%C3%BCr-groups-groupid-members-endpunkt
+                logger.LogWarning("ChurchTools user does not have permission 'churchdb:edit group memberships'. Event history will not show comments.");
             if (!permissions.ChurchService.View)
                 logger.LogWarning("ChurchTools user does not have permission 'churchservice:view'. Event history will not work.");
             if (permissions.ChurchService.ViewServiceGroup.Count == 0)
