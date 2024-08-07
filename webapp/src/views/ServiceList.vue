@@ -58,6 +58,24 @@
           <td>
             {{ person.serviceDates.map((ele) => ele.date).join(", ") }}
             <span
+              v-if="
+                person.groups[0].groupMemberStatus !== 'Active' &&
+                person.groups.every(
+                  (g) =>
+                    g.groupMemberStatus === person.groups[0].groupMemberStatus
+                )
+              "
+              class="badge rounded-pill"
+              :class="{
+                'text-bg-danger':
+                  person.groups[0].groupMemberStatus === 'To_Delete',
+                'text-bg-secondary':
+                  person.groups[0].groupMemberStatus === 'Requested',
+              }"
+              >{{ person.groups[0].groupMemberStatus }}</span
+            >
+            <span
+              v-else
               v-for="group in person.groups.filter(
                 (g) => g.groupMemberStatus !== 'Active'
               )"
