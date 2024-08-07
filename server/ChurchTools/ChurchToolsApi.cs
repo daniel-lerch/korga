@@ -92,9 +92,14 @@ public class ChurchToolsApi : IChurchToolsApi, IDisposable
         return InternalGetAllPages<Group>("/api/groups", query.ToString(), cancellationToken);
     }
 
-    public ValueTask<List<GroupMember>> GetGroupMembers(CancellationToken cancellationToken = default)
+    public ValueTask<List<GroupsMember>> GetGroupMembers(CancellationToken cancellationToken = default)
     {
-        return InternalGetNonPaged<List<GroupMember>>("/api/groups/members", cancellationToken);
+        return InternalGetNonPaged<List<GroupsMember>>("/api/groups/members", cancellationToken);
+    }
+
+    public ValueTask<List<GroupMember>> GetGroupMembers(int groupId, CancellationToken cancellationToken = default)
+    {
+        return InternalGetAllPages<GroupMember>($"/api/groups/{groupId}/members", null, cancellationToken);
     }
 
     public ValueTask<List<Person>> GetPeople(CancellationToken cancellationToken = default)
