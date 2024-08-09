@@ -34,6 +34,7 @@ public class Startup
 
         services.AddKorgaMySqlDatabase();
 
+        services.AddTransient<PersonLookupService>();
         services.AddTransient<PersonFilterService>();
 
         services.AddSpaStaticFiles(options => options.RootPath = environment.WebRootPath);

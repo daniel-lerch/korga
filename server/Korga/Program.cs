@@ -83,6 +83,7 @@ public class Program
                 services.AddKorgaOptions(context.Configuration);
 				services.AddSingleton(PhysicalConsole.Singleton);
                 services.AddKorgaMySqlDatabase();
+                services.AddTransient<PersonLookupService>();
                 services.AddTransient<PersonFilterService>();
             });
 }

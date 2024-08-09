@@ -5,7 +5,7 @@
 namespace Korga.Commands;
 
 [Command("korga", Description = "Korga server management console")]
-[Subcommand(typeof(DatabaseCommand), typeof(DistributionListCommand))]
+[Subcommand(typeof(DatabaseCommand), typeof(DistributionListCommand), typeof(PermissionCommand))]
 public class KorgaCommand
 {
     private int OnExecute(CommandLineApplication app)

@@ -5,16 +5,18 @@ export interface ProfileResponse {
   givenName: string
   familyName: string
   emailAddress: string
+  permissions: {
+    Permissions_View: boolean
+    Permissions_Admin: boolean
+    DistributionLists_View: boolean
+    DistributionLists_Admin: boolean
+    ServiceHistory_View: boolean
+  }
 }
 
-let profile: ProfileResponse | null = null
 export default {
   async getProfile(): Promise<ProfileResponse | null> {
-    if (profile != null) {
-      return profile
-    }
-    profile = await client.get("/api/profile")
-    return profile
+    return await client.get("/api/profile")
   },
 
   async challengeLogin() {
@@ -23,6 +25,5 @@ export default {
 
   async logout() {
     await client.getResponse("/api/logout")
-    profile = null
   },
 }

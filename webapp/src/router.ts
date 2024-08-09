@@ -4,17 +4,23 @@ import { createRouter, createWebHistory } from "vue-router"
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    redirect: "/service",
+    name: "Dashboard",
+    component: () => import("./views/DashboardView.vue"),
   },
   {
-    path: "/service",
-    name: "Service",
-    component: () => import("../views/ServiceList.vue"),
+    path: "/service-history",
+    name: "ServiceHistory",
+    component: () => import("./views/ServiceHistory.vue"),
   },
   {
     path: "/distribution-lists",
     name: "DistributionLists",
-    component: () => import("../views/DistributionLists.vue"),
+    component: () => import("./views/DistributionLists.vue"),
+  },
+  {
+    path: "/permissions",
+    name: "Permissions",
+    component: () => import("./views/PermissionsView.vue"),
   },
 ]
 

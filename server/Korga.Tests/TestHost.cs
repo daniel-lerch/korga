@@ -6,8 +6,6 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using System.Collections.Generic;
 
@@ -23,8 +21,7 @@ public static class TestHost
 
 		var services = new ServiceCollection();
 		services.AddKorgaOptions(configuration);
-		services.AddSingleton<ILoggerFactory>(new NullLoggerFactory());
-		services.AddKorgaMySqlDatabase();
+        services.AddLogging();
 		return services;
 	}
 

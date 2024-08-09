@@ -1,8 +1,8 @@
 ﻿using Korga.ChurchTools.Entities;
+using Korga.EmailDelivery.Entities;
 using Korga.EmailRelay.Entities;
 using Korga.Filters.Entities;
 using Microsoft.EntityFrameworkCore;
-using Korga.EmailDelivery.Entities;
 
 namespace Korga;
 
@@ -25,10 +25,13 @@ public sealed class DatabaseContext : DbContext
     public DbSet<DepartmentMember> DepartmentMembers => Set<DepartmentMember>();
     public DbSet<Status> Status => Set<Status>();
 
-    public DbSet<InboxEmail> InboxEmails => Set<InboxEmail>();
-    public DbSet<DistributionList> DistributionLists => Set<DistributionList>();
     public DbSet<PersonFilterList> PersonFilterLists => Set<PersonFilterList>();
     public DbSet<PersonFilter> PersonFilters => Set<PersonFilter>();
+
+    public DbSet<Permission> Permissions => Set<Permission>();
+
+    public DbSet<InboxEmail> InboxEmails => Set<InboxEmail>();
+    public DbSet<DistributionList> DistributionLists => Set<DistributionList>();
 
     public DbSet<OutboxEmail> OutboxEmails => Set<OutboxEmail>();
     public DbSet<SentEmail> SentEmails => Set<SentEmail>();
@@ -54,6 +57,7 @@ public sealed class DatabaseContext : DbContext
         var person = modelBuilder.Entity<Person>();
         person.HasKey(p => p.Id);
         person.HasOne(p => p.Status).WithMany().HasForeignKey(p => p.StatusId);
+        person.HasIndex(p => p.Email);
         person.Property(p => p.Id).ValueGeneratedNever();
 
         var group = modelBuilder.Entity<Group>();
@@ -132,6 +136,11 @@ CONCAT(
 
         var singlePerson = modelBuilder.Entity<SinglePerson>();
         singlePerson.HasOne(f => f.Person).WithMany().HasForeignKey(f => f.PersonId);
+
+        var permission = modelBuilder.Entity<Permission>();
+        permission.HasKey(p => p.Key);
+        permission.HasOne(p => p.PersonFilterList).WithMany().HasForeignKey(p => p.PersonFilterListId);
+        permission.Property(p => p.Key).HasConversion<string>().ValueGeneratedNever();
     }
 
     private void CreateEmailRelay(ModelBuilder modelBuilder)
@@ -148,6 +157,7 @@ CONCAT(
         distributionList.HasAlternateKey(dl => dl.Alias);
         distributionList.Property(dl => dl.Flags).HasConversion<int>();
         distributionList.HasOne(dl => dl.PermittedRecipients).WithMany().HasForeignKey(dl => dl.PermittedRecipientsId);
+        distributionList.HasOne(dl => dl.PermittedSenders).WithMany().HasForeignKey(dl => dl.PermittedSendersId);
     }
 
     private void CreateEmailDelivery(ModelBuilder modelBuilder)

@@ -2,7 +2,7 @@
   <header>
     <nav class="navbar navbar-expand-md navbar-dark bg-primary">
       <div class="container-fluid">
-        <router-link to="/service" class="navbar-brand">
+        <router-link :to="{ name: 'Dashboard' }" class="navbar-brand">
           <img
             src="/brand.png"
             alt="Logo"
@@ -23,9 +23,34 @@
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav me-auto">
-            <li class="nav-item" v-if="profile">
-              <router-link :to="{ name: 'Service' }" class="nav-link">
-                Dienste
+            <li
+              class="nav-item"
+              v-if="
+                store.profile?.permissions.DistributionLists_View ||
+                store.profile?.permissions.DistributionLists_Admin
+              "
+            >
+              <router-link :to="{ name: 'DistributionLists' }" class="nav-link">
+                Verteilerlisten
+              </router-link>
+            </li>
+            <li
+              class="nav-item"
+              v-if="store.profile?.permissions.ServiceHistory_View"
+            >
+              <router-link :to="{ name: 'ServiceHistory' }" class="nav-link">
+                Diensthistorie
+              </router-link>
+            </li>
+            <li
+              class="nav-item"
+              v-if="
+                store.profile?.permissions.Permissions_View ||
+                store.profile?.permissions.Permissions_Admin
+              "
+            >
+              <router-link :to="{ name: 'Permissions' }" class="nav-link">
+                Berechtigungen
               </router-link>
             </li>
           </ul>
@@ -47,16 +72,16 @@
 </template>
 
 <script setup lang="ts">
-import type { ProfileResponse } from "@/services/profile"
 import ProfileNav from "@/components/ProfileNav.vue"
+import { useProfileStore } from "@/stores/profile"
 import korga from "@/services/profile"
-import { onMounted, ref } from "vue"
+import { onMounted } from "vue"
 
-const profile = ref<ProfileResponse | null>(null)
+const store = useProfileStore()
 
 onMounted(async () => {
   try {
-    profile.value = await korga.getProfile()
+    store.profile = await korga.getProfile()
   } catch (error) {
     console.log(error)
   }

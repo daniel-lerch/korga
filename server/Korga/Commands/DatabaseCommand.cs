@@ -13,8 +13,6 @@ namespace Korga.Commands;
 [Subcommand(typeof(Migrate), typeof(Create), typeof(Delete))]
 public class DatabaseCommand
 {
-    private const string populateDescription = "Fills an existing database with example data for testing.";
-
     private int OnExecute(CommandLineApplication app)
     {
         app.ShowHint();

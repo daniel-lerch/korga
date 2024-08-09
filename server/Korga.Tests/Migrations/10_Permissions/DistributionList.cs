@@ -1,4 +1,4 @@
-﻿namespace Korga.Tests.Migrations.PersonFilterList;
+﻿namespace Korga.Tests.Migrations.Permissions;
 
 public class DistributionList
 {
@@ -7,4 +7,6 @@ public class DistributionList
     public int Flags { get; set; }
     public long? PermittedRecipientsId { get; set; }
     public PersonFilterList? PermittedRecipients { get; set; }
+    public long? PermittedSendersId { get; set; }
+    public PersonFilterList? PermittedSenders { get; set; }
 }

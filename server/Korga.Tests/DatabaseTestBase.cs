@@ -30,7 +30,7 @@ public abstract class DatabaseTestBase : IDisposable
         connection.ChangeDatabase(databaseName);
 
         // Create DatabaseContext for migrations
-        var serviceCollection = new ServiceCollection()
+        var serviceCollection = TestHost.CreateServiceCollection()
             .AddDbContext<DatabaseContext>(optionsBuilder =>
             {
                 optionsBuilder.UseMySql(

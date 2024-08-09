@@ -1,7 +1,7 @@
 <template>
   <LoadingSpinner v-if="!loaded" :state="{ error }" />
   <div v-else class="container page-loaded-container">
-    <h1>E-Mail-Verteiler</h1>
+    <h1>Verteilerlisten</h1>
     <div class="container">
       <div
         v-for="dl in distributionLists"
