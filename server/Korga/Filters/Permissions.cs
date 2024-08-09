@@ -1,5 +1,8 @@
-﻿namespace Korga.Filters;
+﻿using System.Text.Json.Serialization;
 
+namespace Korga.Filters;
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum Permissions
 {
     Permissions_View,

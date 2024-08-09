@@ -24,6 +24,7 @@ public class ChurchToolsController : ControllerBase
 
     [HttpGet("~/api/statuses")]
     [ProducesResponseType(typeof(StatusResponse[]), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetStatuses()
     {
         if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin) && !await filterService.HasPermission(User, Permissions.Permissions_Admin))
@@ -43,6 +44,7 @@ public class ChurchToolsController : ControllerBase
 
     [HttpGet("~/api/groups")]
     [ProducesResponseType(typeof(GroupResponse[]), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetGroups()
     {
         if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin) && !await filterService.HasPermission(User, Permissions.Permissions_Admin))
@@ -63,6 +65,7 @@ public class ChurchToolsController : ControllerBase
 
     [HttpGet("~/api/group-types")]
     [ProducesResponseType(typeof(GroupTypeResponse[]), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetGroupTypes()
     {
         if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin) && !await filterService.HasPermission(User, Permissions.Permissions_Admin))
@@ -82,6 +85,7 @@ public class ChurchToolsController : ControllerBase
 
     [HttpGet("~/api/group-roles")]
     [ProducesResponseType(typeof(GroupRoleResponse[]), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetGroupRoles()
     {
         if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin) && !await filterService.HasPermission(User, Permissions.Permissions_Admin))
@@ -102,6 +106,7 @@ public class ChurchToolsController : ControllerBase
 
     [HttpGet("~/api/people")]
     [ProducesResponseType(typeof(PersonResponse[]), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetPeople()
     {
         if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin) && !await filterService.HasPermission(User, Permissions.Permissions_Admin))

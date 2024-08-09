@@ -28,6 +28,7 @@ namespace Korga.Controllers
 
         [HttpGet("~/api/distribution-lists")]
         [ProducesResponseType(typeof(DistributionListResponse[]), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> GetDistributionLists()
         {
             if (!await filterService.HasPermission(User, Permissions.DistributionLists_View) && !await filterService.HasPermission(User, Permissions.DistributionLists_Admin))
@@ -77,6 +78,7 @@ namespace Korga.Controllers
 
         [HttpPost("~/api/distribution-lists")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> CreateDistributionList([FromBody] DistributionListRequest request)
         {
             if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin))
@@ -95,7 +97,8 @@ namespace Korga.Controllers
 
         [HttpPut("~/api/distribution-list/{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateDistributionList(long id, [FromBody] DistributionListRequest request)
         {
             if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin))
@@ -116,7 +119,8 @@ namespace Korga.Controllers
 
         [HttpDelete("~/api/distribution-list/{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteDistributionList(long id)
         {
             if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin))

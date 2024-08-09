@@ -26,6 +26,7 @@ public class PermissionController : ControllerBase
 
     [HttpGet("~/api/permissions")]
     [ProducesResponseType(typeof(PermissionResponse[]), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Get()
     {
         if (!await filterService.HasPermission(User, Permissions.Permissions_View) && !await filterService.HasPermission(User, Permissions.Permissions_Admin))
@@ -57,9 +58,10 @@ public class PermissionController : ControllerBase
 
     [HttpPost("~/api/permission/{key}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> AddFilter(Permissions key, [FromBody] PersonFilterRequest request)
     {
         if (!await filterService.HasPermission(User, Permissions.Permissions_Admin))
@@ -91,7 +93,8 @@ public class PermissionController : ControllerBase
 
     [HttpDelete("~/api/permission/{key}/{filterId}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RemoveFilter(Permissions key, int filterId)
     {
         if (!await filterService.HasPermission(User, Permissions.Permissions_Admin))

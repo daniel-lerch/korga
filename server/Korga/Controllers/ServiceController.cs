@@ -27,6 +27,7 @@ public class ServiceController : ControllerBase
 
     [HttpGet("~/api/services")]
     [ProducesResponseType(typeof(ServiceResponse[]), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetServices()
     {
         if (!await filterService.HasPermission(User, Permissions.ServiceHistory_View))
@@ -48,6 +49,7 @@ public class ServiceController : ControllerBase
 
     [HttpGet("~/api/services/history")]
     [ProducesResponseType(typeof(ServiceHistoryResponse[]), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetServiceHistory([FromQuery] HashSet<int> serviceId, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to)
     {
         if (!await filterService.HasPermission(User, Permissions.ServiceHistory_View))

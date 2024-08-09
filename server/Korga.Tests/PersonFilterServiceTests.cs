@@ -198,6 +198,23 @@ public class PersonFilterServiceTests : DatabaseTestBase
     }
 
     [Fact]
+    public async Task TestAddFilter_SinglePerson_NewFilter()
+    {
+        await InitializeSampleDataset();
+
+        // Create sample filter
+        PersonFilterList filterList = new()
+        {
+            Filters = [new SinglePerson { PersonId = 1 }]
+        };
+        databaseContext.PersonFilterLists.Add(filterList);
+        await databaseContext.SaveChangesAsync();
+
+        bool inserted = await personFilterService.AddFilter(filterList.Id, new SinglePerson { PersonId = 2 });
+        Assert.True(inserted);
+    }
+
+    [Fact]
     public async Task TestAddFilter_SinglePerson_AlreadyExists()
     {
         await InitializeSampleDataset();
