@@ -84,7 +84,7 @@ public class ServiceController : ControllerBase
         foreach (Service service in services)
         {
             if (service.GroupIds == null) continue;
-            groupIds.UnionWith(service.GroupIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse));
+            groupIds.UnionWith(service.GroupIds);
         }
         return groupIds;
     }
