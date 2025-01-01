@@ -4,7 +4,7 @@ namespace Korga.EmailRelay.Entities;
 
 public class InboxEmail
 {
-    public InboxEmail(uint? uniqueId, string subject, string from, string? sender, string? replyTo, string to, string? receiver, byte[]? header, byte[]? body)
+    public InboxEmail(uint? uniqueId, string? subject, string? from, string? sender, string? replyTo, string? to, string? receiver, byte[]? header, byte[]? body)
     {
         UniqueId = uniqueId;
         Subject = subject;
@@ -23,11 +23,11 @@ public class InboxEmail
     public DistributionList? DistributionList { get; set; }
 
     public uint? UniqueId { get; set; }
-    public string Subject { get; set; }
-    public string From { get; set; }
+    public string? Subject { get; set; }
+    public string? From { get; set; }
     public string? Sender { get; set; }
     public string? ReplyTo { get; set; }
-    public string To { get; set; }
+    public string? To { get; set; }
     /// <summary>
     /// The mailbox this email was delivered to via SMTP.
     /// Determined by <c>Received</c>, <c>Envelope-To</c> or <c>X-Envelope-To</c> headers.
