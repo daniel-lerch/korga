@@ -6,6 +6,7 @@ public class DatabaseContext : DbContext
 {
     public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
 
+    public DbSet<InboxEmail> InboxEmails => Set<InboxEmail>();
     public DbSet<DistributionList> DistributionLists => Set<DistributionList>();
     public DbSet<PersonFilterList> PersonFilterLists => Set<PersonFilterList>();
     public DbSet<PersonFilter> PersonFilters => Set<PersonFilter>();
