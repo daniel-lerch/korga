@@ -96,8 +96,10 @@ public class ImapReceiverService
                 bodyContent = memoryStream.ToArray();
         }
 
-        string from = message.Headers[HeaderId.From];
-        string to = message.Headers[HeaderId.To];
+        // According to RFC 5322 section 3.6, the Orig-Date and From headers are required
+        // In case of missing headers, the message will be rejected in the next pipeline step
+        string? from = message.Headers[HeaderId.From];
+        string? to = message.Headers[HeaderId.To];
         string? receiver = message.Headers.GetReceiver();
 
         InboxEmail emailEntity = new(

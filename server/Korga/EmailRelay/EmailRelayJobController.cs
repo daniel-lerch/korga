@@ -38,12 +38,22 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
 
     protected override async ValueTask ExecuteJob(InboxEmail email, CancellationToken cancellationToken)
     {
+        if (email.From == null)
+        {
+            await RejectEmail(email, errorMessage: null, cancellationToken);
+
+            logger.LogWarning("Email #{Id} has no From header and will be rejected. " +
+                "According to RFC 5311 section 3.6, emails must include a From header. " +
+                "Please contact your email service provider.", email.Id);
+            return;
+        }
+
         if (email.Receiver == null)
         {
             using MimeMessage? errorMessage = emailRelay.InvalidServerConfiguration(email);
-            await SendErrorMessage(email, errorMessage, cancellationToken);
+            await RejectEmail(email, errorMessage, cancellationToken);
 
-            logger.LogWarning("Could not determine receiver for message #{Id} from {From} to {To}. This message will not be forwarded." +
+            logger.LogWarning("Could not determine receiver for message #{Id} from {From} to {To}. This message will not be forwarded. " +
                 "Please make sure your email provider specifies the receiver in the Received, Envelope-To, or X-Envelope-To header", email.Id, email.From, email.To);
             return;
         }
@@ -56,7 +66,7 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
         if (distributionList == null)
         {
             using MimeMessage? errorMessage = emailRelay.InvalidAlias(email);
-            await SendErrorMessage(email, errorMessage, cancellationToken);
+            await RejectEmail(email, errorMessage, cancellationToken);
 
             logger.LogInformation("No group found with alias {Receiver} for email #{Id} from {From}", email.Receiver, email.Id, email.From);
             return;
@@ -65,7 +75,7 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
         if (email.Header == null)
         {
             using MimeMessage? errorMessage = emailRelay.TooManyHeaders(email);
-            await SendErrorMessage(email, errorMessage, cancellationToken);
+            await RejectEmail(email, errorMessage, cancellationToken);
 
             logger.LogInformation("Email #{Id} from {From} to {Receiver} exceeded the header size limit", email.Id, email.From, email.Receiver);
             return;
@@ -74,7 +84,7 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
         if (email.Body == null)
         {
             using MimeMessage? errorMessage = emailRelay.TooBigMessage(email);
-            await SendErrorMessage(email, errorMessage, cancellationToken);
+            await RejectEmail(email, errorMessage, cancellationToken);
 
             logger.LogInformation("Email #{Id} from {From} to {Receiver} exceeded the body size limit", email.Id, email.From, email.Receiver);
             return;
@@ -96,7 +106,7 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
         return;
     }
 
-    private async ValueTask SendErrorMessage(InboxEmail email, MimeMessage? errorMessage, CancellationToken cancellationToken)
+    private async ValueTask RejectEmail(InboxEmail email, MimeMessage? errorMessage, CancellationToken cancellationToken)
     {
         if (errorMessage != null)
             await emailDelivery.Enqueue(((MailboxAddress)errorMessage.To[0]).Address, errorMessage, email.Id, cancellationToken);
