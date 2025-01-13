@@ -21,7 +21,7 @@
         </div>
         <div class="col-12 col-md-6">
           <ul class="list-unstyled mb-2">
-            <li v-for="filter in dl.filters" :key="filter.id">
+            <li v-for="filter in dl.permittedRecipients" :key="filter.id">
               {{ shortText(filter) }}
             </li>
           </ul>
@@ -32,54 +32,60 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from "vue";
-import {
+import type {
   DistributionList,
   PersonFilter,
-  //getDistributionLists,
-} from "@/services/distribution-list";
-import LoadingSpinner from "@/components/LoadingSpinner.vue";
+} from "@/services/distribution-list"
+import { defineComponent, onMounted, ref } from "vue"
+//import { getDistributionLists } from "@/services/distribution-list"
+import LoadingSpinner from "@/components/LoadingSpinner.vue"
 
 export default defineComponent({
   components: { LoadingSpinner },
   setup() {
-    const distributionLists = ref<DistributionList[]>([]);
-    const loaded = ref(false);
-    const error = ref<string | null>(null);
+    const distributionLists = ref<DistributionList[]>([])
+    const loaded = ref(false)
+    const error = ref<string | null>(null)
 
     onMounted(async () => {
       try {
-        //distributionLists.value.push(...(await getDistributionLists()));
-        loaded.value = true;
+        //distributionLists.value.push(...(await getDistributionLists()))
+        loaded.value = true
       } catch (e) {
         error.value =
-          "Die Verteilerlisten konnten nicht geladen werden. Bitte überprüfe deine Internetverbindung.";
+          "Die Verteilerlisten konnten nicht geladen werden. Bitte überprüfe deine Internetverbindung."
       }
-    });
+    })
 
     const shortText = function (filter: PersonFilter) {
       switch (filter.discriminator) {
         case "StatusFilter":
-          return "Status: " + filter.statusName;
+          return "Status: " + filter.statusName
         case "GroupFilter": {
-          const prefix = "Gruppe: " + filter.groupName;
+          const prefix = "Gruppe: " + filter.groupName
           return filter.groupRoleName
             ? prefix + " (" + filter.groupRoleName + ")"
-            : prefix;
+            : prefix
+        }
+        case "GroupTypeFilter": {
+          const prefix = "Gruppentyp: " + filter.groupTypeName
+          return filter.groupRoleName
+            ? prefix + " (" + filter.groupRoleName + ")"
+            : prefix
         }
         case "SinglePerson":
-          return "Person: " + filter.personFullName;
+          return "Person: " + filter.personFullName
         default:
-          return "Unbekannter Filtertyp: " + filter.discriminator;
+          return "Unbekannter Filtertyp: " + filter.discriminator
       }
-    };
+    }
 
     return {
       distributionLists,
       loaded,
       error,
       shortText,
-    };
+    }
   },
-});
+})
 </script>

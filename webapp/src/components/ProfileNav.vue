@@ -26,45 +26,46 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from "vue";
-import { User } from "oidc-client-ts";
-import { useUserManagerStore } from "@/services/usermanager";
-//import korga, { ProfileResponse } from "@/services/profile";
+import type { User } from "oidc-client-ts"
+//import type { ProfileResponse } from "@/services/profile"
+import { defineComponent, onMounted, ref } from "vue"
+//import korga from "@/services/profile"
+import { useUserManagerStore } from "@/services/usermanager"
 
 export default defineComponent({
   setup() {
-    //const profile = ref<ProfileResponse | null>(null);
-    const user = ref<User | null>(null);
-    const store = useUserManagerStore();
+    //const profile = ref<ProfileResponse | null>(null)
+    const user = ref<User | null>(null)
+    const store = useUserManagerStore()
 
     onMounted(async () => {
-      user.value = await store.userManager.getUser();
+      user.value = await store.userManager.getUser()
       //try {
-      //  profile.value = await korga.getProfile();
+      //  profile.value = await korga.getProfile()
       //} catch (error) {
-      //  profile.value = null;
+      //  profile.value = null
       //}
-    });
+    })
 
     async function login() {
-      await store.userManager.signinRedirect();
+      await store.userManager.signinRedirect()
       //try {
-      //  await korga.challengeLogin();
+      //  await korga.challengeLogin()
       //} catch (error) {
-      //  profile.value = null;
+      //  profile.value = null
       //}
     }
 
     async function logout() {
-      await store.userManager.signoutRedirect();
+      await store.userManager.signoutRedirect()
       //try {
-      //  await korga.logout();
+      //  await korga.logout()
       //} catch (error) {
-      //  profile.value = null;
+      //  profile.value = null
       //}
     }
 
-    return { login, logout, user };
+    return { login, logout, user }
   },
-});
+})
 </script>

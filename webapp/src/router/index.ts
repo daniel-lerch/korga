@@ -1,4 +1,5 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
+import type { RouteRecordRaw } from "vue-router"
+import { createRouter, createWebHistory } from "vue-router"
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -8,30 +9,23 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/service",
     name: "Service",
-    component: () =>
-      import(/* webpackChunkName: "service" */ "../views/ServiceList.vue"),
+    component: () => import("../views/ServiceList.vue"),
   },
   {
     path: "/distribution-lists",
     name: "DistributionLists",
-    component: () =>
-      import(
-        /* webpackChunkName: "distribution-list" */ "../views/DistributionLists.vue"
-      ),
+    component: () => import("../views/DistributionLists.vue"),
   },
   {
     path: "/oidc-callback",
     name: "OidcCallback",
-    component: () =>
-      import(
-        /* webpackChunkName: "oidc-callback" */ "../views/OidcCallback.vue"
-      ),
+    component: () => import("../views/OidcCallback.vue"),
   },
-];
+]
 
 const router = createRouter({
-  history: createWebHistory(window.resourceBasePath),
+  history: createWebHistory(import.meta.env.PROD ? window.basePath : "/"),
   routes,
-});
+})
 
-export default router;
+export default router

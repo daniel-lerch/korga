@@ -1,0 +1,63 @@
+services:
+  app:
+    image: daniellerch/korga:latest
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      # Change this according to your database settings
+      - Database__ConnectionString=Server=db;Port=3306;Database=korga;User=korga;Password=korga;
+      
+      # Uncomment below if you want to use Korga in a subfolder like example.com/korga
+      #- Hosting__PathBase=/korga
+
+      # Uncomment below if you want to use Korga behind a reverse proxy like NGINX
+      #- Hosting__AllowProxies=true
+
+      # Uncomment the three options below to login with OpenID Connect
+      # See the main README for instructions how to create client for Korga in your OpenID Connect Provider
+      #- OpenIdConnect__Authority=https://keycloak.example.org/realms/churchtools
+      #- OpenIdConnect__ClientId=korga
+      #- OpenIdConnect__ClientSecret=zX8bZkty9sGeUixRHgooMR6owhBzgQuP
+
+      # Uncomment the three options below to sync with ChurchTools
+      # See the main README for instructions on how to get a login token and configure permissions
+      #- ChurchTools__EnableSync=true
+      #- ChurchTools__Host=example.church.tools
+      #- ChurchTools__LoginToken=DuIojxSyqCIMLf8JXEhQCshetSCZFP2dCuNIzHtgrKxqK13e80MdPY15wjt2jUNpWZzlCpEkJVTxYr6MCx3WZpmY5w8CeiwJbke1lKZ4GfD2jc3niVbiRI66obQtfJH8biXw2HXgZVbgMnK4aMQGOlY7Ssfp8SwyZMki1RoIYNBjWPAGAWyeAD5Dp1cApB74BqoWyziSTIE0EP6DQA8HV7n2IUZCVdgnlQkypcM7YeUTGiex57vdHrfH1foJvwax
+
+      # Uncomment these options and fill in your SMTP account
+      #- EmailDelivery__Enable=true
+      #- EmailDelivery__SenderAddress=noreply@example.org
+      #- EmailDelivery__SmtpHost=smtp.example.org
+      #- EmailDelivery__SmtpUsername=noreply@example.org
+      #- EmailDelivery__SmtpPassword=4mKrsCOoIUYm4FKumX57
+
+      # After configuring email delivery above, you may uncomment these options and fill in your catchall IMAP account
+      #- EmailRelay__Enable=true
+      #- EmailRelay__ImapHost=imap.example.org
+      #- EmailRelay__ImapUsername=catchall@example.org
+      #- EmailRelay__ImapPassword=RKXMaQWm8k7QKFnmijma
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: mariadb:latest
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=korga
+      - MYSQL_USER=korga
+      - MYSQL_PASSWORD=korga
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+
+    # This healthcheck will only work for newly initialized databases with a healthcheck user
+    # To configure it manually, refer to https://stackoverflow.com/a/76089040/7075733
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized" ]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+      start_interval: 1s

@@ -15,7 +15,8 @@ Once configured, Korga automatically synchronizes people and groups from ChurchT
 There is no Web UI available yet to manage distribution lists so you must stick to the CLI inside the Docker container:
 
 ```
-./Korga.Server distribution-list create --group 137 kids
+./Korga dist create kids
+./Korga dist add-recipient kids -g 137
 ```
 
 This command creates a distribution list _kids@example.org_ which forwards emails to every member of group #137.
@@ -23,7 +24,7 @@ This command creates a distribution list _kids@example.org_ which forwards email
 ## Installation
 
 The only officially supported distribution are Docker containers. An official image is available at [daniellerch/korga](https://hub.docker.com/r/daniellerch/korga).
-If you are using Docker Compose, take a look our [example compose file](docs/docker-compose.yml) in the `docs` folder.
+If you are using Docker Compose, take a look our [example compose file](docs/compose.yaml) in the `docs` folder.
 
 Korga has multiple modules that must be enabled via configuration to use them:
 - ChurchTools sync
@@ -32,7 +33,7 @@ Korga has multiple modules that must be enabled via configuration to use them:
 
 Configuration can set as enviroment variables or by creating a custom config file.
 I recommend to use environment variables and will explain them in the following sections.
-However, if you prefer a config file, copy the default [appsettings.json](server/src/Korga.Server/appsettings.json), edit it as required, and mount it at `/app/appsettings.json`.
+However, if you prefer a config file, copy the default [appsettings.json](server/Korga/appsettings.json), edit it as required, and mount it at `/app/appsettings.json`.
 
 ### OpenID Connect authentication
 
@@ -87,6 +88,7 @@ Grant the following permissions to Korga's user:
 - Personen & Gruppen > Sicherheitslevel Personendaten (Stufe 1-3) `churchdb:security level person(1,2,3)`
 - Personen & Gruppen > Alle Personen des jeweiligen Bereiches sichtbar machen (Alle) `churchdb:view alldata(-1)`
 - Personen & Gruppen > Einzelne Gruppen inkl. der enthaltenen Personen sehen (gilt auch für versteckte Gruppen) (Alle) `churchdb:view group(-1)`
+- Personen & Gruppen > Gruppenmitgliedschaften aller sichtbaren Personen bearbeiten `churchdb:edit group memberships`
 - Events > "Events" sehen `churchservice:view`
 - Events > Dienste einzelner Dienstgruppen einsehen (Alle) `churchservice:view servicegroup(-1)`
 - Events > Events von einzelnen Kalendern sehen (Alle) `churchservice:view events(-1)`
@@ -156,18 +158,21 @@ The following instructions are written for Windows but generally also apply to L
 
 ### Backend
 - Visual Studio 2022
-- .NET SDK 7.0
+- .NET SDK 8.0
 - EF Core CLI Tools _(e.g. `dotnet tool install -g dotnet-ef`)_
 - MySQL or MariaDB _(e.g. from [PSModules](https://github.com/daniel-lerch/psmodules))_
 
 ### Frontend
 - Visual Studio Code
 - Vue Language Features (Volar) Extension
-- NodeJS 18 LTS
+- NodeJS 22 LTS
 
-During development the frontend running on the Vue CLI development server will use _http://localhost:50805_ as API endpoint.
+During development the frontend running on the Vue CLI development server will use _http://localhost:10501_ as API endpoint.
 That means the backend can be running in Visual Studio with Debugger attached.
 
 If you just want to work on the frontend you can also use a public test server by creating a file `webapp/.env.development.local`
-to override the defaults with `VUE_APP_API_URL=https://lerchen.net/korga`.
+```env
+VITE_API_ORIGIN=https://lerchen.net
+VITE_API_BASE_PATH=/korga/
+```
 Then you don't have to setup a database server and the ASP.NET Core backend.

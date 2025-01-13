@@ -1,4 +1,4 @@
-FROM node:20 AS webapp
+FROM node:22 AS webapp
 WORKDIR /app
 
 # Copy package definition and restore node modules as distinct layers
@@ -13,17 +13,34 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS server
 WORKDIR /app
 
 # Copy csproj and restore as distinct layers
-COPY server/src/Korga.Server/Korga.Server.csproj ./Korga.Server/
-RUN dotnet restore Korga.Server
+COPY server/ChurchTools/ChurchTools.csproj ./ChurchTools/
+COPY server/Korga/Korga.csproj ./Korga/
+RUN dotnet restore Korga
 
 # Copy everything else and build
-COPY server/src ./
-RUN dotnet publish -c Release -o /app/out Korga.Server
+COPY server ./
+RUN dotnet publish -c Release -o /app/out Korga
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 
+# Install curl for healthcheck
+RUN set -x \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=server /app/out .
 COPY --from=webapp /app/dist wwwroot/
-ENTRYPOINT ["dotnet", "Korga.Server.dll"]
+
+HEALTHCHECK \
+    --interval=1m \
+    --timeout=10s \
+    --start-period=15s \
+    --start-interval=5s \
+    --retries=3 \
+    CMD curl --fail http://localhost:8080/healthz || exit 1
+
+ENTRYPOINT ["dotnet", "Korga.dll"]

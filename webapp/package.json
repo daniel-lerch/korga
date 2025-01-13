@@ -1,50 +1,41 @@
 {
   "name": "korga",
-  "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "dev": "vite",
+    "build": "run-p type-check \"build-only {@}\" --",
+    "preview": "vite preview",
+    "build-only": "vite build",
+    "type-check": "vue-tsc --build --force",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "format": "prettier --write src/"
   },
   "dependencies": {
-    "@vueuse/core": "10.x",
-    "bootstrap": "5.2.x",
-    "core-js": "3.x",
-    "oidc-client-ts": "3.x",
-    "pinia": "2.x",
-    "vue": "3.x",
-    "vue-router": "4.x",
-    "webpack-require-from": "1.8.x"
+    "bootstrap": "~5.3.3",
+    "core-js": "^3.39.0",
+    "oidc-client-ts": "^3.1.0",
+    "pinia": "^2.3.0",
+    "vue": "^3.5.13",
+    "vue-multiselect": "^3.1.0",
+    "vue-router": "^4.5.0"
   },
   "devDependencies": {
-    "@types/bootstrap": "5.2.x",
-    "@typescript-eslint/eslint-plugin": "7.x",
-    "@typescript-eslint/parser": "7.x",
-    "@vue/cli-plugin-babel": "5.x",
-    "@vue/cli-plugin-eslint": "5.x",
-    "@vue/cli-plugin-router": "5.x",
-    "@vue/cli-plugin-typescript": "5.x",
-    "@vue/cli-service": "5.x",
-    "@vue/eslint-config-typescript": "12.x",
-    "eslint": "8.x",
-    "eslint-config-prettier": "9.x",
-    "eslint-plugin-prettier": "5.x",
-    "eslint-plugin-vue": "9.x",
-    "prettier": "3.2.x",
-    "sass": "1.x",
-    "sass-loader": "14.x",
-    "typescript": "5.4.x"
-  },
-  "babel": {
-    "presets": [
-      "@vue/cli-plugin-babel/preset"
-    ]
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead",
-    "not ie 11"
-  ]
+    "@rushstack/eslint-patch": "^1.10.4",
+    "@tsconfig/node20": "^20.1.4",
+    "@types/node": "^22.10.2",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/eslint-config-prettier": "^10.1.0",
+    "@vue/eslint-config-typescript": "^14.1.4",
+    "@vue/tsconfig": "^0.7.0",
+    "eslint": "^9.17.0",
+    "eslint-plugin-vue": "^9.32.0",
+    "npm-run-all2": "^7.0.2",
+    "prettier": "^3.4.2",
+    "sass": "^1.83.0",
+    "sass-loader": "^16.0.4",
+    "typescript": "~5.7.2",
+    "vite": "^6.0.5",
+    "vue-tsc": "^2.1.10"
+  }
 }
