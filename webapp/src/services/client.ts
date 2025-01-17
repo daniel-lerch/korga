@@ -34,6 +34,11 @@ export default {
     userManager = new UserManager({
       authority: settings.oidcAuthority,
       client_id: settings.oidcClientId,
+      metadata: {
+        authorization_endpoint: settings.oidcAuthority + "/oauth/authorize",
+        token_endpoint: settings.oidcAuthority + "/oauth/access_token",
+        userinfo_endpoint: settings.oidcAuthority + "/oauth/userinfo",
+      },
       redirect_uri: settings.oidcRedirectUri,
     })
     return userManager
