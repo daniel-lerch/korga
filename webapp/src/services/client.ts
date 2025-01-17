@@ -1,8 +1,10 @@
-import { useUserManagerStore } from "./usermanager";
+import { UserManager } from "oidc-client-ts";
 
 const baseUrl = import.meta.env.PROD
   ? window.basePath.slice(0, -1)
   : import.meta.env.VITE_API_BASE_PATH.slice(0, -1)
+
+let userManager: UserManager | null = null
 
 const getInfo: RequestInit = {
   credentials: "include",
@@ -20,9 +22,25 @@ const deleteInfo: RequestInit = {
 }
 
 export default {
+  async userManager() {
+    if (userManager != null) {
+      return userManager
+    }
+    const response = await fetch(baseUrl + "/api/settings")
+    if (response.ok === false) {
+      throw new Error("Unexpected status code " + response.status)
+    }
+    const settings = await response.json() as { oidcAuthority: string, oidcClientId: string, oidcRedirectUri: string }
+    userManager = new UserManager({
+      authority: settings.oidcAuthority,
+      client_id: settings.oidcClientId,
+      redirect_uri: settings.oidcRedirectUri,
+    })
+    return userManager
+  },
   async get<T>(path: string) {
-    const store = useUserManagerStore()
-    const user = await store.userManager.getUser()
+    const userManager = await this.userManager()
+    const user = await userManager.getUser()
     const response = await fetch(baseUrl + path, {
       headers: { Authorization: `Bearer ${user?.access_token}` },
     })
@@ -37,8 +55,8 @@ export default {
     return (await response.json()) as T
   },
   async getResponse(path: string) {
-    const store = useUserManagerStore()
-    const user = await store.userManager.getUser()
+    const userManager = await this.userManager()
+    const user = await userManager.getUser()
     const response = await fetch(baseUrl + path, {
       headers: { Authorization: `Bearer ${user?.access_token}` },
     })
