@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { useUserManagerStore } from "@/services/usermanager";
+import client from "@/services/client";
 
-const store = useUserManagerStore();
 const router = useRouter();
 
-onMounted(() => {
-  store.userManager.signinCallback();
+onMounted(async () => {
+  const userManager = await client.userManager();
+  await userManager.signinCallback();
   router.push("/distribution-lists");
 });
 </script>

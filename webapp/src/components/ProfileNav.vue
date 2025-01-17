@@ -30,16 +30,16 @@ import type { User } from "oidc-client-ts"
 //import type { ProfileResponse } from "@/services/profile"
 import { defineComponent, onMounted, ref } from "vue"
 //import korga from "@/services/profile"
-import { useUserManagerStore } from "@/services/usermanager"
+import client from "@/services/client"
 
 export default defineComponent({
   setup() {
     //const profile = ref<ProfileResponse | null>(null)
     const user = ref<User | null>(null)
-    const store = useUserManagerStore()
 
     onMounted(async () => {
-      user.value = await store.userManager.getUser()
+      const userManager = await client.userManager()
+      user.value = await userManager.getUser()
       //try {
       //  profile.value = await korga.getProfile()
       //} catch (error) {
@@ -48,7 +48,8 @@ export default defineComponent({
     })
 
     async function login() {
-      await store.userManager.signinRedirect()
+      const userManager = await client.userManager()
+      await userManager.signinRedirect()
       //try {
       //  await korga.challengeLogin()
       //} catch (error) {
@@ -57,7 +58,8 @@ export default defineComponent({
     }
 
     async function logout() {
-      await store.userManager.signoutRedirect()
+      const userManager = await client.userManager()
+      await userManager.signoutRedirect()
       //try {
       //  await korga.logout()
       //} catch (error) {
