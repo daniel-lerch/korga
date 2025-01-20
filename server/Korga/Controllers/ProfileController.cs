@@ -1,6 +1,5 @@
 ﻿using Korga.Models.Json;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -44,7 +43,7 @@ public class ProfileController : ControllerBase
         return new SignOutResult(new[]
         {
             CookieAuthenticationDefaults.AuthenticationScheme,
-            OpenIdConnectDefaults.AuthenticationScheme
+            "OAuth"
         });
     }
 }

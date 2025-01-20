@@ -3,7 +3,6 @@ using Korga.Configuration;
 using Korga.EmailDelivery;
 using Korga.EmailRelay;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -12,13 +11,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
-using OpenIdConnectOptions = Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions;
 using KorgaOpenIdConnectOptions = Korga.Configuration.OpenIdConnectOptions;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace Korga.Extensions;
 
@@ -85,7 +86,7 @@ public static class IServiceCollectionExtensions
             .AddAuthentication(options =>
             {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = "OAuth";
             })
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
             {
@@ -95,9 +96,9 @@ public static class IServiceCollectionExtensions
                 options.Cookie.HttpOnly = true;
                 options.LoginPath = PathString.Empty;
             })
-            .AddOpenIdConnect();
+            .AddOAuth("OAuth", options => { });
 
-        services.AddOptions<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme)
+        services.AddOptions<OAuthOptions>("OAuth")
             .Configure<ILogger<Startup>, IOptions<KorgaOpenIdConnectOptions>>((options, logger, openIdConnectOptions) =>
             {
                 if (string.IsNullOrEmpty(openIdConnectOptions.Value.Authority)
@@ -109,118 +110,120 @@ public static class IServiceCollectionExtensions
 
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
                 options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
-                options.NonceCookie.SameSite = SameSiteMode.Lax;
-                options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.Authority = openIdConnectOptions.Value.Authority;
+                options.AuthorizationEndpoint = openIdConnectOptions.Value.Authority + "/protocol/openid-connect/auth"; //"/oauth/authorize";
+                options.TokenEndpoint = openIdConnectOptions.Value.Authority + "/protocol/openid-connect/token"; //"/oauth/access_token";
+                options.UserInformationEndpoint = openIdConnectOptions.Value.Authority + "/protocol/openid-connect/userinfo"; //"/oauth/userinfo";
+                options.UsePkce = true;
+                options.CallbackPath = "/signin-oauth";
                 options.ClientId = openIdConnectOptions.Value.ClientId;
                 options.ClientSecret = openIdConnectOptions.Value.ClientSecret;
-                options.ResponseType = OpenIdConnectResponseType.Code;
-                options.Configuration = new()
-                {
-                    AuthorizationEndpoint = openIdConnectOptions.Value.Authority + "/oauth/authorize",
-                    TokenEndpoint = openIdConnectOptions.Value.Authority + "/oauth/access_token",
-                    UserInfoEndpoint = openIdConnectOptions.Value.Authority + "/oauth/userinfo",
-                };
-
-                // response_mode=form_post only works when backend and identity provider are on the same site (same effective TLD)
-                // because the Nonce and Correlation cookies won't be sent with a request initiated by the identity provider unless SameSite=None
-                options.ResponseMode = OpenIdConnectResponseMode.Query;
-
                 options.SaveTokens = true;
-                options.GetClaimsFromUserInfoEndpoint = true;
+
                 options.Scope.Add("openid");
                 options.Scope.Add("profile");
-                options.Scope.Add("email");
-                options.Events.OnRedirectToIdentityProvider = context =>
+
+                options.Events.OnCreatingTicket = async context =>
                 {
-                    context.HandleResponse();
-                    SetFrontendRedirectUri(context);
-                    SetBackendRedirectUri(context, environment);
+                    var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
+                    request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", context.AccessToken);
 
-                    #region Code ported from OpenIdConnectHandler.cs
-                    if (!string.IsNullOrEmpty(context.ProtocolMessage.State))
-                    {
-                        context.Properties.Items[OpenIdConnectDefaults.UserstatePropertiesKey] = context.ProtocolMessage.State;
-                    }
+                    var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
+                    response.EnsureSuccessStatusCode();
 
-                    // When redeeming a 'code' for an AccessToken, this value is needed
-                    context.Properties.Items.Add(OpenIdConnectDefaults.RedirectUriForCodePropertiesKey, context.ProtocolMessage.RedirectUri);
-
-                    context.ProtocolMessage.State = options.StateDataFormat.Protect(context.Properties);
-                    #endregion
-
-                    context.Response.StatusCode = 401;
-                    return context.Response.WriteAsJsonAsync(new { OpenIdConnectRedirectUrl = context.ProtocolMessage.CreateAuthenticationRequestUrl() });
+                    var user = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                    context.RunClaimActions(user.RootElement);
                 };
-                options.Events.OnRedirectToIdentityProviderForSignOut = context =>
-                {
-                    context.HandleResponse();
 
-                    SetFrontendRedirectUri(context);
-                    SetBackendLogoutRedirectUri(context, environment);
+                //options.Events.OnRedirectToAuthorizationEndpoint = context =>
+                //{
+                //    context.HandleResponse();
+                //    SetFrontendRedirectUri(context);
+                //    SetBackendRedirectUri(context, environment);
 
-                    #region Code ported from OpenIdConnectHandler.cs
-                    if (!string.IsNullOrEmpty(context.ProtocolMessage.State))
-                    {
-                        context.Properties.Items[OpenIdConnectDefaults.UserstatePropertiesKey] = context.ProtocolMessage.State;
-                    }
+                //    #region Code ported from OpenIdConnectHandler.cs
+                //    if (!string.IsNullOrEmpty(context.ProtocolMessage.State))
+                //    {
+                //        context.Properties.Items[OpenIdConnectDefaults.UserstatePropertiesKey] = context.ProtocolMessage.State;
+                //    }
 
-                    context.ProtocolMessage.State = options.StateDataFormat.Protect(context.Properties);
-                    #endregion
+                //    // When redeeming a 'code' for an AccessToken, this value is needed
+                //    context.Properties.Items.Add(OpenIdConnectDefaults.RedirectUriForCodePropertiesKey, context.ProtocolMessage.RedirectUri);
 
-                    context.Response.StatusCode = 401;
-                    return context.Response.WriteAsJsonAsync(new { OpenIdConnectRedirectUrl = context.ProtocolMessage.CreateLogoutRequestUrl() });
-                };
+                //    context.ProtocolMessage.State = options.StateDataFormat.Protect(context.Properties);
+                //    #endregion
+
+                //    context.Response.StatusCode = 401;
+                //    return context.Response.WriteAsJsonAsync(new { OpenIdConnectRedirectUrl = context.ProtocolMessage.CreateAuthenticationRequestUrl() });
+                //};
+                //options.Events.OnRedirectToIdentityProviderForSignOut = context =>
+                //{
+                //    context.HandleResponse();
+
+                //    SetFrontendRedirectUri(context);
+                //    SetBackendLogoutRedirectUri(context, environment);
+
+                //    #region Code ported from OpenIdConnectHandler.cs
+                //    if (!string.IsNullOrEmpty(context.ProtocolMessage.State))
+                //    {
+                //        context.Properties.Items[OpenIdConnectDefaults.UserstatePropertiesKey] = context.ProtocolMessage.State;
+                //    }
+
+                //    context.ProtocolMessage.State = options.StateDataFormat.Protect(context.Properties);
+                //    #endregion
+
+                //    context.Response.StatusCode = 401;
+                //    return context.Response.WriteAsJsonAsync(new { OpenIdConnectRedirectUrl = context.ProtocolMessage.CreateLogoutRequestUrl() });
+                //};
             });
 
         return services;
     }
 
-    private static void SetFrontendRedirectUri(RedirectContext context)
-    {
-        string? frontendUri = context.Request.Headers.Referer.FirstOrDefault();
+    //private static void SetFrontendRedirectUri(RedirectContext context)
+    //{
+    //    string? frontendUri = context.Request.Headers.Referer.FirstOrDefault();
 
-        if (string.IsNullOrEmpty(frontendUri))
-            frontendUri = context.Request.Headers.Origin.FirstOrDefault();
+    //    if (string.IsNullOrEmpty(frontendUri))
+    //        frontendUri = context.Request.Headers.Origin.FirstOrDefault();
 
-        if (string.IsNullOrEmpty(frontendUri))
-            frontendUri = (context.Request.IsHttps ? "https://" : "http://") + context.Request.Host + context.Request.PathBase;
+    //    if (string.IsNullOrEmpty(frontendUri))
+    //        frontendUri = (context.Request.IsHttps ? "https://" : "http://") + context.Request.Host + context.Request.PathBase;
 
-        context.Properties.RedirectUri = frontendUri;
-    }
+    //    context.Properties.RedirectUri = frontendUri;
+    //}
 
-    private static void SetBackendRedirectUri(RedirectContext context, IWebHostEnvironment environment)
-    {
-        if (environment.IsDevelopment())
-        {
-            string? backendUri = context.Request.Headers.Referer.FirstOrDefault();
+    //private static void SetBackendRedirectUri(RedirectContext context, IWebHostEnvironment environment)
+    //{
+    //    if (environment.IsDevelopment())
+    //    {
+    //        string? backendUri = context.Request.Headers.Referer.FirstOrDefault();
 
-            if (string.IsNullOrEmpty(backendUri))
-                backendUri = context.Request.Headers.Origin.FirstOrDefault();
+    //        if (string.IsNullOrEmpty(backendUri))
+    //            backendUri = context.Request.Headers.Origin.FirstOrDefault();
 
-            if (!string.IsNullOrEmpty(backendUri))
-            {
-                Uri uri = new(backendUri);
-                context.ProtocolMessage.RedirectUri = uri.Scheme + Uri.SchemeDelimiter + uri.Authority + context.Request.PathBase + context.Options.CallbackPath;
-            }
-        }
-    }
+    //        if (!string.IsNullOrEmpty(backendUri))
+    //        {
+    //            Uri uri = new(backendUri);
+    //            context.ProtocolMessage.RedirectUri = uri.Scheme + Uri.SchemeDelimiter + uri.Authority + context.Request.PathBase + context.Options.CallbackPath;
+    //        }
+    //    }
+    //}
 
-    private static void SetBackendLogoutRedirectUri(RedirectContext context, IWebHostEnvironment environment)
-    {
-        if (environment.IsDevelopment())
-        {
-            string? backendUri = context.Request.Headers.Referer.FirstOrDefault();
+    //private static void SetBackendLogoutRedirectUri(RedirectContext context, IWebHostEnvironment environment)
+    //{
+    //    if (environment.IsDevelopment())
+    //    {
+    //        string? backendUri = context.Request.Headers.Referer.FirstOrDefault();
 
-            if (string.IsNullOrEmpty(backendUri))
-                backendUri = context.Request.Headers.Origin.FirstOrDefault();
+    //        if (string.IsNullOrEmpty(backendUri))
+    //            backendUri = context.Request.Headers.Origin.FirstOrDefault();
 
-            if (!string.IsNullOrEmpty(backendUri))
-            {
-                Uri uri = new(backendUri);
-                context.ProtocolMessage.PostLogoutRedirectUri = uri.Scheme + Uri.SchemeDelimiter + uri.Authority + context.Request.PathBase + context.Options.SignedOutCallbackPath;
-            }
-        }
-    }
+    //        if (!string.IsNullOrEmpty(backendUri))
+    //        {
+    //            Uri uri = new(backendUri);
+    //            context.ProtocolMessage.PostLogoutRedirectUri = uri.Scheme + Uri.SchemeDelimiter + uri.Authority + context.Request.PathBase + context.Options.SignedOutCallbackPath;
+    //        }
+    //    }
+    //}
 }
