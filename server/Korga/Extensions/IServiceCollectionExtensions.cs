@@ -116,6 +116,12 @@ public static class IServiceCollectionExtensions
                 options.ClientId = openIdConnectOptions.Value.ClientId;
                 options.ClientSecret = openIdConnectOptions.Value.ClientSecret;
                 options.ResponseType = OpenIdConnectResponseType.Code;
+                options.Configuration = new()
+                {
+                    AuthorizationEndpoint = openIdConnectOptions.Value.Authority + "/oauth/authorize",
+                    TokenEndpoint = openIdConnectOptions.Value.Authority + "/oauth/access_token",
+                    UserInfoEndpoint = openIdConnectOptions.Value.Authority + "/oauth/userinfo",
+                };
 
                 // response_mode=form_post only works when backend and identity provider are on the same site (same effective TLD)
                 // because the Nonce and Correlation cookies won't be sent with a request initiated by the identity provider unless SameSite=None
