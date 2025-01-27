@@ -8,18 +8,16 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-
-using KorgaOpenIdConnectOptions = Korga.Configuration.OpenIdConnectOptions;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text.Json;
+
+using OAuthOptions = Microsoft.AspNetCore.Authentication.OAuth.OAuthOptions;
+using KorgaOAuthOptions = Korga.Configuration.OAuthOptions;
+using KorgaOpenIdConnectOptions = Korga.Configuration.OpenIdConnectOptions;
 
 namespace Korga.Extensions;
 
@@ -32,6 +30,9 @@ public static class IServiceCollectionExtensions
             .ValidateDataAnnotations();
         services.AddOptions<HostingOptions>()
             .Bind(configuration.GetSection("Hosting"))
+            .ValidateDataAnnotations();
+        services.AddOptions<KorgaOAuthOptions>()
+            .Bind(configuration.GetSection("OAuth"))
             .ValidateDataAnnotations();
         services.AddOptions<KorgaOpenIdConnectOptions>()
            .Bind(configuration.GetSection("OpenIdConnect"))
@@ -99,11 +100,13 @@ public static class IServiceCollectionExtensions
             .AddOAuth("OAuth", options => { });
 
         services.AddOptions<OAuthOptions>("OAuth")
-            .Configure<ILogger<Startup>, IOptions<KorgaOpenIdConnectOptions>>((options, logger, openIdConnectOptions) =>
+            .Configure<ILogger<Startup>, IOptions<KorgaOAuthOptions>>((options, logger, oauthOptions) =>
             {
-                if (string.IsNullOrEmpty(openIdConnectOptions.Value.Authority)
-                    || string.IsNullOrEmpty(openIdConnectOptions.Value.ClientId)
-                    || string.IsNullOrEmpty(openIdConnectOptions.Value.ClientSecret))
+                if (string.IsNullOrEmpty(oauthOptions.Value.AuthorizationEndpoint)
+                    || string.IsNullOrEmpty(oauthOptions.Value.TokenEndpoint)
+                    || string.IsNullOrEmpty(oauthOptions.Value.UserInfoEndpoint)
+                    || string.IsNullOrEmpty(oauthOptions.Value.ClientId)
+                    || string.IsNullOrEmpty(oauthOptions.Value.ClientSecret))
                 {
                     logger.LogWarning("OpenID Connect configuration is incomplete. Login will not work.");
                 }
@@ -111,13 +114,13 @@ public static class IServiceCollectionExtensions
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
                 options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.AuthorizationEndpoint = openIdConnectOptions.Value.Authority + "/protocol/openid-connect/auth"; //"/oauth/authorize";
-                options.TokenEndpoint = openIdConnectOptions.Value.Authority + "/protocol/openid-connect/token"; //"/oauth/access_token";
-                options.UserInformationEndpoint = openIdConnectOptions.Value.Authority + "/protocol/openid-connect/userinfo"; //"/oauth/userinfo";
-                options.UsePkce = true;
+                options.AuthorizationEndpoint = oauthOptions.Value.AuthorizationEndpoint;
+                options.TokenEndpoint = oauthOptions.Value.TokenEndpoint;
+                options.UserInformationEndpoint = oauthOptions.Value.UserInfoEndpoint;
+                options.UsePkce = oauthOptions.Value.UsePkce;
                 options.CallbackPath = "/signin-oauth";
-                options.ClientId = openIdConnectOptions.Value.ClientId;
-                options.ClientSecret = openIdConnectOptions.Value.ClientSecret;
+                options.ClientId = oauthOptions.Value.ClientId;
+                options.ClientSecret = oauthOptions.Value.ClientSecret;
                 options.SaveTokens = true;
 
                 options.Scope.Add("openid");
