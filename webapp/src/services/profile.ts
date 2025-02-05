@@ -18,8 +18,8 @@ export default {
   },
 
   async challengeLogin() {
-    window.location.href = client.baseUrl + "/api/challenge"
-    //await client.getResponse("/api/challenge")
+    const params = new URLSearchParams({ redirect: window.location.pathname }).toString()
+    window.location.href = client.baseUrl + "/api/challenge?" + params
   },
 
   async logout() {

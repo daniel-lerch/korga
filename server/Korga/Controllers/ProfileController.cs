@@ -31,9 +31,9 @@ public class ProfileController : ControllerBase
     }
 
     [HttpGet("~/api/challenge")]
-    public IActionResult ChallengeLogin()
+    public IActionResult ChallengeLogin([FromQuery] string redirect)
     {
-        AuthenticationProperties properties = new() { RedirectUri = "/" };
+        AuthenticationProperties properties = new() { RedirectUri = redirect };
         return Challenge(properties, "OAuth");
     }
 
