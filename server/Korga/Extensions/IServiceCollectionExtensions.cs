@@ -2,6 +2,7 @@
 using Korga.Configuration;
 using Korga.EmailDelivery;
 using Korga.EmailRelay;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -13,11 +14,14 @@ using Microsoft.Extensions.Options;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Http;
+using System.Security.Claims;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 using OAuthOptions = Microsoft.AspNetCore.Authentication.OAuth.OAuthOptions;
 using KorgaOAuthOptions = Korga.Configuration.OAuthOptions;
 using KorgaOpenIdConnectOptions = Korga.Configuration.OpenIdConnectOptions;
+using Microsoft.Extensions.Hosting;
 
 namespace Korga.Extensions;
 
@@ -87,15 +91,27 @@ public static class IServiceCollectionExtensions
             .AddAuthentication(options =>
             {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = "OAuth";
+                options.DefaultChallengeScheme = null; // Disable automatic challenge of OAuth
             })
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
             {
                 options.ExpireTimeSpan = TimeSpan.FromDays(1);
                 options.Cookie.SameSite = SameSiteMode.Strict;
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SecurePolicy = environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
                 options.Cookie.HttpOnly = true;
-                options.LoginPath = PathString.Empty;
+
+                // Disable automatic challenge of Cookie Authentication
+                // Setting LoginPath and AccessDeniedPath to null is not sufficient
+                options.Events.OnRedirectToLogin = context =>
+                {
+                    context.Response.StatusCode = 401;
+                    return Task.CompletedTask;
+                };
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    context.Response.StatusCode = 403;
+                    return Task.CompletedTask;
+                };
             })
             .AddOAuth("OAuth", options => { });
 
@@ -112,7 +128,7 @@ public static class IServiceCollectionExtensions
                 }
 
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
-                options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.CorrelationCookie.SecurePolicy = environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
                 options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.AuthorizationEndpoint = oauthOptions.Value.AuthorizationEndpoint;
                 options.TokenEndpoint = oauthOptions.Value.TokenEndpoint;
@@ -125,6 +141,11 @@ public static class IServiceCollectionExtensions
 
                 options.Scope.Add("openid");
                 options.Scope.Add("profile");
+
+                options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "sub");
+                options.ClaimActions.MapJsonKey(ClaimTypes.GivenName, "firstName");
+                options.ClaimActions.MapJsonKey(ClaimTypes.Surname, "lastName");
+                options.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
 
                 options.Events.OnCreatingTicket = async context =>
                 {

@@ -18,7 +18,8 @@ export default {
   },
 
   async challengeLogin() {
-    await client.getResponse("/api/challenge")
+    window.location.href = client.baseUrl + "/api/challenge"
+    //await client.getResponse("/api/challenge")
   },
 
   async logout() {

@@ -1,6 +1,6 @@
 ﻿using Korga.Models.Json;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -14,10 +14,10 @@ public class ProfileController : ControllerBase
     [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
     public IActionResult Profile()
     {
-        string? id = User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
-        string? givenName = User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname");
-        string? familyName = User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname");
-        string? emailAddress = User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
+        string? id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        string? givenName = User.FindFirstValue(ClaimTypes.GivenName);
+        string? familyName = User.FindFirstValue(ClaimTypes.Surname);
+        string? emailAddress = User.FindFirstValue(ClaimTypes.Email);
 
         if (id == null || givenName == null || familyName == null || emailAddress == null) return new JsonResult(null);
 
@@ -30,20 +30,16 @@ public class ProfileController : ControllerBase
         });
     }
 
-    [Authorize]
     [HttpGet("~/api/challenge")]
-    public NoContentResult ChallengeLogin()
+    public IActionResult ChallengeLogin()
     {
-        return NoContent();
+        AuthenticationProperties properties = new() { RedirectUri = "/" };
+        return Challenge(properties, "OAuth");
     }
 
     [HttpGet("~/api/logout")]
     public IActionResult Logout()
     {
-        return new SignOutResult(new[]
-        {
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            "OAuth"
-        });
+        return SignOut(CookieAuthenticationDefaults.AuthenticationScheme);
     }
 }

@@ -1,4 +1,4 @@
-const baseUrl = import.meta.env.PROD
+const baseUrl: string = import.meta.env.PROD
   ? window.basePath.slice(0, -1)
   : import.meta.env.VITE_API_BASE_PATH.slice(0, -1)
 
@@ -18,6 +18,7 @@ const deleteInfo: RequestInit = {
 }
 
 export default {
+  baseUrl,
   async get<T>(path: string) {
     const response = await fetch(baseUrl + path, getInfo)
     if (response.ok === false) {
