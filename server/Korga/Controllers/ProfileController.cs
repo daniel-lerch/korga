@@ -15,18 +15,22 @@ public class ProfileController : ControllerBase
     public IActionResult Profile()
     {
         string? id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        string? displayName = User.FindFirstValue(ClaimTypes.Name);
         string? givenName = User.FindFirstValue(ClaimTypes.GivenName);
         string? familyName = User.FindFirstValue(ClaimTypes.Surname);
         string? emailAddress = User.FindFirstValue(ClaimTypes.Email);
+        string? picture = User.FindFirstValue("picture");
 
-        if (id == null || givenName == null || familyName == null || emailAddress == null) return new JsonResult(null);
+        if (id == null || displayName == null || givenName == null || familyName == null || emailAddress == null) return new JsonResult(null);
 
         return new JsonResult(new ProfileResponse
         {
             Id = id,
+            DisplayName = displayName,
             GivenName = givenName,
             FamilyName = familyName,
-            EmailAddress = emailAddress
+            EmailAddress = emailAddress,
+            Picture = picture
         });
     }
 

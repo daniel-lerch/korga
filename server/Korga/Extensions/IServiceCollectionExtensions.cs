@@ -143,9 +143,11 @@ public static class IServiceCollectionExtensions
                 options.Scope.Add("profile");
 
                 options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "sub");
+                options.ClaimActions.MapJsonKey(ClaimTypes.Name, "displayName");
                 options.ClaimActions.MapJsonKey(ClaimTypes.GivenName, "firstName");
                 options.ClaimActions.MapJsonKey(ClaimTypes.Surname, "lastName");
                 options.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
+                options.ClaimActions.MapJsonKey("picture", "imageUrl");
 
                 options.Events.OnCreatingTicket = async context =>
                 {
