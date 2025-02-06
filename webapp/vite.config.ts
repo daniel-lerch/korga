@@ -13,9 +13,6 @@ export default defineConfig(({ mode }) => {
     changeOrigin: false,
   }
   proxy[env.VITE_API_BASE_PATH + "api"] = options
-  proxy[env.VITE_API_BASE_PATH + "signin-oauth"] = options
-  proxy[env.VITE_API_BASE_PATH + "signin-oidc"] = options
-  proxy[env.VITE_API_BASE_PATH + "signout-callback-oidc"] = options
   return {
     plugins: [vue()],
     resolve: {

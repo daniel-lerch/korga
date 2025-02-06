@@ -1,11 +1,14 @@
-﻿namespace Korga.Configuration;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Korga.Configuration;
 
 public class OAuthOptions
 {
-    public string? AuthorizationEndpoint { get; set; }
-    public string? TokenEndpoint { get; set; }
-    public string? UserInfoEndpoint { get; set; }
+    // Validation ensures that required values cannot be null
+    [Required] public string AuthorizationEndpoint { get; set; } = null!;
+    [Required] public string TokenEndpoint { get; set; } = null!;
+    [Required] public string UserInformationEndpoint { get; set; } = null!;
     public bool UsePkce { get; set; }
-    public string? ClientId { get; set; }
-    public string? ClientSecret { get; set; }
+    [Required] public string ClientId { get; set; } = null!;
+    [Required] public string ClientSecret { get; set; } = null!;
 }

@@ -13,7 +13,7 @@
         </li>
       </ul>
     </li>
-    <button v-else-if="user.profile === null" class="btn btn-outline-light" @click.prevent="user.login">
+    <button v-else-if="user.profile === null" class="btn btn-outline-light login-button" @click.prevent="user.login">
       Login
     </button>
   </ul>
@@ -35,5 +35,10 @@ onMounted(() => {
   width: 36px;
   height: 36px;
   border-radius: 50%;
+}
+
+.login-button {
+  padding-top: calc(0.5em - 1px);
+  padding-bottom: calc(0.5em - 1px);
 }
 </style>

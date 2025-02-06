@@ -35,36 +35,29 @@ Configuration can set as enviroment variables or by creating a custom config fil
 I recommend to use environment variables and will explain them in the following sections.
 However, if you prefer a config file, copy the default [appsettings.json](server/Korga/appsettings.json), edit it as required, and mount it at `/app/appsettings.json`.
 
-### OpenID Connect authentication
+### OAuth authentication
 
-Korga supports single sign-on using OpenID Connect.
-It is the only authentication mechanism Korga supports.
-If you do not configure OpenID Connect, you will not be able to login in Korga's Web UI.
+Korga uses single sign-on via OAuth 2.0. It is the only authentication mechanism Korga supports and required to start the application.
 
-First you must register a new client in your OpenID Connect Provider.
+These instructions assume you use ChurchTools as OAuth provider (supported since December 2024).
+Other OAuth 2.0 and OpenID Connect identity providers should also work.
 
-These instructions assume you use [Keycloak](https://www.keycloak.org/) either in standalone mode,
-with storage provider like [canchanchara/keycloak-churchtools-storage-provider](https://github.com/canchanchara/keycloak-churchtools-storage-provider),
-or with LDAP user federation with a wrapper like [milux/ctldap](https://github.com/milux/ctldap).
+1. Login to ChurchTools as an administrator and open _System settings_ from the navbar
 
-1. Login to Keycloak's admin console, select the correct realm and select _Clients_ in the left-hand navbar
+2. Go to _Integrations_ > _Login to third-party system_ and click on _Add OAuth-Client_
 
-2. Click on _Create client_, select _OpenID Connect_ as type and choose a client ID you like and click _Next_
+3. Choose a name (will be displayed to users when they log in) and enter the URL of your Korga instance as _Redirect-URI_ e.g. `https://korga.exmaple.org/api/signin-oauth``
 
-3. Enable _Client authentication_ and disable _Direct access grants_ so that _Standard flow_ is the only enabled authentication flow and click _Next_
+After creating an OAuth client for Korga in ChurchTools, you can configure it via environment variables in `docker-compose.yml`.
 
-4. As _Root URL_ and _Home URL_ enter the URL to your Korga instance, e.g. https://example.org/korga. As _Valid redirect URIs_ and _Valid post logout redirect URIs_ enter a wildcard path, e.g. https://example.org/korga/*. _Web origins_ should be left empty. Then click _Save_
-
-5. Finally go to the _Credentials_ tab of your newly created client and copy the _Client secret_
-
-After creating a client for Korga in Keycloak or your OpenID Connect provider of choice, you can configure it via environment variables in `docker-compose.yml`.
-
-- `OpenIdConnect__Authority`  
-Set this to the root URL of your Keycloak realm, e.g. `https://keycloak.example.org/realms/churchtools`
-- `OpenIdConnect__ClientId`  
-Set this to the client ID you chose when creating a client for Korga in Keycloak, e.g. `korga`
-- `OpenIdConnect__ClientSecret`  
-Set this to the client secret copied in step 5.
+- `OAuth__AuthorizationEndpoint`  
+Copy Authorization-URL from ChurchTools, e.g. `https://demo.church.tools/oauth/authorize`
+- `OAuth__TokenEndpoint`  
+Copy Access-Token-URL from ChurchTools, e.g. `https://demo.church.tools/oauth/access_token`
+- `OAuth__UserInformationEndpoint`  
+Copy Profile-URL from ChurchTools, e.g. `https://demo.church.tools/oauth/userinfo`
+- `OAuth__ClientId`  
+Copy Client Identifier from ChurchTools, e.g. `2807de0033284e12bab29389b8bd1ea3acc0352b6bdc4ce8936aa854a555391d`
 
 ### ChurchTools sync
 
@@ -79,7 +72,8 @@ First you must create a service account which Korga can use for API access to Ch
 
 Steps 4. and 5. can also be performed in the ChurchTools web interface: [Official Documentation](https://hilfe.church.tools/wiki/0/API%20Authentifizierung#logintoken)
 
-> ⚠️ For security reasons it is not recommended to let Korga use your ChurchTools admin account.
+> [!WARNING]]
+> For security reasons it is not recommended to let Korga use your ChurchTools admin account.
 
 Grant the following permissions to Korga's user:
 

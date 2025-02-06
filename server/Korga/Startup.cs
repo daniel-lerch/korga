@@ -44,7 +44,7 @@ public class Startup
 
         services.AddHealthChecks();
 
-        services.AddOpenIdConnectAuthentication(Configuration, environment);
+        services.AddOAuthAuthentication(Configuration, environment);
 
         // Use Configuration manually because options are not available in ConfigureService
         // Instead of returning a fake service when disabled we don't register any hosted service at all
