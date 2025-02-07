@@ -4,6 +4,7 @@ using Korga;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Korga.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20250101221549_NullableEmailHeaders")]
+    partial class NullableEmailHeaders
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -170,7 +173,7 @@ namespace Korga.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -184,8 +187,6 @@ namespace Korga.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Email");
 
                     b.HasIndex("StatusId");
 
@@ -283,16 +284,11 @@ namespace Korga.Migrations
                     b.Property<long?>("PermittedRecipientsId")
                         .HasColumnType("bigint");
 
-                    b.Property<long?>("PermittedSendersId")
-                        .HasColumnType("bigint");
-
                     b.HasKey("Id");
 
                     b.HasAlternateKey("Alias");
 
                     b.HasIndex("PermittedRecipientsId");
-
-                    b.HasIndex("PermittedSendersId");
 
                     b.ToTable("DistributionLists");
                 });
@@ -353,21 +349,6 @@ namespace Korga.Migrations
                         .IsUnique();
 
                     b.ToTable("InboxEmails");
-                });
-
-            modelBuilder.Entity("Korga.Filters.Entities.Permission", b =>
-                {
-                    b.Property<string>("Key")
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<long>("PersonFilterListId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Key");
-
-                    b.HasIndex("PersonFilterListId");
-
-                    b.ToTable("Permissions");
                 });
 
             modelBuilder.Entity("Korga.Filters.Entities.PersonFilter", b =>
@@ -590,13 +571,7 @@ namespace Korga.Migrations
                         .WithMany()
                         .HasForeignKey("PermittedRecipientsId");
 
-                    b.HasOne("Korga.Filters.Entities.PersonFilterList", "PermittedSenders")
-                        .WithMany()
-                        .HasForeignKey("PermittedSendersId");
-
                     b.Navigation("PermittedRecipients");
-
-                    b.Navigation("PermittedSenders");
                 });
 
             modelBuilder.Entity("Korga.EmailRelay.Entities.InboxEmail", b =>
@@ -606,17 +581,6 @@ namespace Korga.Migrations
                         .HasForeignKey("DistributionListId");
 
                     b.Navigation("DistributionList");
-                });
-
-            modelBuilder.Entity("Korga.Filters.Entities.Permission", b =>
-                {
-                    b.HasOne("Korga.Filters.Entities.PersonFilterList", "PersonFilterList")
-                        .WithMany()
-                        .HasForeignKey("PersonFilterListId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("PersonFilterList");
                 });
 
             modelBuilder.Entity("Korga.Filters.Entities.PersonFilter", b =>

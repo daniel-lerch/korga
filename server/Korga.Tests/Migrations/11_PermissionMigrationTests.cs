@@ -10,7 +10,7 @@ using Xunit.Abstractions;
 
 namespace Korga.Tests.Migrations;
 
-public class PermissionMigrationTests : MigrationTestBase<PersonFilterList.DatabaseContext, Permissions.DatabaseContext>
+public class PermissionMigrationTests : MigrationTestBase<NullableEmailHeaders.DatabaseContext, Permissions.DatabaseContext>
 {
     public PermissionMigrationTests(ITestOutputHelper testOutput) : base(testOutput) { }
 
@@ -20,10 +20,10 @@ public class PermissionMigrationTests : MigrationTestBase<PersonFilterList.Datab
         IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
 
         // Create database schema of last migration before the one to test
-        await migrator.MigrateAsync("PersonFilterList");
+        await migrator.MigrateAsync("NullableEmailHeaders");
 
         // Add test data
-        PersonFilterList.DistributionList distributionList = new()
+        NullableEmailHeaders.DistributionList distributionList = new()
         {
             Alias = "test",
             PermittedRecipients = new(),
@@ -78,7 +78,7 @@ public class PermissionMigrationTests : MigrationTestBase<PersonFilterList.Datab
         after.ChangeTracker.Clear();
 
         // Migrate to migration before the one to test and thereby revert it
-        await migrator.MigrateAsync("PersonFilterList");
+        await migrator.MigrateAsync("NullableEmailHeaders");
 
         List<long> filters = await before.PersonFilterLists.Select(fl => fl.Id).ToListAsync();
 
@@ -89,5 +89,8 @@ public class PermissionMigrationTests : MigrationTestBase<PersonFilterList.Datab
 
         Assert.Contains(permittedRecipientId, filters);
         Assert.DoesNotContain(permittedSenderId, filters);
+
+        // Upgrade database again to verify rollback worked
+        await migrator.MigrateAsync("Permissions");
     }
 }

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Korga.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20240807185934_Permissions")]
+    [Migration("20250207222600_Permissions")]
     partial class Permissions
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace Korga.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.7")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
@@ -320,7 +320,6 @@ namespace Korga.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
 
                     b.Property<string>("From")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<byte[]>("Header")
@@ -339,11 +338,9 @@ namespace Korga.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("Subject")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("To")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<uint?>("UniqueId")

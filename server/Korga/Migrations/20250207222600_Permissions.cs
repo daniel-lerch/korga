@@ -68,6 +68,7 @@ namespace Korga.Migrations
                 principalTable: "PersonFilterLists",
                 principalColumn: "Id");
 
+            // Create default permissions
             migrationBuilder.Sql("INSERT INTO `PersonFilterLists` VALUES (NULL)");
             migrationBuilder.Sql("INSERT INTO `Permissions` VALUES (\"Permissions_View\", LAST_INSERT_ID())");
             migrationBuilder.Sql("INSERT INTO `PersonFilterLists` VALUES (NULL)");
@@ -83,6 +84,7 @@ namespace Korga.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            // Delete default permissions
             migrationBuilder.Sql(
 @"DELETE FROM `PersonFilterLists` WHERE `Id` IN
 (SELECT `PersonFilterListId` FROM `Permissions`)");
@@ -98,6 +100,7 @@ namespace Korga.Migrations
                 name: "FK_DistributionLists_PersonFilterLists_PermittedSendersId",
                 table: "DistributionLists");
 
+            // Delete send permissions (not supported in previous versions)
             migrationBuilder.Sql(
 @"DELETE FROM `PersonFilterLists` WHERE `Id` IN
 (SELECT `PermittedSendersId` FROM `DistributionLists` WHERE `PermittedSendersId` IS NOT NULL)");

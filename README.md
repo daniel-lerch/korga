@@ -165,7 +165,7 @@ The following instructions are written for Windows but generally also apply to L
 ### Frontend
 - Visual Studio Code
 - Vue Language Features (Volar) Extension
-- NodeJS 20 LTS
+- NodeJS 22 LTS
 
 During development the frontend running on the Vue CLI development server will use _http://localhost:10501_ as API endpoint.
 That means the backend can be running in Visual Studio with Debugger attached.
