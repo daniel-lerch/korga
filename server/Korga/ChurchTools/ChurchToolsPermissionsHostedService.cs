@@ -41,6 +41,12 @@ namespace Korga.ChurchTools
 
         private async ValueTask CheckSyncPermissions(GlobalPermissions permissions, IChurchToolsApi churchTools, CancellationToken cancellationToken)
         {
+            if (permissions.ChurchDb == null)
+            {
+                logger.LogWarning("ChurchTools people and groups module is disabled. Sync will not work.");
+                return;
+            }
+
             if (!permissions.ChurchCore.AdministerPersons)
                 logger.LogWarning("ChurchTools user does not have permission 'churchcore:administer persons'. Sync will not work.");
             if (!permissions.ChurchDb.View)
@@ -71,6 +77,18 @@ namespace Korga.ChurchTools
 
         private void CheckServiceHistoryPermissions(GlobalPermissions permissions)
         {
+            if (permissions.ChurchDb == null)
+            {
+                logger.LogWarning("ChurchTools people and groups module is disabled. Event history will not work.");
+                return;
+            }
+
+            if (permissions.ChurchService == null)
+            {
+                logger.LogWarning("ChurchTools events module is disabled. Event history will not work.");
+                return;
+            }
+
             if (!permissions.ChurchDb.EditGroupMemberships)
                 // https://forum.church.tools/topic/10368/berechtigungen-f%C3%BCr-groups-groupid-members-endpunkt
                 logger.LogWarning("ChurchTools user does not have permission 'churchdb:edit group memberships'. Event history will not show comments.");
