@@ -1,7 +1,7 @@
 <template>
   <LoadingSpinner v-if="!loaded" :state="{ error }" />
   <div v-else class="container page-loaded-container">
-    <h1>E-Mail-Verteiler</h1>
+    <h1>Verteilerlisten</h1>
     <div class="container">
       <div
         v-for="dl in distributionLists"
@@ -20,11 +20,7 @@
           </span>
         </div>
         <div class="col-12 col-md-6">
-          <ul class="list-unstyled mb-2">
-            <li v-for="filter in dl.permittedRecipients" :key="filter.id">
-              {{ shortText(filter) }}
-            </li>
-          </ul>
+          <PersonFilter :filter-list="dl.permittedRecipients" />
         </div>
       </div>
     </div>
@@ -32,16 +28,14 @@
 </template>
 
 <script lang="ts">
-import type {
-  DistributionList,
-  PersonFilter,
-} from "@/services/distribution-list"
+import type { DistributionList } from "@/services/distribution-list"
 import { defineComponent, onMounted, ref } from "vue"
 import { getDistributionLists } from "@/services/distribution-list"
 import LoadingSpinner from "@/components/LoadingSpinner.vue"
+import PersonFilter from "@/components/PersonFilter.vue"
 
 export default defineComponent({
-  components: { LoadingSpinner },
+  components: { LoadingSpinner, PersonFilter },
   setup() {
     const distributionLists = ref<DistributionList[]>([])
     const loaded = ref(false)
@@ -57,34 +51,10 @@ export default defineComponent({
       }
     })
 
-    const shortText = function (filter: PersonFilter) {
-      switch (filter.discriminator) {
-        case "StatusFilter":
-          return "Status: " + filter.statusName
-        case "GroupFilter": {
-          const prefix = "Gruppe: " + filter.groupName
-          return filter.groupRoleName
-            ? prefix + " (" + filter.groupRoleName + ")"
-            : prefix
-        }
-        case "GroupTypeFilter": {
-          const prefix = "Gruppentyp: " + filter.groupTypeName
-          return filter.groupRoleName
-            ? prefix + " (" + filter.groupRoleName + ")"
-            : prefix
-        }
-        case "SinglePerson":
-          return "Person: " + filter.personFullName
-        default:
-          return "Unbekannter Filtertyp: " + filter.discriminator
-      }
-    }
-
     return {
       distributionLists,
       loaded,
       error,
-      shortText,
     }
   },
 })

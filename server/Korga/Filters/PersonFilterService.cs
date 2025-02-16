@@ -1,22 +1,26 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Korga.ChurchTools.Entities;
 using Korga.Extensions;
 using Korga.Filters.Entities;
+using Korga.Models.Json;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Korga.Filters;
 
 public class PersonFilterService
 {
     private readonly DatabaseContext database;
+    private readonly PersonLookupService lookupService;
 
-    public PersonFilterService(DatabaseContext database)
+    public PersonFilterService(DatabaseContext database, PersonLookupService lookupService)
     {
         this.database = database;
+        this.lookupService = lookupService;
     }
 
     /// <summary>
@@ -43,7 +47,24 @@ public class PersonFilterService
         return await query.Distinct().ToListAsync(cancellationToken);
     }
 
-    private IQueryable<Person> FilterToQuery(PersonFilter filter)
+    public async ValueTask<bool> HasPermission(ClaimsPrincipal user, Permissions permission)
+    {
+        Person? person = await lookupService.GetPerson(user);
+        if (person == null) return false;
+
+        List<PersonFilter> personFilters = await database.Permissions.Where(p => p.Key == permission)
+            .Join(database.PersonFilters, p => p.PersonFilterListId, f => f.PersonFilterListId, (p, f) => f)
+            .ToListAsync();
+
+        foreach (PersonFilter filter in personFilters)
+        {
+            if (await FilterToQuery(filter).AnyAsync(p => p.Id == person.Id)) return true;
+        }
+
+        return false;
+    }
+
+    public IQueryable<Person> FilterToQuery(PersonFilter filter)
     {
         if (filter is GroupFilter groupFilter)
         {
@@ -69,6 +90,38 @@ public class PersonFilterService
         }
 
         throw new ArgumentException($"Invalid filter type {filter.GetType().FullName}", nameof(filter));
+    }
+
+    public async ValueTask<PersonFilterResponse> GetFilterResponse(PersonFilter personFilter)
+    {
+        PersonFilterResponse filter = new() { Id = personFilter.Id, Discriminator = personFilter.GetType().Name };
+
+        if (personFilter is StatusFilter statusFilter)
+        {
+            filter.StatusName = await database.Status.Where(s => s.Id == statusFilter.StatusId).Select(s => s.Name).SingleAsync();
+        }
+        else if (personFilter is GroupFilter groupFilter)
+        {
+            filter.GroupName = await database.Groups.Where(g => g.Id == groupFilter.GroupId).Select(g => g.Name).SingleAsync();
+            if (groupFilter.GroupRoleId.HasValue)
+                filter.GroupRoleName = await database.GroupRoles.Where(r => r.Id == groupFilter.GroupRoleId.Value).Select(r => r.Name).SingleAsync();
+        }
+        else if (personFilter is GroupTypeFilter groupTypeFilter)
+        {
+            filter.GroupTypeName = await database.GroupTypes.Where(t => t.Id == groupTypeFilter.GroupTypeId).Select(t => t.Name).SingleAsync();
+            if (groupTypeFilter.GroupRoleId.HasValue)
+                filter.GroupRoleName = await database.GroupRoles.Where(r => r.Id == groupTypeFilter.GroupRoleId.Value).Select(r => r.Name).SingleAsync();
+        }
+        else if (personFilter is SinglePerson singlePerson)
+        {
+            filter.PersonFullName = await database.People.Where(p => p.Id == singlePerson.PersonId).Select(p => $"{p.FirstName} {p.LastName}").SingleAsync();
+        }
+        else
+        {
+            throw new ArgumentException($"Invalid filter type {personFilter.GetType().FullName}", nameof(personFilter));
+        }
+
+        return filter;
     }
 
     public async ValueTask<bool> AddFilter(long filterListId, PersonFilter filter)

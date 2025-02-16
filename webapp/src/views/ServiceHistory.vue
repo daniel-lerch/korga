@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <h1>Dienstzuteilung</h1>
+    <h1>Diensthistorie</h1>
     <div class="selection-bar">
       <multiselect
         class="selection-service"

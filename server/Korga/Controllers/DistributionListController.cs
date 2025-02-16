@@ -1,5 +1,7 @@
 ﻿using Korga.EmailRelay;
 using Korga.EmailRelay.Entities;
+using Korga.Extensions;
+using Korga.Filters;
 using Korga.Filters.Entities;
 using Korga.Models.Json;
 using Microsoft.AspNetCore.Authorization;
@@ -12,65 +14,272 @@ using System.Threading.Tasks;
 
 namespace Korga.Controllers
 {
-	[ApiController]
-	public class DistributionListController : ControllerBase
-	{
-		private readonly DatabaseContext database;
+    [Authorize]
+    [ApiController]
+    public class DistributionListController : ControllerBase
+    {
+        private readonly DatabaseContext database;
+        private readonly PersonFilterService filterService;
 
-		public DistributionListController(DatabaseContext database)
-		{
-			this.database = database;
-		}
+        public DistributionListController(DatabaseContext database, PersonFilterService filterService)
+        {
+            this.database = database;
+            this.filterService = filterService;
+        }
 
-		[Authorize]
-		[HttpGet("~/api/distribution-lists")]
-		[ProducesResponseType(typeof(DistributionListResponse[]), StatusCodes.Status200OK)]
-		public async Task<IActionResult> GetDistributionLists()
-		{
-			List<DistributionList> distributionLists = await database.DistributionLists
-				.Include(dl => dl.PermittedRecipients)
-				.ThenInclude(fl => fl!.Filters)
-				.OrderBy(dl => dl.Alias)
-				.ToListAsync();
+        [HttpGet("~/api/distribution-lists")]
+        [ProducesResponseType(typeof(DistributionListResponse[]), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetDistributionLists()
+        {
+            if (!await filterService.HasPermission(User, Permissions.DistributionLists_View) && !await filterService.HasPermission(User, Permissions.DistributionLists_Admin))
+                return StatusCode(StatusCodes.Status403Forbidden);
 
-			List<DistributionListResponse> response = [];
+            List<DistributionList> distributionLists = await database.DistributionLists
+                .Include(dl => dl.PermittedRecipients)
+                .ThenInclude(fl => fl!.Filters)
+                .Include(dl => dl.PermittedSenders)
+                .ThenInclude(fl => fl!.Filters)
+                .OrderBy(dl => dl.Alias)
+                .ToListAsync();
 
-			foreach (DistributionList distributionList in distributionLists)
-			{
-				List<DistributionListResponse.PersonFilter> filters = [];
+            List<DistributionListResponse> response = [];
 
-				foreach (PersonFilter personFilter in distributionList.PermittedRecipients?.Filters ?? [])
-				{
-					DistributionListResponse.PersonFilter filter = new() { Id = personFilter.Id, Discriminator = personFilter.GetType().Name };
+            foreach (DistributionList distributionList in distributionLists)
+            {
+                List<PersonFilterResponse> recipients = [];
+                List<PersonFilterResponse> senders = [];
 
-					if (personFilter is StatusFilter statusFilter)
-					{
-						filter.StatusName = await database.Status.Where(s => s.Id == statusFilter.StatusId).Select(s => s.Name).SingleAsync();
-					}
-					else if (personFilter is GroupFilter groupFilter)
-					{
-						filter.GroupName = await database.Groups.Where(g => g.Id == groupFilter.GroupId).Select(g => g.Name).SingleAsync();
-						if (groupFilter.GroupRoleId.HasValue)
-							filter.GroupRoleName = await database.GroupRoles.Where(r => r.Id == groupFilter.GroupRoleId.Value).Select(r => r.Name).SingleAsync();
-					}
-					else if (personFilter is GroupTypeFilter groupTypeFilter)
-					{
-						filter.GroupTypeName = await database.GroupTypes.Where(t => t.Id == groupTypeFilter.GroupTypeId).Select(t => t.Name).SingleAsync();
-						if (groupTypeFilter.GroupRoleId.HasValue)
-							filter.GroupRoleName = await database.GroupRoles.Where(r => r.Id == groupTypeFilter.GroupRoleId.Value).Select(r => r.Name).SingleAsync();
-					}
-					else if (personFilter is SinglePerson singlePerson)
-					{
-						filter.PersonFullName = await database.People.Where(p => p.Id == singlePerson.PersonId).Select(p => $"{p.FirstName} {p.LastName}").SingleAsync();
-					}
+                foreach (PersonFilter personFilter in distributionList.PermittedRecipients?.Filters ?? [])
+                {
+                    PersonFilterResponse filter = await filterService.GetFilterResponse(personFilter);
 
-					filters.Add(filter);
-				}
+                    recipients.Add(filter);
+                }
 
-				response.Add(new(distributionList.Id, distributionList.Alias, distributionList.Flags.HasFlag(DistributionListFlags.Newsletter), filters));
-			}
+                foreach (PersonFilter personFilter in distributionList.PermittedSenders?.Filters ?? [])
+                {
+                    PersonFilterResponse filter = await filterService.GetFilterResponse(personFilter);
 
-			return new JsonResult(response);
-		}
-	}
+                    senders.Add(filter);
+                }
+
+                response.Add(new()
+                {
+                    Id = distributionList.Id,
+                    Alias = distributionList.Alias,
+                    Newsletter = distributionList.Flags.HasFlag(DistributionListFlags.Newsletter),
+                    PermittedRecipients = recipients,
+                    PermittedSenders = senders,
+                });
+            }
+
+            return new JsonResult(response);
+        }
+
+        [HttpPost("~/api/distribution-lists")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> CreateDistributionList([FromBody] DistributionListRequest request)
+        {
+            if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin))
+                return StatusCode(StatusCodes.Status403Forbidden);
+
+            DistributionList distributionList = new(request.Alias)
+            {
+                Flags = request.Newsletter ? DistributionListFlags.Newsletter : DistributionListFlags.None,
+            };
+
+            database.DistributionLists.Add(distributionList);
+            await database.SaveChangesAsync();
+
+            return StatusCode(StatusCodes.Status204NoContent);
+        }
+
+        [HttpPut("~/api/distribution-list/{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateDistributionList(long id, [FromBody] DistributionListRequest request)
+        {
+            if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin))
+                return StatusCode(StatusCodes.Status403Forbidden);
+
+            DistributionList? distributionList = await database.DistributionLists.SingleOrDefaultAsync(l => l.Id == id);
+
+            if (distributionList == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+
+            distributionList.Alias = request.Alias;
+            distributionList.Flags = request.Newsletter ? DistributionListFlags.Newsletter : DistributionListFlags.None;
+
+            await database.SaveChangesAsync();
+
+            return StatusCode(StatusCodes.Status204NoContent);
+        }
+
+        [HttpDelete("~/api/distribution-list/{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteDistributionList(long id)
+        {
+            if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin))
+                return StatusCode(StatusCodes.Status403Forbidden);
+
+            DistributionList? distributionList = await database.DistributionLists
+                .Include(l => l.PermittedRecipients)
+                .Include(l => l.PermittedSenders)
+                .SingleOrDefaultAsync(l => l.Id == id);
+
+            if (distributionList == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+
+            database.DistributionLists.Remove(distributionList);
+
+            if (distributionList.PermittedSenders != null)
+                database.PersonFilterLists.Remove(distributionList.PermittedSenders);
+
+            if (distributionList.PermittedRecipients != null)
+                database.PersonFilterLists.Remove(distributionList.PermittedRecipients);
+
+            await database.SaveChangesAsync();
+
+            return StatusCode(StatusCodes.Status204NoContent);
+        }
+
+        [HttpPost("~/api/distribution-list/{id}/recipients")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> AddRecipientsFilter(long id, [FromBody] PersonFilterRequest request)
+        {
+            if (!await filterService.HasPermission(User, Permissions.Permissions_Admin))
+                return StatusCode(StatusCodes.Status403Forbidden);
+
+            DistributionList? distributionList = await database.DistributionLists.Include(p => p.PermittedRecipients).FirstOrDefaultAsync(p => p.Id == id);
+
+            if (distributionList == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+
+            try
+            {
+                PersonFilter filter = request.ToEntity();
+                if (distributionList.PermittedRecipients == null)
+                {
+                    distributionList.PermittedRecipients = new() { Filters = [filter] };
+                }
+                else
+                {
+                    filter.PersonFilterListId = distributionList.PermittedRecipients.Id;
+                    database.PersonFilters.Add(filter);
+                }
+                await database.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (ex.IsForeignKeyConstraintViolation())
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+            catch (DbUpdateException ex) when (ex.IsUniqueConstraintViolation())
+            {
+                return StatusCode(StatusCodes.Status409Conflict);
+            }
+
+            return StatusCode(StatusCodes.Status204NoContent);
+        }
+
+        [HttpPost("~/api/distribution-list/{id}/senders")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> AddSendersFilter(long id, [FromBody] PersonFilterRequest request)
+        {
+            if (!await filterService.HasPermission(User, Permissions.Permissions_Admin))
+                return StatusCode(StatusCodes.Status403Forbidden);
+
+            DistributionList? distributionList = await database.DistributionLists.Include(p => p.PermittedSenders).FirstOrDefaultAsync(p => p.Id == id);
+
+            if (distributionList == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+
+            try
+            {
+                PersonFilter filter = request.ToEntity();
+                if (distributionList.PermittedSenders == null)
+                {
+                    distributionList.PermittedSenders = new() { Filters = [filter] };
+                }
+                else
+                {
+                    filter.PersonFilterListId = distributionList.PermittedSenders.Id;
+                    database.PersonFilters.Add(filter);
+                }
+                await database.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (ex.IsForeignKeyConstraintViolation())
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+            catch (DbUpdateException ex) when (ex.IsUniqueConstraintViolation())
+            {
+                return StatusCode(StatusCodes.Status409Conflict);
+            }
+
+            return StatusCode(StatusCodes.Status204NoContent);
+        }
+
+        [HttpDelete("~/api/distribution-list/{id}/recipients/{filterId}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> RemoveRecipientsFilter(long id, long filterId)
+        {
+            if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin))
+                return StatusCode(StatusCodes.Status403Forbidden);
+
+            DistributionList? distributionList = await database.DistributionLists.FirstOrDefaultAsync(p => p.Id == id);
+
+            if (distributionList == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+
+            PersonFilter? filter = await database.PersonFilters.SingleOrDefaultAsync(f => f.Id == filterId && f.PersonFilterListId == distributionList.PermittedRecipientsId);
+
+            if (filter == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+
+            database.PersonFilters.Remove(filter);
+            await database.SaveChangesAsync();
+
+            return StatusCode(StatusCodes.Status204NoContent);
+        }
+
+        [HttpDelete("~/api/distribution-list/{id}/senders/{filterId}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> RemoveSendersFilter(long id, long filterId)
+        {
+            if (!await filterService.HasPermission(User, Permissions.DistributionLists_Admin))
+                return StatusCode(StatusCodes.Status403Forbidden);
+
+            DistributionList? distributionList = await database.DistributionLists.FirstOrDefaultAsync(p => p.Id == id);
+
+            if (distributionList == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+
+            PersonFilter? filter = await database.PersonFilters.SingleOrDefaultAsync(f => f.Id == filterId && f.PersonFilterListId == distributionList.PermittedSendersId);
+
+            if (filter == null)
+                return StatusCode(StatusCodes.Status404NotFound);
+
+            database.PersonFilters.Remove(filter);
+            await database.SaveChangesAsync();
+
+            return StatusCode(StatusCodes.Status204NoContent);
+        }
+    }
 }

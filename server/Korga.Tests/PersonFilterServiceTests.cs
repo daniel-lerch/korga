@@ -20,6 +20,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
 
     protected override void ConfigureServices(IServiceCollection services)
     {
+        services.AddScoped<PersonLookupService>();
         services.AddScoped<PersonFilterService>();
     }
 
@@ -194,6 +195,23 @@ public class PersonFilterServiceTests : DatabaseTestBase
 
         bool inserted = await personFilterService.AddFilter(filterList.Id, new GroupTypeFilter { GroupTypeId = 1 });
         Assert.False(inserted);
+    }
+
+    [Fact]
+    public async Task TestAddFilter_SinglePerson_NewFilter()
+    {
+        await InitializeSampleDataset();
+
+        // Create sample filter
+        PersonFilterList filterList = new()
+        {
+            Filters = [new SinglePerson { PersonId = 1 }]
+        };
+        databaseContext.PersonFilterLists.Add(filterList);
+        await databaseContext.SaveChangesAsync();
+
+        bool inserted = await personFilterService.AddFilter(filterList.Id, new SinglePerson { PersonId = 2 });
+        Assert.True(inserted);
     }
 
     [Fact]

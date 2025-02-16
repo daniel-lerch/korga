@@ -1,3 +1,4 @@
+import type { PersonFilter } from "./filter"
 import client from "./client"
 
 export interface DistributionList {
@@ -5,16 +6,6 @@ export interface DistributionList {
   alias: string
   newsletter: boolean
   permittedRecipients: PersonFilter[]
-}
-
-export interface PersonFilter {
-  id: number
-  discriminator: string
-  statusName: string | null
-  groupName: string | null
-  groupRoleName: string | null
-  groupTypeName: string | null
-  personFullName: string | null
 }
 
 export function getDistributionLists(): Promise<DistributionList[]> {

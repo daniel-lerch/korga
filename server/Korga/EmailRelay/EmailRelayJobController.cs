@@ -1,10 +1,13 @@
 ﻿using Korga.EmailDelivery;
 using Korga.EmailRelay.Entities;
+using Korga.Filters;
+using Korga.Filters.Entities;
 using Korga.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MimeKit;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,15 +19,17 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
     private readonly DatabaseContext database;
     private readonly ILogger<EmailRelayJobController> logger;
     private readonly DistributionListService distributionListService;
-    private readonly MimeMessageCreationService emailRelay;
+    private readonly MimeMessageCreationService mimeMessageService;
+    private readonly PersonFilterService filterService;
     private readonly EmailDeliveryService emailDelivery;
 
-    public EmailRelayJobController(DatabaseContext database, ILogger<EmailRelayJobController> logger, DistributionListService distributionListService, MimeMessageCreationService emailRelay, EmailDeliveryService emailDelivery)
+    public EmailRelayJobController(DatabaseContext database, ILogger<EmailRelayJobController> logger, DistributionListService distributionListService, MimeMessageCreationService mimeMessageService, PersonFilterService filterService, EmailDeliveryService emailDelivery)
     {
         this.database = database;
         this.logger = logger;
         this.distributionListService = distributionListService;
-        this.emailRelay = emailRelay;
+        this.mimeMessageService = mimeMessageService;
+        this.filterService = filterService;
         this.emailDelivery = emailDelivery;
     }
 
@@ -50,7 +55,7 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
 
         if (email.Receiver == null)
         {
-            using MimeMessage? errorMessage = emailRelay.InvalidServerConfiguration(email);
+            using MimeMessage? errorMessage = mimeMessageService.InvalidServerConfiguration(email);
             await RejectEmail(email, errorMessage, cancellationToken);
 
             logger.LogWarning("Could not determine receiver for message #{Id} from {From} to {To}. This message will not be forwarded. " +
@@ -65,16 +70,24 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
 
         if (distributionList == null)
         {
-            using MimeMessage? errorMessage = emailRelay.InvalidAlias(email);
+            using MimeMessage? errorMessage = mimeMessageService.InvalidAlias(email);
             await RejectEmail(email, errorMessage, cancellationToken);
 
             logger.LogInformation("No group found with alias {Receiver} for email #{Id} from {From}", email.Receiver, email.Id, email.From);
             return;
         }
 
+        if (!await IsSenderPermitted(email, distributionList, cancellationToken))
+        {
+            await RejectEmail(email, mimeMessageService.SenderNotPermitted(email), cancellationToken);
+
+            logger.LogInformation("Sender {From}, {Sender} is not permitted to send to distribution list {Receiver} for email #{Id}", email.From, email.Sender, email.Receiver, email.Id);
+            return;
+        }
+
         if (email.Header == null)
         {
-            using MimeMessage? errorMessage = emailRelay.TooManyHeaders(email);
+            using MimeMessage? errorMessage = mimeMessageService.TooManyHeaders(email);
             await RejectEmail(email, errorMessage, cancellationToken);
 
             logger.LogInformation("Email #{Id} from {From} to {Receiver} exceeded the header size limit", email.Id, email.From, email.Receiver);
@@ -83,7 +96,7 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
 
         if (email.Body == null)
         {
-            using MimeMessage? errorMessage = emailRelay.TooBigMessage(email);
+            using MimeMessage? errorMessage = mimeMessageService.TooBigMessage(email);
             await RejectEmail(email, errorMessage, cancellationToken);
 
             logger.LogInformation("Email #{Id} from {From} to {Receiver} exceeded the body size limit", email.Id, email.From, email.Receiver);
@@ -94,8 +107,8 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
         foreach (MailboxAddress address in recipients)
         {
             using MimeMessage preparedMessage = distributionList.Flags.HasFlag(DistributionListFlags.Newsletter)
-                ? await emailRelay.PrepareForForwardTo(email, address, cancellationToken)
-                : emailRelay.PrepareForResentTo(email, address);
+                ? await mimeMessageService.PrepareForForwardTo(email, address, cancellationToken)
+                : mimeMessageService.PrepareForResentTo(email, address);
             await emailDelivery.Enqueue(address.Address, preparedMessage, email.Id, cancellationToken);
         }
         email.DistributionListId = distributionList.Id;
@@ -106,6 +119,29 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
         return;
     }
 
+    private async ValueTask<bool> IsSenderPermitted(InboxEmail email, DistributionList distributionList, CancellationToken cancellationToken)
+    {
+        List<PersonFilter> permittedSenders = await database.PersonFilters
+            .Where(f => f.PersonFilterListId == distributionList.PermittedSendersId)
+            .ToListAsync(cancellationToken);
+
+        // If no permitted senders are defined, everyone is allowed to send to this distribution list
+        if (permittedSenders.Count == 0) return true;
+
+        string? sender = GetActualSender(email);
+        if (sender == null) return false;
+
+        List<int> senderPersonIds = await database.People.Where(p => p.Email == sender).Select(p => p.Id).ToListAsync(cancellationToken);
+
+        foreach (PersonFilter filter in permittedSenders)
+        {
+            if (await filterService.FilterToQuery(filter).AnyAsync(p => senderPersonIds.Contains(p.Id), cancellationToken))
+                return true;
+        }
+
+        return false;
+    }
+
     private async ValueTask RejectEmail(InboxEmail email, MimeMessage? errorMessage, CancellationToken cancellationToken)
     {
         if (errorMessage != null)
@@ -113,5 +149,20 @@ public class EmailRelayJobController : OneAtATimeJobController<InboxEmail>
 
         email.ProcessingCompletedTime = DateTime.UtcNow;
         await database.SaveChangesAsync(cancellationToken);
+    }
+
+    private static string? GetActualSender(InboxEmail email)
+    {
+        if (email.Sender != null)
+        {
+            if (MailboxAddress.TryParse(email.Sender, out MailboxAddress mailboxAddress))
+                return mailboxAddress.Address;
+            else
+                return null;
+        }
+        else
+        {
+            return MailboxAddressHelper.FirstMailboxAddressOrDefault(email.From)?.Address;
+        }
     }
 }

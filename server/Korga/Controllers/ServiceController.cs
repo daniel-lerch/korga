@@ -1,5 +1,6 @@
 ﻿using ChurchTools;
 using ChurchTools.Model;
+using Korga.Filters;
 using Korga.Models.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -16,16 +17,22 @@ namespace Korga.Controllers;
 public class ServiceController : ControllerBase
 {
     private readonly IChurchToolsApi churchTools;
+    private readonly PersonFilterService filterService;
 
-    public ServiceController(IChurchToolsApi churchTools)
+    public ServiceController(IChurchToolsApi churchTools, PersonFilterService filterService)
     {
         this.churchTools = churchTools;
+        this.filterService = filterService;
     }
 
     [HttpGet("~/api/services")]
     [ProducesResponseType(typeof(ServiceResponse[]), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetServices()
     {
+        if (!await filterService.HasPermission(User, Permissions.ServiceHistory_View))
+            return StatusCode(StatusCodes.Status403Forbidden);
+
         var serviceGroupsTask = churchTools.GetServiceGroups();
         var servicesTask = churchTools.GetServices();
 
@@ -42,8 +49,12 @@ public class ServiceController : ControllerBase
 
     [HttpGet("~/api/services/history")]
     [ProducesResponseType(typeof(ServiceHistoryResponse[]), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetServiceHistory([FromQuery] HashSet<int> serviceId, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to)
     {
+        if (!await filterService.HasPermission(User, Permissions.ServiceHistory_View))
+            return StatusCode(StatusCodes.Status403Forbidden);
+
         var groupIds = await GetServiceGroups(serviceId);
         var groupMembers = await GetGroupMembers(groupIds);
 
