@@ -1,5 +1,8 @@
 # Korga
 
+> [!IMPORTANT]
+> This README reflect the current development state on `master` for Korga 4. See [Korga 3.1.3](https://github.com/daniel-lerch/korga/blob/v3.1.3/README.md) for the latest released version.
+
 [![Build and tests](https://github.com/daniel-lerch/korga/actions/workflows/main.yml/badge.svg)](https://github.com/daniel-lerch/korga/actions/workflows/main.yml)
 [![](https://img.shields.io/docker/pulls/daniellerch/korga.svg)](https://hub.docker.com/r/daniellerch/korga)
 [![](https://img.shields.io/docker/image-size/daniellerch/korga/latest.svg)](https://hub.docker.com/r/daniellerch/korga)
@@ -31,9 +34,7 @@ Korga has multiple modules that must be enabled via configuration to use them:
 - Email delivery
 - Email relay
 
-Configuration can set as enviroment variables or by creating a custom config file.
-I recommend to use environment variables and will explain them in the following sections.
-However, if you prefer a config file, copy the default [appsettings.json](server/Korga/appsettings.json), edit it as required, and mount it at `/app/appsettings.json`.
+See [Korga server configuration](docs/configuration.md) for a full list of configuration options.
 
 ### OAuth authentication
 
@@ -72,7 +73,7 @@ First you must create a service account which Korga can use for API access to Ch
 
 Steps 4. and 5. can also be performed in the ChurchTools web interface: [Official Documentation](https://hilfe.church.tools/wiki/0/API%20Authentifizierung#logintoken)
 
-> [!WARNING]]
+> [!WARNING]
 > For security reasons it is not recommended to let Korga use your ChurchTools admin account.
 
 Grant the following permissions to Korga's user:
