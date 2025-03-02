@@ -20,7 +20,7 @@ public class ChurchToolsApi : IChurchToolsApi, IDisposable
 
         try
         {
-            return await Login(new(), host, username, password);
+            return await Login(httpClient, host, username, password);
         }
         catch
         {

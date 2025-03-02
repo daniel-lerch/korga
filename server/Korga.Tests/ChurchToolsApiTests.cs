@@ -33,4 +33,12 @@ public class ChurchToolsApiTests
         // This call fails if client is not authenticated
         await client.GetPerson();
     }
+
+    [Fact]
+    public async Task TestGetGlobalPermissions()
+    {
+        using ChurchToolsApi client = await ChurchToolsApi.Login(churchToolsHost, churchToolsUsername, churchToolsPassword);
+
+        await client.GetGlobalPermissions();
+    }
 }
