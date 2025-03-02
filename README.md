@@ -14,15 +14,17 @@ It synchronizes people and groups with [ChurchTools](https://church.tools) and p
 
 ### Email distribution lists
 
-Once configured, Korga automatically synchronizes people and groups from ChurchTools. This data can be used to create distribution lists.
+Korga makes it possible to send emails to ChurchTools groups via email.
+For example, anyone can send an email to _youth@example.oorg_ and Korga will forward it to all members of your ChurchTools group _Youth_ with role _Leader_. 
+
 There is no Web UI available yet to manage distribution lists so you must stick to the CLI inside the Docker container:
 
 ```
-./Korga dist create kids
-./Korga dist add-recipient kids -g 137
+./Korga dist create youth
+./Korga dist add-recipient youth -g 137
 ```
 
-This command creates a distribution list _kids@example.org_ which forwards emails to every member of group #137.
+This command creates a distribution list _youth@example.org_ which forwards emails to every member of group #137.
 
 ## Installation
 
@@ -47,18 +49,9 @@ Other OAuth 2.0 and OpenID Connect identity providers should also work.
 
 2. Go to _Integrations_ > _Login to third-party system_ and click on _Add OAuth-Client_
 
-3. Choose a name (will be displayed to users when they log in) and enter the URL of your Korga instance as _Redirect-URI_ e.g. `https://korga.exmaple.org/api/signin-oauth``
+3. Choose a name (will be displayed to users when they log in) and enter the URL of your Korga instance as _Redirect-URI_ e.g. `https://korga.example.org/api/signin-oauth`
 
-After creating an OAuth client for Korga in ChurchTools, you can configure it via environment variables in `docker-compose.yml`.
-
-- `OAuth__AuthorizationEndpoint`  
-Copy Authorization-URL from ChurchTools, e.g. `https://demo.church.tools/oauth/authorize`
-- `OAuth__TokenEndpoint`  
-Copy Access-Token-URL from ChurchTools, e.g. `https://demo.church.tools/oauth/access_token`
-- `OAuth__UserInformationEndpoint`  
-Copy Profile-URL from ChurchTools, e.g. `https://demo.church.tools/oauth/userinfo`
-- `OAuth__ClientId`  
-Copy Client Identifier from ChurchTools, e.g. `2807de0033284e12bab29389b8bd1ea3acc0352b6bdc4ce8936aa854a555391d`
+After creating an OAuth client for Korga in ChurchTools, you can configure it via [environment variables](docs/configuration.md#oauth) in `docker-compose.yml`.
 
 ### ChurchTools sync
 
@@ -88,61 +81,22 @@ Grant the following permissions to Korga's user:
 - Events > Dienste einzelner Dienstgruppen einsehen (Alle) `churchservice:view servicegroup(-1)`
 - Events > Events von einzelnen Kalendern sehen (Alle) `churchservice:view events(-1)`
 
-After creating and configuring a ChurchTools user for Korga you can finally configure it via environment variables in `docker-compose.yml`.
-
-- `ChurchTools__EnableSync`  
-Set this to `true` to enable a periodic sync with ChurchTools
-- `ChurchTools__Host`  
-Configure your ChurchTools domain, e.g. `example.church.tools`
-- `ChurchTools__LoginToken`  
-Fill in the login token of your service account for Korga.
-This should be a 256 chars long alphanumeric text without special chars.
+After creating and configuring a ChurchTools user for Korga you can finally configure it via [environment variables](docs/configuration.md#churchtools) in `docker-compose.yml`.
 
 Do not forget to recreate your container to take these changes into effect.
 
 ### Email delivery
 
-Email delivery via SMTP can be configured with environment variables in `docker-compose.yml`:
-
-- `EmailDelivery__Enable`  
-Set this to `true` to enable Korga to send emails via SMTP
-- `EmailDelivery__SenderName`  
-The display name for system messages. Defaults to `Korga`
-- `EmailDelivery__SenderAddress`  
-The address Korga will send emails from. Usually this should be the email address for the credentials below.
-- `EmailDelivery__SmtpHost`  
-Defaults to `smtp.strato.de`
-- `EmailDelivery__SmtpPort`  
-Defaults to `465`
-- `EmailDelivery__SmtpUseSsl`  
-Defaults to `true`
-- `EmailDelivery__SmtpUsername`
-- `EmailDelivery__SmtpPassword`
+Email delivery requires an SMTP server and credentials.
+This is given for almost any email inbox.
+Depending on your email hosting provider you might need an app password.
+Email delivery can be configured via [environment variables](docs/configuration.md#email-delivery) in `docker-compose.yml`.
 
 ### Email relay
 
 Korga's email relay requires a catchall IMAP inbox.
 Such an inbox receives all emails sent to a domain where no matching inbox was found, i.e. `*@example.org`.
-It can be configured with environment variables in `docker-compose.yml`:
-
-- `EmailRelay__Enable`  
-Set this to `true` to let Korga periodically check for emails to forward them. If `EmailDelivery__Enable` is set to `false`, this option will have no effect. Email relay depends on email delivery.
-- `EmailRelay__ImapHost`  
-Defaults to `imap.strato.de`
-- `EmailRelay__ImapPort`  
-Defaults to `993`
-- `EmailRelay__ImapUseSsl`  
-Defaults to `true`
-- `EmailRelay__ImapUsername`
-- `EmailRelay__ImapPassword`
-- `EmailRelay__RetrievalIntervalInMinutes`  
-Defaults to `2.0` (2 minutes)
-- `EmailRelay__ImapRetentionIntervalInDays`  
-Defaults to `1.0` (24 hours)
-- `EmailRelay__MaxHeaderSizeInKilobytes`  
-Defaults to `64` (64 KiB)
-- `EmailRelay__MaxBodySizeInKilobytes`  
-Defaults to `12288` (12 MiB). You must adjust MariaDB's `max_packet_size` if you want to increase this limit.
+It can be configured via [environment variables](docs/configuration.md#email-relay) in `docker-compose.yml`.
 
 ## Contributing
 
