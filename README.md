@@ -15,7 +15,7 @@ It synchronizes people and groups with [ChurchTools](https://church.tools) and p
 ### Email distribution lists
 
 Korga makes it possible to send emails to ChurchTools groups via email.
-For example, anyone can send an email to _youth@example.oorg_ and Korga will forward it to all members of your ChurchTools group _Youth_ with role _Leader_. 
+For example, anyone can send an email to _youth@example.org_ and Korga will forward it to all members of your ChurchTools group _Youth_ with role _Leader_. 
 
 There is no Web UI available yet to manage distribution lists so you must stick to the CLI inside the Docker container:
 
@@ -51,7 +51,7 @@ Other OAuth 2.0 and OpenID Connect identity providers should also work.
 
 3. Choose a name (will be displayed to users when they log in) and enter the URL of your Korga instance as _Redirect-URI_ e.g. `https://korga.example.org/api/signin-oauth`
 
-After creating an OAuth client for Korga in ChurchTools, you can configure it via [environment variables](docs/configuration.md#oauth) in `docker-compose.yml`.
+After creating an OAuth client for Korga in ChurchTools, you can configure it via [environment variables](docs/configuration.md#oauth) in `compose.yaml`.
 
 ### ChurchTools sync
 
@@ -81,7 +81,7 @@ Grant the following permissions to Korga's user:
 - Events > Dienste einzelner Dienstgruppen einsehen (Alle) `churchservice:view servicegroup(-1)`
 - Events > Events von einzelnen Kalendern sehen (Alle) `churchservice:view events(-1)`
 
-After creating and configuring a ChurchTools user for Korga you can finally configure it via [environment variables](docs/configuration.md#churchtools) in `docker-compose.yml`.
+After creating and configuring a ChurchTools user for Korga you can finally configure it via [environment variables](docs/configuration.md#churchtools) in `compose.yaml`.
 
 Do not forget to recreate your container to take these changes into effect.
 
@@ -90,13 +90,13 @@ Do not forget to recreate your container to take these changes into effect.
 Email delivery requires an SMTP server and credentials.
 This is given for almost any email inbox.
 Depending on your email hosting provider you might need an app password.
-Email delivery can be configured via [environment variables](docs/configuration.md#email-delivery) in `docker-compose.yml`.
+Email delivery can be configured via [environment variables](docs/configuration.md#email-delivery) in `compose.yaml`.
 
 ### Email relay
 
 Korga's email relay requires a catchall IMAP inbox.
 Such an inbox receives all emails sent to a domain where no matching inbox was found, i.e. `*@example.org`.
-It can be configured via [environment variables](docs/configuration.md#email-relay) in `docker-compose.yml`.
+It can be configured via [environment variables](docs/configuration.md#email-relay) in `compose.yaml`.
 
 ## Contributing
 

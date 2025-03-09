@@ -10,6 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Korga.EmailDelivery;
 using Korga.Filters;
+using Microsoft.AspNetCore.DataProtection;
+using System.IO;
 
 namespace Korga;
 
@@ -43,6 +45,11 @@ public class Startup
         services.AddOpenApiDocument();
 
         services.AddHealthChecks();
+
+        if (!environment.IsDevelopment())
+        {
+            services.AddDataProtection().PersistKeysToFileSystem(new(Path.Combine(environment.ContentRootPath, "secrets")));
+        }
 
         services.AddOAuthAuthentication(Configuration, environment);
 

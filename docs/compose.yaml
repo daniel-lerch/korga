@@ -37,6 +37,8 @@ services:
       #- EmailRelay__ImapHost=imap.example.org
       #- EmailRelay__ImapUsername=catchall@example.org
       #- EmailRelay__ImapPassword=RKXMaQWm8k7QKFnmijma
+    volumes:
+      - .data/secrets:/app/secrets
     depends_on:
       db:
         condition: service_healthy
