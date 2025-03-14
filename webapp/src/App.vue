@@ -23,7 +23,7 @@
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav me-auto">
-            <li class="nav-item" v-if="profile">
+            <li class="nav-item" v-if="user.profile">
               <router-link :to="{ name: 'Service' }" class="nav-link">
                 Dienste
               </router-link>
@@ -47,19 +47,14 @@
 </template>
 
 <script setup lang="ts">
-import type { ProfileResponse } from "@/services/profile"
+import { onMounted } from "vue"
 import ProfileNav from "@/components/ProfileNav.vue"
-import korga from "@/services/profile"
-import { onMounted, ref } from "vue"
+import { useUserStore } from "@/stores/user"
 
-const profile = ref<ProfileResponse | null>(null)
+const user = useUserStore()
 
-onMounted(async () => {
-  try {
-    profile.value = await korga.getProfile()
-  } catch (error) {
-    console.log(error)
-  }
+onMounted(() => {
+  user.load()
 })
 </script>
 

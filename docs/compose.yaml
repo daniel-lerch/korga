@@ -13,11 +13,11 @@ services:
       # Uncomment below if you want to use Korga behind a reverse proxy like NGINX
       #- Hosting__AllowProxies=true
 
-      # Uncomment the three options below to login with OpenID Connect
-      # See the main README for instructions how to create client for Korga in your OpenID Connect Provider
-      #- OpenIdConnect__Authority=https://keycloak.example.org/realms/churchtools
-      #- OpenIdConnect__ClientId=korga
-      #- OpenIdConnect__ClientSecret=zX8bZkty9sGeUixRHgooMR6owhBzgQuP
+      # Uncomment below to login via OAuth 2.0, e.g. with ChurchTools
+      #- OAuth__AuthorizationEndpoint=https://example.church.tools/oauth/authorize
+      #- OAuth__TokenEndpoint=https://example.church.tools/oauth/access_token
+      #- OAuth__UserInformationEndpoint=https://example.church.tools/oauth/userinfo
+      #- OAuth__ClientId=2807de0033284e12bab29389b8bd1ea3acc0352b6bdc4ce8936aa854a555391d
 
       # Uncomment the three options below to sync with ChurchTools
       # See the main README for instructions on how to get a login token and configure permissions
@@ -37,6 +37,8 @@ services:
       #- EmailRelay__ImapHost=imap.example.org
       #- EmailRelay__ImapUsername=catchall@example.org
       #- EmailRelay__ImapPassword=RKXMaQWm8k7QKFnmijma
+    volumes:
+      - .data/secrets:/app/secrets
     depends_on:
       db:
         condition: service_healthy

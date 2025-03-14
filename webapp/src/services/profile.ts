@@ -2,27 +2,22 @@ import client from "./client"
 
 export interface ProfileResponse {
   id: string
+  displayName: string
   givenName: string
   familyName: string
   emailAddress: string
+  picture: string | null
 }
 
-let profile: ProfileResponse | null = null
-export default {
-  async getProfile(): Promise<ProfileResponse | null> {
-    if (profile != null) {
-      return profile
-    }
-    profile = await client.get("/api/profile")
-    return profile
-  },
+export function getProfile(): Promise<ProfileResponse | null> {
+  return client.get("/api/profile")
+}
 
-  async challengeLogin() {
-    await client.getResponse("/api/challenge")
-  },
+export function login() {
+  const params = new URLSearchParams({ redirect: window.location.pathname }).toString()
+  window.location.href = client.baseUrl + "/api/challenge?" + params
+}
 
-  async logout() {
-    await client.getResponse("/api/logout")
-    profile = null
-  },
+export function logout() {
+  return client.getResponse("/api/logout")
 }

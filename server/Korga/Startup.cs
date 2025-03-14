@@ -10,6 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Korga.EmailDelivery;
 using Korga.Filters;
+using Microsoft.AspNetCore.DataProtection;
+using System.IO;
 
 namespace Korga;
 
@@ -44,7 +46,12 @@ public class Startup
 
         services.AddHealthChecks();
 
-        services.AddOpenIdConnectAuthentication(Configuration, environment);
+        if (!environment.IsDevelopment())
+        {
+            services.AddDataProtection().PersistKeysToFileSystem(new(Path.Combine(environment.ContentRootPath, "secrets")));
+        }
+
+        services.AddOAuthAuthentication(Configuration, environment);
 
         // Use Configuration manually because options are not available in ConfigureService
         // Instead of returning a fake service when disabled we don't register any hosted service at all

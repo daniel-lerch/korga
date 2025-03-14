@@ -1,5 +1,8 @@
 # Korga
 
+> [!IMPORTANT]
+> This README reflect the current development state on `master` for Korga 4. See [Korga 3.1.3](https://github.com/daniel-lerch/korga/blob/v3.1.3/README.md) for the latest released version.
+
 [![Build and tests](https://github.com/daniel-lerch/korga/actions/workflows/main.yml/badge.svg)](https://github.com/daniel-lerch/korga/actions/workflows/main.yml)
 [![](https://img.shields.io/docker/pulls/daniellerch/korga.svg)](https://hub.docker.com/r/daniellerch/korga)
 [![](https://img.shields.io/docker/image-size/daniellerch/korga/latest.svg)](https://hub.docker.com/r/daniellerch/korga)
@@ -11,15 +14,17 @@ It synchronizes people and groups with [ChurchTools](https://church.tools) and p
 
 ### Email distribution lists
 
-Once configured, Korga automatically synchronizes people and groups from ChurchTools. This data can be used to create distribution lists.
+Korga makes it possible to send emails to ChurchTools groups via email.
+For example, anyone can send an email to _youth@example.org_ and Korga will forward it to all members of your ChurchTools group _Youth_ with role _Leader_. 
+
 There is no Web UI available yet to manage distribution lists so you must stick to the CLI inside the Docker container:
 
 ```
-./Korga dist create kids
-./Korga dist add-recipient kids -g 137
+./Korga dist create youth
+./Korga dist add-recipient youth -g 137
 ```
 
-This command creates a distribution list _kids@example.org_ which forwards emails to every member of group #137.
+This command creates a distribution list _youth@example.org_ which forwards emails to every member of group #137.
 
 ## Installation
 
@@ -31,40 +36,22 @@ Korga has multiple modules that must be enabled via configuration to use them:
 - Email delivery
 - Email relay
 
-Configuration can set as enviroment variables or by creating a custom config file.
-I recommend to use environment variables and will explain them in the following sections.
-However, if you prefer a config file, copy the default [appsettings.json](server/Korga/appsettings.json), edit it as required, and mount it at `/app/appsettings.json`.
+See [Korga server configuration](docs/configuration.md) for a full list of configuration options.
 
-### OpenID Connect authentication
+### OAuth authentication
 
-Korga supports single sign-on using OpenID Connect.
-It is the only authentication mechanism Korga supports.
-If you do not configure OpenID Connect, you will not be able to login in Korga's Web UI.
+Korga uses single sign-on via OAuth 2.0. It is the only authentication mechanism Korga supports and required to start the application.
 
-First you must register a new client in your OpenID Connect Provider.
+These instructions assume you use ChurchTools as OAuth provider (supported since December 2024).
+Other OAuth 2.0 and OpenID Connect identity providers should also work.
 
-These instructions assume you use [Keycloak](https://www.keycloak.org/) either in standalone mode,
-with storage provider like [canchanchara/keycloak-churchtools-storage-provider](https://github.com/canchanchara/keycloak-churchtools-storage-provider),
-or with LDAP user federation with a wrapper like [milux/ctldap](https://github.com/milux/ctldap).
+1. Login to ChurchTools as an administrator and open _System settings_ from the navbar
 
-1. Login to Keycloak's admin console, select the correct realm and select _Clients_ in the left-hand navbar
+2. Go to _Integrations_ > _Login to third-party system_ and click on _Add OAuth-Client_
 
-2. Click on _Create client_, select _OpenID Connect_ as type and choose a client ID you like and click _Next_
+3. Choose a name (will be displayed to users when they log in) and enter the URL of your Korga instance as _Redirect-URI_ e.g. `https://korga.example.org/api/signin-oauth`
 
-3. Enable _Client authentication_ and disable _Direct access grants_ so that _Standard flow_ is the only enabled authentication flow and click _Next_
-
-4. As _Root URL_ and _Home URL_ enter the URL to your Korga instance, e.g. https://example.org/korga. As _Valid redirect URIs_ and _Valid post logout redirect URIs_ enter a wildcard path, e.g. https://example.org/korga/*. _Web origins_ should be left empty. Then click _Save_
-
-5. Finally go to the _Credentials_ tab of your newly created client and copy the _Client secret_
-
-After creating a client for Korga in Keycloak or your OpenID Connect provider of choice, you can configure it via environment variables in `docker-compose.yml`.
-
-- `OpenIdConnect__Authority`  
-Set this to the root URL of your Keycloak realm, e.g. `https://keycloak.example.org/realms/churchtools`
-- `OpenIdConnect__ClientId`  
-Set this to the client ID you chose when creating a client for Korga in Keycloak, e.g. `korga`
-- `OpenIdConnect__ClientSecret`  
-Set this to the client secret copied in step 5.
+After creating an OAuth client for Korga in ChurchTools, you can configure it via [environment variables](docs/configuration.md#oauth) in `compose.yaml`.
 
 ### ChurchTools sync
 
@@ -79,7 +66,8 @@ First you must create a service account which Korga can use for API access to Ch
 
 Steps 4. and 5. can also be performed in the ChurchTools web interface: [Official Documentation](https://hilfe.church.tools/wiki/0/API%20Authentifizierung#logintoken)
 
-> ⚠️ For security reasons it is not recommended to let Korga use your ChurchTools admin account.
+> [!WARNING]
+> For security reasons it is not recommended to let Korga use your ChurchTools admin account.
 
 Grant the following permissions to Korga's user:
 
@@ -93,61 +81,22 @@ Grant the following permissions to Korga's user:
 - Events > Dienste einzelner Dienstgruppen einsehen (Alle) `churchservice:view servicegroup(-1)`
 - Events > Events von einzelnen Kalendern sehen (Alle) `churchservice:view events(-1)`
 
-After creating and configuring a ChurchTools user for Korga you can finally configure it via environment variables in `docker-compose.yml`.
-
-- `ChurchTools__EnableSync`  
-Set this to `true` to enable a periodic sync with ChurchTools
-- `ChurchTools__Host`  
-Configure your ChurchTools domain, e.g. `example.church.tools`
-- `ChurchTools__LoginToken`  
-Fill in the login token of your service account for Korga.
-This should be a 256 chars long alphanumeric text without special chars.
+After creating and configuring a ChurchTools user for Korga you can finally configure it via [environment variables](docs/configuration.md#churchtools) in `compose.yaml`.
 
 Do not forget to recreate your container to take these changes into effect.
 
 ### Email delivery
 
-Email delivery via SMTP can be configured with environment variables in `docker-compose.yml`:
-
-- `EmailDelivery__Enable`  
-Set this to `true` to enable Korga to send emails via SMTP
-- `EmailDelivery__SenderName`  
-The display name for system messages. Defaults to `Korga`
-- `EmailDelivery__SenderAddress`  
-The address Korga will send emails from. Usually this should be the email address for the credentials below.
-- `EmailDelivery__SmtpHost`  
-Defaults to `smtp.strato.de`
-- `EmailDelivery__SmtpPort`  
-Defaults to `465`
-- `EmailDelivery__SmtpUseSsl`  
-Defaults to `true`
-- `EmailDelivery__SmtpUsername`
-- `EmailDelivery__SmtpPassword`
+Email delivery requires an SMTP server and credentials.
+This is given for almost any email inbox.
+Depending on your email hosting provider you might need an app password.
+Email delivery can be configured via [environment variables](docs/configuration.md#email-delivery) in `compose.yaml`.
 
 ### Email relay
 
 Korga's email relay requires a catchall IMAP inbox.
 Such an inbox receives all emails sent to a domain where no matching inbox was found, i.e. `*@example.org`.
-It can be configured with environment variables in `docker-compose.yml`:
-
-- `EmailRelay__Enable`  
-Set this to `true` to let Korga periodically check for emails to forward them. If `EmailDelivery__Enable` is set to `false`, this option will have no effect. Email relay depends on email delivery.
-- `EmailRelay__ImapHost`  
-Defaults to `imap.strato.de`
-- `EmailRelay__ImapPort`  
-Defaults to `993`
-- `EmailRelay__ImapUseSsl`  
-Defaults to `true`
-- `EmailRelay__ImapUsername`
-- `EmailRelay__ImapPassword`
-- `EmailRelay__RetrievalIntervalInMinutes`  
-Defaults to `2.0` (2 minutes)
-- `EmailRelay__ImapRetentionIntervalInDays`  
-Defaults to `1.0` (24 hours)
-- `EmailRelay__MaxHeaderSizeInKilobytes`  
-Defaults to `64` (64 KiB)
-- `EmailRelay__MaxBodySizeInKilobytes`  
-Defaults to `12288` (12 MiB). You must adjust MariaDB's `max_packet_size` if you want to increase this limit.
+It can be configured via [environment variables](docs/configuration.md#email-relay) in `compose.yaml`.
 
 ## Contributing
 

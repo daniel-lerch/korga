@@ -1,17 +1,18 @@
 import { fileURLToPath, URL } from "node:url"
 
-import { defineConfig, loadEnv } from "vite"
+import { defineConfig, loadEnv, ProxyOptions } from "vite"
 import vue from "@vitejs/plugin-vue"
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
 
-  const proxy = {} as { [key: string]: string }
-  proxy[env.VITE_API_BASE_PATH + "api"] = env.VITE_API_ORIGIN
-  proxy[env.VITE_API_BASE_PATH + "signin-oidc"] = env.VITE_API_ORIGIN
-  proxy[env.VITE_API_BASE_PATH + "signout-callback-oidc"] = env.VITE_API_ORIGIN
-
+  const proxy = {} as Record<string, string | ProxyOptions>
+  const options = {
+    target: env.VITE_API_ORIGIN,
+    changeOrigin: false,
+  }
+  proxy[env.VITE_API_BASE_PATH + "api"] = options
   return {
     plugins: [vue()],
     resolve: {

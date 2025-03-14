@@ -15,7 +15,13 @@ public class VueSpaTests
     [InlineData("/korga/test/pathbase", "/events/list")]
     public async Task TestVueEntrypoint(string pathbase, string url)
     {
-        TestServer server = TestHost.CreateTestServer(new Dictionary<string, string?> { { "Hosting:PathBase", pathbase } });
+        TestServer server = TestHost.CreateTestServer(new Dictionary<string, string?> {
+            { "Hosting:PathBase", pathbase },
+            { "OAuth:AuthorizationEndpoint", "undefined" },
+            { "OAuth:TokenEndpoint", "undefined" },
+            { "OAuth:UserInformationEndpoint", "undefined" },
+            { "OAuth:ClientId", "undefined" },
+        });
         HttpClient client = server.CreateClient();
 
         var response = await client.GetAsync(pathbase + url);
