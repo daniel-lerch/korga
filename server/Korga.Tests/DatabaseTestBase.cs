@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;
 using System;
-using Xunit.Abstractions;
+using Xunit;
 
 namespace Korga.Tests;
 

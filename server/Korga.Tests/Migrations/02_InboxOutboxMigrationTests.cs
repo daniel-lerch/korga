@@ -7,7 +7,6 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Korga.Tests.Migrations;
 
