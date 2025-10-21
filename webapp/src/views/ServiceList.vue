@@ -2,33 +2,15 @@
   <div class="container">
     <h1>Dienstzuteilung</h1>
     <div class="selection-bar">
-      <multiselect
-        class="selection-service"
-        v-model="selectedServices"
-        placeholder="Bitte Auswählen"
-        label="name"
-        track-by="id"
-        :options="services"
-        :multiple="true"
-        :close-on-select="false"
-        @select="fetchServiceHistory"
-        @remove="fetchServiceHistory"
-        v-if="services != null && services.length > 0"
-      ></multiselect>
+      <multiselect class="selection-service" v-model="selectedServices" placeholder="Bitte Auswählen" label="name"
+        track-by="id" :options="services" :multiple="true" :close-on-select="false" @select="fetchServiceHistory"
+        @remove="fetchServiceHistory" v-if="services != null && services.length > 0"></multiselect>
 
       <div class="selection-sort">
         <label>Sortieren nach:</label>
-        <multiselect
-          v-model="selectedOption"
-          :options="sortOptions"
-          label="text"
-          track-by="id"
-          :searchable="false"
-          :show-labels="false"
-          :allow-empty="false"
-          @select="sortServiceHistory"
-          placeholder="Pick a value"
-        ></multiselect>
+        <multiselect v-model="selectedOption" :options="sortOptions" label="text" track-by="id" :searchable="false"
+          :show-labels="false" :allow-empty="false" @select="sortServiceHistory" placeholder="Pick a value">
+        </multiselect>
       </div>
     </div>
 
@@ -43,49 +25,35 @@
         </tr>
       </thead>
       <tbody>
-        <tr
-          v-for="(person, index) in serviceHistory"
-          :key="index"
-          :class="{
-            inactive: person.groups.some(
-              (group) => group.groupMemberStatus !== 'Active'
-            ),
-          }"
-        >
+        <tr v-for="(person, index) in serviceHistory" :key="index" :class="{
+          inactive: person.groups.some(
+            (group) => group.groupMemberStatus !== 'Active'
+          ),
+        }">
           <th scope="row">{{ index }}</th>
           <td>{{ person.firstName }}</td>
           <td>{{ person.lastName }}</td>
           <td>
-            {{ person.serviceDates.map((ele) => ele.date).join(", ") }}
-            <span
-              v-if="
-                person.groups[0].groupMemberStatus !== 'Active' &&
-                person.groups.every(
-                  (g) =>
-                    g.groupMemberStatus === person.groups[0].groupMemberStatus
-                )
-              "
-              class="badge rounded-pill"
-              :class="{
-                'text-bg-danger':
-                  person.groups[0].groupMemberStatus === 'To_Delete',
-                'text-bg-secondary':
-                  person.groups[0].groupMemberStatus === 'Requested',
-              }"
-              >{{ person.groups[0].groupMemberStatus }}</span
-            >
-            <span
-              v-else
-              v-for="group in person.groups.filter(
-                (g) => g.groupMemberStatus !== 'Active'
-              )"
-              v-bind:key="group.groupName"
-              class="badge rounded-pill"
-              :class="{
-                'text-bg-danger': group.groupMemberStatus === 'To_Delete',
-                'text-bg-secondary': group.groupMemberStatus === 'Requested',
-              }"
-            >
+            {{person.serviceDates.map((ele) => ele.date).join(", ")}}
+            <span v-if="
+              person.groups[0] &&
+              person.groups[0].groupMemberStatus !== 'Active' &&
+              person.groups.every(
+                (g) =>
+                  g.groupMemberStatus === person.groups[0]?.groupMemberStatus
+              )
+            " class="badge rounded-pill" :class="{
+              'text-bg-danger':
+                person.groups[0].groupMemberStatus === 'To_Delete',
+              'text-bg-secondary':
+                person.groups[0].groupMemberStatus === 'Requested',
+            }">{{ person.groups[0].groupMemberStatus }}</span>
+            <span v-else v-for="group in person.groups.filter(
+              (g) => g.groupMemberStatus !== 'Active'
+            )" v-bind:key="group.groupName" class="badge rounded-pill" :class="{
+              'text-bg-danger': group.groupMemberStatus === 'To_Delete',
+              'text-bg-secondary': group.groupMemberStatus === 'Requested',
+            }">
               {{ group.groupName }}: {{ group.groupMemberStatus }}
             </span>
           </td>
@@ -100,10 +68,7 @@
         </tr>
       </tbody>
     </table>
-    <div
-      class="d-flex justify-content-center"
-      v-if="!serviceHistory && selectedServices.length > 0"
-    >
+    <div class="d-flex justify-content-center" v-if="!serviceHistory && selectedServices.length > 0">
       <div class="spinner-border" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
@@ -126,7 +91,7 @@ const sortOptions = [
   { id: 1, text: "am wenigsten Dienste" },
 ]
 
-const selectedOption = ref(sortOptions[0])
+const selectedOption = ref(sortOptions[0]!)
 
 onMounted(async () => {
   services.value = await getServices()
