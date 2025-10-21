@@ -3,21 +3,10 @@
     <nav class="navbar navbar-expand-md navbar-dark bg-primary">
       <div class="container-fluid">
         <router-link to="/service" class="navbar-brand">
-          <img
-            src="/brand.png"
-            alt="Logo"
-            width="24"
-            height="24"
-            class="d-inline-block align-text-top mx-1"
-          />
+          <img src="/brand.png" alt="Logo" width="24" height="24" class="d-inline-block align-text-top mx-1" />
           Korga
         </router-link>
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarSupportedContent"
-        >
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
           <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -40,7 +29,7 @@
   <footer>
     <div>
       <small>
-        Copyright &copy; 2022-2024 Daniel Lerch and Benjamin Stieler
+        Copyright &copy; 2022-2025 Daniel Lerch and Benjamin Stieler
       </small>
     </div>
   </footer>
@@ -115,6 +104,7 @@ a.subdued:hover {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }

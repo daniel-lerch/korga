@@ -1,8 +1,5 @@
 # Korga
 
-> [!IMPORTANT]
-> This README reflect the current development state on `master` for Korga 4. See [Korga 3.1.3](https://github.com/daniel-lerch/korga/blob/v3.1.3/README.md) for the latest released version.
-
 [![Build and tests](https://github.com/daniel-lerch/korga/actions/workflows/main.yml/badge.svg)](https://github.com/daniel-lerch/korga/actions/workflows/main.yml)
 [![](https://img.shields.io/docker/pulls/daniellerch/korga.svg)](https://hub.docker.com/r/daniellerch/korga)
 [![](https://img.shields.io/docker/image-size/daniellerch/korga/latest.svg)](https://hub.docker.com/r/daniellerch/korga)
