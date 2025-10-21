@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from "node:url"
 
 import { defineConfig, loadEnv, ProxyOptions } from "vite"
 import vue from "@vitejs/plugin-vue"
+import vueDevTools from "vite-plugin-vue-devtools"
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -14,7 +15,10 @@ export default defineConfig(({ mode }) => {
   }
   proxy[env.VITE_API_BASE_PATH + "api"] = options
   return {
-    plugins: [vue()],
+    plugins: [
+      vue(),
+      vueDevTools()
+    ],
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
