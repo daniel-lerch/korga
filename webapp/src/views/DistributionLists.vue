@@ -3,19 +3,12 @@
   <div v-else class="container page-loaded-container">
     <h1>E-Mail-Verteiler</h1>
     <div class="container">
-      <div
-        v-for="dl in distributionLists"
-        :key="dl.id"
-        class="row border-bottom mb-2"
-      >
+      <div v-for="dl in distributionLists" :key="dl.id" class="row border-bottom mb-2">
         <div class="col-8 col-md-3 col-lg-2">
           <h6>{{ dl.alias }}</h6>
         </div>
         <div class="col-auto">
-          <span
-            class="badge rounded-pill bg-primary"
-            :class="{ invisible: !dl.newsletter }"
-          >
+          <span class="badge rounded-pill bg-primary" :class="{ invisible: !dl.newsletter }">
             Newsletter
           </span>
         </div>
@@ -51,7 +44,7 @@ export default defineComponent({
       try {
         distributionLists.value.push(...(await getDistributionLists()))
         loaded.value = true
-      } catch (e) {
+      } catch {
         error.value =
           "Die Verteilerlisten konnten nicht geladen werden. Bitte überprüfe deine Internetverbindung."
       }
