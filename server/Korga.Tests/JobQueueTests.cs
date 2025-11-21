@@ -35,6 +35,7 @@ public class JobQueueTests : IDisposable
         storage.Data.Enqueue(new());
         storage.Data.Enqueue(new());
         await jobQueue.StartAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         await jobQueue.StopAsync(CancellationToken.None);
         Assert.Equal(2, storage.Executed);
     }
@@ -90,7 +91,7 @@ public class JobQueueTests : IDisposable
         CancellationTokenSource cts = new(TimeSpan.FromSeconds(10));
 
         await jobQueue.StartAsync(CancellationToken.None);
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         storage.Data.Enqueue(job1);
         storage.Data.Enqueue(job2);
         await job1.CompletionSource.Task.WaitAsync(cts.Token);

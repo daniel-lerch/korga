@@ -15,7 +15,7 @@ public static class IApplicationBuilderExtensions
         if (options.Value.AllowProxies)
         {
             var headersOptions = new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.All };
-            headersOptions.KnownNetworks.Clear();
+            headersOptions.KnownIPNetworks.Clear();
             headersOptions.KnownProxies.Clear();
             app.UseForwardedHeaders(headersOptions);
         }

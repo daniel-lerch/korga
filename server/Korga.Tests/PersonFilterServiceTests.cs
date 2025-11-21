@@ -4,6 +4,7 @@ using Korga.Filters.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -26,21 +27,21 @@ public class PersonFilterServiceTests : DatabaseTestBase
     [Fact]
     public async Task TestGetPeople_Empty()
     {
-        await InitializeSampleDataset();
+        await InitializeSampleDataset(TestContext.Current.CancellationToken);
 
         // Create an empty person filter list
         PersonFilterList filterList = new();
         databaseContext.PersonFilterLists.Add(filterList);
-        await databaseContext.SaveChangesAsync();
+        await databaseContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var people = await personFilterService.GetPeople(filterList.Id);
+        var people = await personFilterService.GetPeople(filterList.Id, TestContext.Current.CancellationToken);
         Assert.Empty(people);
     }
 
     [Fact]
     public async Task TestGetPeople_Person()
     {
-        await InitializeSampleDataset();
+        await InitializeSampleDataset(TestContext.Current.CancellationToken);
 
         // Create person filter
         PersonFilterList filterList = new()
@@ -48,9 +49,9 @@ public class PersonFilterServiceTests : DatabaseTestBase
             Filters = [new SinglePerson { PersonId = 1 }]
         };
         databaseContext.PersonFilterLists.Add(filterList);
-        await databaseContext.SaveChangesAsync();
+        await databaseContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var people = await personFilterService.GetPeople(filterList.Id);
+        var people = await personFilterService.GetPeople(filterList.Id, TestContext.Current.CancellationToken);
         Person actual = Assert.Single(people);
         Assert.Equal(1, actual.Id);
     }
@@ -58,7 +59,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
     [Fact]
     public async Task TestGetPeople_Status()
     {
-        await InitializeSampleDataset();
+        await InitializeSampleDataset(TestContext.Current.CancellationToken);
 
         // Create status filter
         PersonFilterList filterList = new()
@@ -66,9 +67,9 @@ public class PersonFilterServiceTests : DatabaseTestBase
             Filters = [new StatusFilter { StatusId = 3 }]
         };
         databaseContext.PersonFilterLists.Add(filterList);
-        await databaseContext.SaveChangesAsync();
+        await databaseContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var people = await personFilterService.GetPeople(filterList.Id);
+        var people = await personFilterService.GetPeople(filterList.Id, TestContext.Current.CancellationToken);
         Assert.Equal(2, people.Count());
         Assert.Contains(people, p => p.Id == 1);
         Assert.Contains(people, p => p.Id == 2);
@@ -77,7 +78,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
     [Fact]
     public async Task TestGetPeople_Status_Status()
     {
-        await InitializeSampleDataset();
+        await InitializeSampleDataset(TestContext.Current.CancellationToken);
 
         // Create person filter
         PersonFilterList filterList = new()
@@ -89,9 +90,9 @@ public class PersonFilterServiceTests : DatabaseTestBase
             ]
         };
         databaseContext.PersonFilterLists.Add(filterList);
-        await databaseContext.SaveChangesAsync();
+        await databaseContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var people = await personFilterService.GetPeople(filterList.Id);
+        var people = await personFilterService.GetPeople(filterList.Id, TestContext.Current.CancellationToken);
         Assert.Equal(3, people.Count());
         Assert.Contains(people, p => p.Id == 1);
         Assert.Contains(people, p => p.Id == 2);
@@ -101,7 +102,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
     [Fact]
     public async Task TestGetPeople_Group()
     {
-        await InitializeSampleDataset();
+        await InitializeSampleDataset(TestContext.Current.CancellationToken);
 
         // Create person filter
         PersonFilterList filterList = new()
@@ -109,9 +110,9 @@ public class PersonFilterServiceTests : DatabaseTestBase
             Filters = [new GroupFilter { GroupId = 1 }]
         };
         databaseContext.PersonFilterLists.Add(filterList);
-        await databaseContext.SaveChangesAsync();
+        await databaseContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var people = await personFilterService.GetPeople(filterList.Id);
+        var people = await personFilterService.GetPeople(filterList.Id, TestContext.Current.CancellationToken);
         Person actual = Assert.Single(people);
         Assert.Equal(1, actual.Id);
     }
@@ -119,10 +120,10 @@ public class PersonFilterServiceTests : DatabaseTestBase
     [Fact]
     public async Task TestAddFilter_Group_EmptyList()
     {
-        await InitializeSampleDataset();
+        await InitializeSampleDataset(TestContext.Current.CancellationToken);
         PersonFilterList filterList = new();
         databaseContext.PersonFilterLists.Add(filterList);
-        await databaseContext.SaveChangesAsync();
+        await databaseContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         bool inserted = await personFilterService.AddFilter(filterList.Id, new GroupFilter { GroupId = 1 });
         Assert.True(inserted);
@@ -131,7 +132,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
     [Fact]
     public async Task TestAddFilter_Group_NewFilter()
     {
-        await InitializeSampleDataset();
+        await InitializeSampleDataset(TestContext.Current.CancellationToken);
 
         // Create sample filter
         PersonFilterList filterList = new()
@@ -139,7 +140,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
             Filters = [new GroupFilter { GroupId = 1 }]
         };
         databaseContext.PersonFilterLists.Add(filterList);
-        await databaseContext.SaveChangesAsync();
+        await databaseContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         bool inserted = await personFilterService.AddFilter(filterList.Id, new GroupFilter { GroupId = 2 });
         Assert.True(inserted);
@@ -148,12 +149,12 @@ public class PersonFilterServiceTests : DatabaseTestBase
     [Fact]
     public async Task TestAddFilter_Group_Different_Lists()
     {
-        await InitializeSampleDataset();
+        await InitializeSampleDataset(TestContext.Current.CancellationToken);
 
         PersonFilterList filterList1 = new();
         PersonFilterList filterList2 = new();
         databaseContext.PersonFilterLists.AddRange(filterList1, filterList2);
-        await databaseContext.SaveChangesAsync();
+        await databaseContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         bool inserted1 = await personFilterService.AddFilter(filterList1.Id, new GroupFilter { GroupId = 1 });
         Assert.True(inserted1);
@@ -165,7 +166,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
     [Fact]
     public async Task TestAddFilter_Group_AlreadyExists()
     {
-        await InitializeSampleDataset();
+        await InitializeSampleDataset(TestContext.Current.CancellationToken);
 
         // Create sample filter
         PersonFilterList filterList = new()
@@ -173,7 +174,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
             Filters = [new GroupFilter { GroupId = 1 }]
         };
         databaseContext.PersonFilterLists.Add(filterList);
-        await databaseContext.SaveChangesAsync();
+        await databaseContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         bool inserted = await personFilterService.AddFilter(filterList.Id, new GroupFilter { GroupId = 1 });
         Assert.False(inserted);
@@ -182,7 +183,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
     [Fact]
     public async Task TestAddFilter_GroupType_AlreadyExists()
     {
-        await InitializeSampleDataset();
+        await InitializeSampleDataset(TestContext.Current.CancellationToken);
 
         // Create sample filter
         PersonFilterList filterList = new()
@@ -190,7 +191,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
             Filters = [new GroupTypeFilter { GroupTypeId = 1 }]
         };
         databaseContext.PersonFilterLists.Add(filterList);
-        await databaseContext.SaveChangesAsync();
+        await databaseContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         bool inserted = await personFilterService.AddFilter(filterList.Id, new GroupTypeFilter { GroupTypeId = 1 });
         Assert.False(inserted);
@@ -199,7 +200,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
     [Fact]
     public async Task TestAddFilter_SinglePerson_AlreadyExists()
     {
-        await InitializeSampleDataset();
+        await InitializeSampleDataset(TestContext.Current.CancellationToken);
 
         // Create sample filter
         PersonFilterList filterList = new()
@@ -207,7 +208,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
             Filters = [new SinglePerson { PersonId = 1 }]
         };
         databaseContext.PersonFilterLists.Add(filterList);
-        await databaseContext.SaveChangesAsync();
+        await databaseContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         bool inserted = await personFilterService.AddFilter(filterList.Id, new SinglePerson { PersonId = 1 });
         Assert.False(inserted);
@@ -216,7 +217,7 @@ public class PersonFilterServiceTests : DatabaseTestBase
     [Fact]
     public async Task TestAddFilter_Status_AlreadyExists()
     {
-        await InitializeSampleDataset();
+        await InitializeSampleDataset(TestContext.Current.CancellationToken);
 
         // Create sample filter
         PersonFilterList filterList = new()
@@ -224,17 +225,17 @@ public class PersonFilterServiceTests : DatabaseTestBase
             Filters = [new StatusFilter { StatusId = 3 }]
         };
         databaseContext.PersonFilterLists.Add(filterList);
-        await databaseContext.SaveChangesAsync();
+        await databaseContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         bool inserted = await personFilterService.AddFilter(filterList.Id, new StatusFilter { StatusId = 3 });
         Assert.False(inserted);
     }
 
 
-    private async ValueTask InitializeSampleDataset()
+    private async ValueTask InitializeSampleDataset(CancellationToken cancellationToken)
     {
         // Initialize database
-        await databaseContext.Database.MigrateAsync();
+        await databaseContext.Database.MigrateAsync(cancellationToken);
 
         databaseContext.Status.AddRange(
         [
@@ -277,6 +278,6 @@ public class PersonFilterServiceTests : DatabaseTestBase
             new() { PersonId = 2, GroupId = 2, GroupRoleId = 16 },
             new() { PersonId = 4, GroupId = 2, GroupRoleId = 15 },
         ]);
-        await databaseContext.SaveChangesAsync();
+        await databaseContext.SaveChangesAsync(cancellationToken);
     }
 }

@@ -1,4 +1,4 @@
-FROM node:22 AS webapp
+FROM node:24 AS webapp
 WORKDIR /app
 
 # Copy package definition and restore node modules as distinct layers
@@ -9,7 +9,7 @@ RUN npm install
 COPY webapp ./
 RUN npm run build
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS server
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS server
 WORKDIR /app
 
 # Copy csproj and restore as distinct layers
@@ -22,7 +22,7 @@ COPY server ./
 RUN dotnet publish -c Release -o /app/out Korga
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 
 # Install curl for healthcheck

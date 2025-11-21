@@ -16,7 +16,7 @@ public class ChurchToolsApiTests
         using ChurchToolsApi client = await ChurchToolsApi.Login(churchToolsHost, churchToolsUsername, churchToolsPassword);
         
         // This call fails if client is not authenticated
-        await client.GetPerson();
+        await client.GetPerson(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -26,12 +26,12 @@ public class ChurchToolsApiTests
         using ChurchToolsApi bootstrap = await ChurchToolsApi.Login(churchToolsHost, churchToolsUsername, churchToolsPassword);
         Assert.NotNull(bootstrap.User);
 
-        string loginToken = await bootstrap.GetPersonLoginToken(bootstrap.User.PersonId);
+        string loginToken = await bootstrap.GetPersonLoginToken(bootstrap.User.PersonId, TestContext.Current.CancellationToken);
 
         using ChurchToolsApi client = ChurchToolsApi.CreateWithToken(churchToolsHost, loginToken);
 
         // This call fails if client is not authenticated
-        await client.GetPerson();
+        await client.GetPerson(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -39,6 +39,6 @@ public class ChurchToolsApiTests
     {
         using ChurchToolsApi client = await ChurchToolsApi.Login(churchToolsHost, churchToolsUsername, churchToolsPassword);
 
-        await client.GetGlobalPermissions();
+        await client.GetGlobalPermissions(TestContext.Current.CancellationToken);
     }
 }

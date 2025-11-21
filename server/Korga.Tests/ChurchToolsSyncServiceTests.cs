@@ -38,7 +38,7 @@ public class ChurchToolsSyncServiceTests : DatabaseTestBase
     public async Task TestIntialSync()
     {
         // Initialize database
-        await databaseContext.Database.MigrateAsync();
+        await databaseContext.Database.MigrateAsync(TestContext.Current.CancellationToken);
 
         DbGroupType[] expectedGroupTypes =
         [
@@ -66,16 +66,16 @@ public class ChurchToolsSyncServiceTests : DatabaseTestBase
             new(2, "Dienst", 0)
         ];
 
-        await syncService.Execute(CancellationToken.None);
+        await syncService.Execute(TestContext.Current.CancellationToken);
 
-        Assert.Equivalent(expectedGroupTypes, await databaseContext.GroupTypes.ToArrayAsync());
-        Assert.Equivalent(expectedGroupRoles, await databaseContext.GroupRoles.ToArrayAsync());
+        Assert.Equivalent(expectedGroupTypes, await databaseContext.GroupTypes.ToArrayAsync(TestContext.Current.CancellationToken));
+        Assert.Equivalent(expectedGroupRoles, await databaseContext.GroupRoles.ToArrayAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task TestUpdate()
     {
-        await InitializeSampleDataset();
+        await InitializeSampleDataset(TestContext.Current.CancellationToken);
 
         DbGroupType[] expectedGroupTypes =
         [
@@ -101,16 +101,16 @@ public class ChurchToolsSyncServiceTests : DatabaseTestBase
             new(2, "Dienst", 0)
         ];
 
-        await syncService.Execute(CancellationToken.None);
+        await syncService.Execute(TestContext.Current.CancellationToken);
 
-        Assert.Equivalent(expectedGroupTypes, await databaseContext.GroupTypes.ToArrayAsync());
-        Assert.Equivalent(expectedGroupRoles, await databaseContext.GroupRoles.ToArrayAsync());
+        Assert.Equivalent(expectedGroupTypes, await databaseContext.GroupTypes.ToArrayAsync(TestContext.Current.CancellationToken));
+        Assert.Equivalent(expectedGroupRoles, await databaseContext.GroupRoles.ToArrayAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task TestDelete()
     {
-        await InitializeSampleDataset();
+        await InitializeSampleDataset(TestContext.Current.CancellationToken);
 
         churchTools.PersonMasterdata.Roles = [
             new(8, 1, "Teilnehmer", 0),
@@ -120,14 +120,14 @@ public class ChurchToolsSyncServiceTests : DatabaseTestBase
             new(1, "Kleingruppe", 0),
         ];
 
-        await syncService.Execute(CancellationToken.None);
+        await syncService.Execute(TestContext.Current.CancellationToken);
 
-        var groupTypes = await databaseContext.GroupTypes.ToArrayAsync();
+        var groupTypes = await databaseContext.GroupTypes.ToArrayAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, groupTypes.Length);
         Assert.Equal(default, groupTypes[0].DeletionTime);
         Assert.NotEqual(default, groupTypes[1].DeletionTime);
 
-        var groupRoles = await databaseContext.GroupRoles.ToArrayAsync();
+        var groupRoles = await databaseContext.GroupRoles.ToArrayAsync(TestContext.Current.CancellationToken);
         Assert.Equal(4, groupRoles.Length);
         Assert.Equal(default, groupRoles[0].DeletionTime);
         Assert.Equal(default, groupRoles[1].DeletionTime);
@@ -138,7 +138,7 @@ public class ChurchToolsSyncServiceTests : DatabaseTestBase
     [Fact]
     public async Task TestUndoDelete()
     {
-        await InitializePartiallyDeletedDataset();
+        await InitializePartiallyDeletedDataset(TestContext.Current.CancellationToken);
 
         DbGroupType[] expectedGroupTypes =
         [
@@ -166,16 +166,16 @@ public class ChurchToolsSyncServiceTests : DatabaseTestBase
             new(2, "Dienst", 0)
         ];
 
-        await syncService.Execute(CancellationToken.None);
+        await syncService.Execute(TestContext.Current.CancellationToken);
 
-        Assert.Equivalent(expectedGroupTypes, await databaseContext.GroupTypes.ToArrayAsync());
-        Assert.Equivalent(expectedGroupRoles, await databaseContext.GroupRoles.ToArrayAsync());
+        Assert.Equivalent(expectedGroupTypes, await databaseContext.GroupTypes.ToArrayAsync(TestContext.Current.CancellationToken));
+        Assert.Equivalent(expectedGroupRoles, await databaseContext.GroupRoles.ToArrayAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task TestStillDeleted()
     {
-        await InitializePartiallyDeletedDataset();
+        await InitializePartiallyDeletedDataset(TestContext.Current.CancellationToken);
 
         churchTools.PersonMasterdata.Roles = [
             new(8, 1, "Teilnehmer", 0),
@@ -185,14 +185,14 @@ public class ChurchToolsSyncServiceTests : DatabaseTestBase
             new(1, "Kleingruppe", 0),
         ];
 
-        await syncService.Execute(CancellationToken.None);
+        await syncService.Execute(TestContext.Current.CancellationToken);
 
-        var groupTypes = await databaseContext.GroupTypes.ToArrayAsync();
+        var groupTypes = await databaseContext.GroupTypes.ToArrayAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, groupTypes.Length);
         Assert.Equal(default, groupTypes[0].DeletionTime);
         Assert.Equal(deletionTime, groupTypes[1].DeletionTime);
 
-        var groupRoles = await databaseContext.GroupRoles.ToArrayAsync();
+        var groupRoles = await databaseContext.GroupRoles.ToArrayAsync(TestContext.Current.CancellationToken);
         Assert.Equal(4, groupRoles.Length);
         Assert.Equal(default, groupRoles[0].DeletionTime);
         Assert.Equal(default, groupRoles[1].DeletionTime);
@@ -200,10 +200,10 @@ public class ChurchToolsSyncServiceTests : DatabaseTestBase
         Assert.Equal(deletionTime, groupRoles[3].DeletionTime);
     }
 
-    private async ValueTask InitializeSampleDataset()
+    private async ValueTask InitializeSampleDataset(CancellationToken cancellationToken)
     {
         // Initialize database
-        await databaseContext.Database.MigrateAsync();
+        await databaseContext.Database.MigrateAsync(cancellationToken);
 
         databaseContext.GroupTypes.AddRange(
         [
@@ -217,13 +217,13 @@ public class ChurchToolsSyncServiceTests : DatabaseTestBase
             new(15, 2, "Mitarbeiter"),
             new(16, 2, "Leiter"),
         ]);
-        await databaseContext.SaveChangesAsync();
+        await databaseContext.SaveChangesAsync(cancellationToken);
     }
 
-    private async ValueTask InitializePartiallyDeletedDataset()
+    private async ValueTask InitializePartiallyDeletedDataset(CancellationToken cancellationToken)
     {
         // Initialize database
-        await databaseContext.Database.MigrateAsync();
+        await databaseContext.Database.MigrateAsync(cancellationToken);
 
         databaseContext.GroupTypes.AddRange(
         [
@@ -237,7 +237,7 @@ public class ChurchToolsSyncServiceTests : DatabaseTestBase
             new(15, 2, "Mitarbeiter") { DeletionTime = deletionTime },
             new(16, 2, "Leiter") { DeletionTime = deletionTime },
         ]);
-        await databaseContext.SaveChangesAsync();
+        await databaseContext.SaveChangesAsync(cancellationToken);
     }
 
     private class FakeChurchToolsApi : IChurchToolsApi

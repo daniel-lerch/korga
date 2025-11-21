@@ -51,22 +51,22 @@ public class GroupStatusMigrationTests : MigrationTestBase<SplitOutboxEmail.Data
         IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
 
         // Create database schema of last migration before the one to test
-        await migrator.MigrateAsync("SplitOutboxEmail");
+        await migrator.MigrateAsync("SplitOutboxEmail", TestContext.Current.CancellationToken);
 
         // Add test data
         before.GroupTypes.Add(groupTypeBeforeUpgrade);
         before.Groups.Add(beforeUpgrade);
-        await before.SaveChangesAsync();
+        await before.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Run migration at test
-        await migrator.MigrateAsync("GroupStatus");
+        await migrator.MigrateAsync("GroupStatus", TestContext.Current.CancellationToken);
 
         // Verify that data has been migrated as expected
-        GroupStatus.GroupType groupType = await after.GroupTypes.SingleAsync();
+        GroupStatus.GroupType groupType = await after.GroupTypes.SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equivalent(expectedGroupType, groupType);
-        GroupStatus.GroupStatus intermediateStatus = await after.GroupStatuses.SingleAsync();
+        GroupStatus.GroupStatus intermediateStatus = await after.GroupStatuses.SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equivalent(expectedIntermediateStatus, intermediateStatus);
-        GroupStatus.Group group = await after.Groups.Include(x => x.GroupType).Include(x => x.GroupStatus).SingleAsync();
+        GroupStatus.Group group = await after.Groups.Include(x => x.GroupType).Include(x => x.GroupStatus).SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equivalent(expected, group);
     }
 
@@ -106,38 +106,38 @@ public class GroupStatusMigrationTests : MigrationTestBase<SplitOutboxEmail.Data
         IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
 
         // Create database schema of the migration to test
-        await migrator.MigrateAsync("GroupStatus");
+        await migrator.MigrateAsync("GroupStatus", TestContext.Current.CancellationToken);
 
         after.GroupTypes.Add(groupTypeBeforeDowngrade);
         after.GroupStatuses.Add(groupStatusBeforeDowngrade);
         after.Groups.Add(groupBeforeDowngrade);
-        await after.SaveChangesAsync();
+        await after.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Reset change tracker before upgrading the schema again to avoid caching
         after.ChangeTracker.Clear();
 
         // Migrate to migration before the one to test and thereby revert it
-        await migrator.MigrateAsync("SplitOutboxEmail");
+        await migrator.MigrateAsync("SplitOutboxEmail", TestContext.Current.CancellationToken);
 
         // Verify that data has been rolled back as expected
-        SplitOutboxEmail.GroupType groupType = await before.GroupTypes.SingleAsync();
+        SplitOutboxEmail.GroupType groupType = await before.GroupTypes.SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equivalent(expectedGroupType, groupType);
-        SplitOutboxEmail.Group group = await before.Groups.SingleAsync();
+        SplitOutboxEmail.Group group = await before.Groups.SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equivalent(expected, group);
 
         // Upgrade database again to verify rollback worked
-        await migrator.MigrateAsync("GroupStatus");
+        await migrator.MigrateAsync("GroupStatus", TestContext.Current.CancellationToken);
 
         // By downgrading and upgrading again we loose the group status name
         groupStatusBeforeDowngrade.Name = "default";
 
-        GroupStatus.Group groupAfterUpgrade = await after.Groups.Include(x => x.GroupType).Include(x => x.GroupStatus).SingleAsync();
+        GroupStatus.Group groupAfterUpgrade = await after.Groups.Include(x => x.GroupType).Include(x => x.GroupStatus).SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equivalent(groupBeforeDowngrade, groupAfterUpgrade);
 
-        GroupStatus.GroupType groupTypeAfterUpgrade = await after.GroupTypes.SingleAsync();
+        GroupStatus.GroupType groupTypeAfterUpgrade = await after.GroupTypes.SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equivalent(groupTypeBeforeDowngrade, groupTypeAfterUpgrade);
 
-        GroupStatus.GroupStatus groupStatusAfterUpgrade = await after.GroupStatuses.SingleAsync();
+        GroupStatus.GroupStatus groupStatusAfterUpgrade = await after.GroupStatuses.SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equivalent(groupStatusBeforeDowngrade, groupStatusAfterUpgrade);
     }
 }

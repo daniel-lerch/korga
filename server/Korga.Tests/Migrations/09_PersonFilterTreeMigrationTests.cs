@@ -82,7 +82,7 @@ public class PersonFilterListMigrationTests : MigrationTestBase<GroupMemberStatu
         IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
 
         // Create database schema of last migration before the one to test
-        await migrator.MigrateAsync("GroupMemberStatus");
+        await migrator.MigrateAsync("GroupMemberStatus", TestContext.Current.CancellationToken);
 
         // Add test data
         before.Status.Add(status);
@@ -96,16 +96,16 @@ public class PersonFilterListMigrationTests : MigrationTestBase<GroupMemberStatu
         before.DistributionLists.Add(distToGroupAndSinglePerson);
         before.PersonFilters.Add(groupFilter);
         before.PersonFilters.Add(singlePerson);
-        await before.SaveChangesAsync();
+        await before.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Run migration at test
-        await migrator.MigrateAsync("PersonFilterList");
+        await migrator.MigrateAsync("PersonFilterList", TestContext.Current.CancellationToken);
 
         // Verify that data has been migrated as expected
-        List<PersonFilterList.DistributionList> distributionLists = await after.DistributionLists.ToListAsync();
+        List<PersonFilterList.DistributionList> distributionLists = await after.DistributionLists.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(3, distributionLists.Count);
 
-        var fl0 = await after.PersonFilterLists.Include(fl => fl.Filters).SingleAsync(fl => fl.Id == distributionLists[0].PermittedRecipientsId);
+        var fl0 = await after.PersonFilterLists.Include(fl => fl.Filters).SingleAsync(fl => fl.Id == distributionLists[0].PermittedRecipientsId, TestContext.Current.CancellationToken);
         Assert.NotNull(fl0);
         Assert.NotNull(fl0.Filters);
         var or0_filter0 = fl0.Filters.Single() as PersonFilterList.StatusFilter;
@@ -114,7 +114,7 @@ public class PersonFilterListMigrationTests : MigrationTestBase<GroupMemberStatu
 
         Assert.Null(distributionLists[1].PermittedRecipientsId);
 
-        var fl2 = await after.PersonFilterLists.Include(fl => fl.Filters).SingleAsync(fl => fl.Id == distributionLists[2].PermittedRecipientsId);
+        var fl2 = await after.PersonFilterLists.Include(fl => fl.Filters).SingleAsync(fl => fl.Id == distributionLists[2].PermittedRecipientsId, TestContext.Current.CancellationToken);
         Assert.NotNull(fl2);
         Assert.NotNull(fl2.Filters);
         Assert.Equal(2, fl2.Filters.Count);
@@ -199,7 +199,7 @@ public class PersonFilterListMigrationTests : MigrationTestBase<GroupMemberStatu
         IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
 
         // Create database schema of the migration to test
-        await migrator.MigrateAsync("PersonFilterList");
+        await migrator.MigrateAsync("PersonFilterList", TestContext.Current.CancellationToken);
 
         // Add test data
         after.Status.Add(status);
@@ -213,22 +213,22 @@ public class PersonFilterListMigrationTests : MigrationTestBase<GroupMemberStatu
         after.PersonFilterLists.Add(groupAndSinglePersonFilterList);
         after.DistributionLists.Add(distToGroupAndSinglePerson);
         after.PersonFilterLists.Add(danglingStatusFilterList);
-        await after.SaveChangesAsync();
+        await after.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Reset change tracker before upgrading the schema again to avoid caching
         after.ChangeTracker.Clear();
 
         // Migrate to migration before the one to test and thereby revert it
-        await migrator.MigrateAsync("GroupMemberStatus");
+        await migrator.MigrateAsync("GroupMemberStatus", TestContext.Current.CancellationToken);
 
         // Verify that data has been migrated as expected
-        List<GroupMemberStatus.DistributionList> distributionLists = await before.DistributionLists.ToListAsync();
+        List<GroupMemberStatus.DistributionList> distributionLists = await before.DistributionLists.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(3, distributionLists.Count);
 
-        List<GroupMemberStatus.PersonFilter> personFilters = await before.PersonFilters.ToListAsync();
+        List<GroupMemberStatus.PersonFilter> personFilters = await before.PersonFilters.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(3, personFilters.Count);
 
         // Upgrade database again to verify rollback worked
-        await migrator.MigrateAsync("PersonFilterList");
+        await migrator.MigrateAsync("PersonFilterList", TestContext.Current.CancellationToken);
     }
 }
