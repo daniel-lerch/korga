@@ -32,18 +32,18 @@ public class NullableEmailHeadersMigrationTests : MigrationTestBase<PersonFilter
         IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
 
         // Create database schema of last migration before the one to test
-        await migrator.MigrateAsync("PersonFilterList");
+        await migrator.MigrateAsync("PersonFilterList", TestContext.Current.CancellationToken);
 
         // Add test data
         before.InboxEmails.Add(reference);
         before.InboxEmails.Add(emptyFields);
-        await before.SaveChangesAsync();
+        await before.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Run migration at test
-        await migrator.MigrateAsync("NullableEmailHeaders");
+        await migrator.MigrateAsync("NullableEmailHeaders", TestContext.Current.CancellationToken);
 
         // Verify that data has been migrated as expected
-        List<NullableEmailHeaders.InboxEmail> inboxEmails = await after.InboxEmails.ToListAsync();
+        List<NullableEmailHeaders.InboxEmail> inboxEmails = await after.InboxEmails.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Contains(inboxEmails, email => email.Id == reference.Id);
         Assert.Contains(inboxEmails, email => email.Id == emptyFields.Id);
         Assert.Equal(2, inboxEmails.Count);
@@ -90,7 +90,7 @@ public class NullableEmailHeadersMigrationTests : MigrationTestBase<PersonFilter
         IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
 
         // Create database schema of the migration to test
-        await migrator.MigrateAsync("NullableEmailHeaders");
+        await migrator.MigrateAsync("NullableEmailHeaders", TestContext.Current.CancellationToken);
 
         // Add test data
         after.InboxEmails.Add(reference);
@@ -98,16 +98,16 @@ public class NullableEmailHeadersMigrationTests : MigrationTestBase<PersonFilter
         after.InboxEmails.Add(nullSubject);
         after.InboxEmails.Add(nullFrom);
         after.InboxEmails.Add(nullTo);
-        await after.SaveChangesAsync();
+        await after.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Reset change tracker before upgrading the schema again to avoid caching
         after.ChangeTracker.Clear();
 
         // Migrate to migration before the one to test and thereby revert it
-        await migrator.MigrateAsync("PersonFilterList");
+        await migrator.MigrateAsync("PersonFilterList", TestContext.Current.CancellationToken);
 
         // Verify that data has been migrated as expected
-        List<PersonFilterList.InboxEmail> inboxEmails = await before.InboxEmails.ToListAsync();
+        List<PersonFilterList.InboxEmail> inboxEmails = await before.InboxEmails.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Contains(inboxEmails, email => email.Id == reference.Id);
         Assert.Contains(inboxEmails, email => email.Id == emptyFields.Id);
         Assert.DoesNotContain(inboxEmails, email => email.Id == nullSubject.Id);
@@ -116,6 +116,6 @@ public class NullableEmailHeadersMigrationTests : MigrationTestBase<PersonFilter
         Assert.Equal(2, inboxEmails.Count);
 
         // Upgrade database again to verify rollback worked
-        await migrator.MigrateAsync("NullableEmailHeaders");
+        await migrator.MigrateAsync("NullableEmailHeaders", TestContext.Current.CancellationToken);
     }
 }

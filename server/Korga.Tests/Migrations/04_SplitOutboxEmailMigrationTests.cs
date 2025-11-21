@@ -59,19 +59,19 @@ public class SplitOutboxEmailMigrationTests : MigrationTestBase<ForwardMode.Data
         IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
 
         // Create database schema of last migration before the one to test
-        await migrator.MigrateAsync("ForwardMode");
+        await migrator.MigrateAsync("ForwardMode", TestContext.Current.CancellationToken);
 
         // Add test data
         before.OutboxEmails.Add(beforeMigrationSent);
         before.OutboxEmails.Add(beforeMigrationPending);
-        await before.SaveChangesAsync();
+        await before.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Run migration at test
-        await migrator.MigrateAsync("SplitOutboxEmail");
+        await migrator.MigrateAsync("SplitOutboxEmail", TestContext.Current.CancellationToken);
 
         // Verify that data has been migrated as expected
-        SplitOutboxEmail.SentEmail sentEmail = await after.SentEmails.SingleAsync();
-        SplitOutboxEmail.OutboxEmail outboxEmail = await after.OutboxEmails.SingleAsync();
+        SplitOutboxEmail.SentEmail sentEmail = await after.SentEmails.SingleAsync(TestContext.Current.CancellationToken);
+        SplitOutboxEmail.OutboxEmail outboxEmail = await after.OutboxEmails.SingleAsync(TestContext.Current.CancellationToken);
 
         Assert.Equivalent(expectedSent, sentEmail);
         Assert.Equivalent(expectedPending, outboxEmail);
@@ -109,35 +109,35 @@ public class SplitOutboxEmailMigrationTests : MigrationTestBase<ForwardMode.Data
         IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
 
         // Create database schema of the migration to test
-        await migrator.MigrateAsync("SplitOutboxEmail");
+        await migrator.MigrateAsync("SplitOutboxEmail", TestContext.Current.CancellationToken);
 
         // Add test data
         after.SentEmails.Add(beforeDowngradeSent);
         after.OutboxEmails.Add(beforeDowngradePending);
-        await after.SaveChangesAsync();
+        await after.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Reset change tracker before upgrading the schema again to avoid caching
         after.ChangeTracker.Clear();
 
         // Migrate to migration before the one to test and thereby revert it
-        await migrator.MigrateAsync("ForwardMode");
+        await migrator.MigrateAsync("ForwardMode", TestContext.Current.CancellationToken);
 
         // Verify that data has been rolled back as expected
-        ForwardMode.OutboxEmail outboxEmail = await before.OutboxEmails.SingleAsync();
+        ForwardMode.OutboxEmail outboxEmail = await before.OutboxEmails.SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equivalent(expectedPending, outboxEmail);
 
         // Make sure old table has been deleted
         await using (MySqlCommand command = connection.CreateCommand())
         {
             command.CommandText = $"SHOW TABLES WHERE `Tables_in_{databaseName}` = \"SentEmails\"";
-            await using MySqlDataReader reader = await command.ExecuteReaderAsync();
-            Assert.False(await reader.ReadAsync());
+            await using MySqlDataReader reader = await command.ExecuteReaderAsync(TestContext.Current.CancellationToken);
+            Assert.False(await reader.ReadAsync(TestContext.Current.CancellationToken));
         }
 
         // Upgrade database again to verify rollback worked
-        await migrator.MigrateAsync("SplitOutboxEmail");
+        await migrator.MigrateAsync("SplitOutboxEmail", TestContext.Current.CancellationToken);
 
-        SplitOutboxEmail.OutboxEmail afterUpgrade = await after.OutboxEmails.SingleAsync();
+        SplitOutboxEmail.OutboxEmail afterUpgrade = await after.OutboxEmails.SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equivalent(beforeDowngradePending, afterUpgrade);
     }
 }

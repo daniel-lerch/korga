@@ -121,25 +121,25 @@ Daniel");
         IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
 
         // Create database schema of last migration before the one to test
-        await migrator.MigrateAsync("AddSinglePersonFilter");
+        await migrator.MigrateAsync("AddSinglePersonFilter", TestContext.Current.CancellationToken);
 
         // Add test data
         before.Emails.Add(beforeUpgrade);
-        await before.SaveChangesAsync();
+        await before.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Run migration at test
-        await migrator.MigrateAsync("InboxOutbox");
+        await migrator.MigrateAsync("InboxOutbox", TestContext.Current.CancellationToken);
 
         // Verify that data has been migrated as expected
-        InboxOutbox.InboxEmail inboxEmail = await after.InboxEmails.SingleAsync();
+        InboxOutbox.InboxEmail inboxEmail = await after.InboxEmails.SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equivalent(expected, inboxEmail);
 
         // Make sure old table has been deleted
         await using (MySqlCommand command = connection.CreateCommand())
         {
             command.CommandText = $"SHOW TABLES WHERE `Tables_in_{databaseName}` = \"Emails\"";
-            await using MySqlDataReader reader = await command.ExecuteReaderAsync();
-            Assert.False(await reader.ReadAsync());
+            await using MySqlDataReader reader = await command.ExecuteReaderAsync(TestContext.Current.CancellationToken);
+            Assert.False(await reader.ReadAsync(TestContext.Current.CancellationToken));
         }
     }
 
@@ -188,38 +188,38 @@ Daniel");
         IMigrator migrator = databaseContext.GetInfrastructure().GetRequiredService<IMigrator>();
 
         // Create database schema of the migration to test
-        await migrator.MigrateAsync("InboxOutbox");
+        await migrator.MigrateAsync("InboxOutbox", TestContext.Current.CancellationToken);
 
         // Add test data
         after.InboxEmails.Add(beforeDowngrade);
-        await after.SaveChangesAsync();
+        await after.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Reset change tracker before upgrading the schema again to avoid caching
         after.ChangeTracker.Clear();
 
         // Migrate to migration before the one to test and thereby revert it
-        await migrator.MigrateAsync("AddSinglePersonFilter");
+        await migrator.MigrateAsync("AddSinglePersonFilter", TestContext.Current.CancellationToken);
 
         // Verify that data has been rolled back as expected
-        AddSinglePersonFilter.Email email = await before.Emails.SingleAsync();
+        AddSinglePersonFilter.Email email = await before.Emails.SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equivalent(expected, email);
 
         // Make sure old table has been deleted
         await using (MySqlCommand command = connection.CreateCommand())
         {
             command.CommandText = $"SHOW TABLES WHERE `Tables_in_{databaseName}` = \"InboxEmails\"";
-            await using MySqlDataReader reader = await command.ExecuteReaderAsync();
-            Assert.False(await reader.ReadAsync());
+            await using MySqlDataReader reader = await command.ExecuteReaderAsync(TestContext.Current.CancellationToken);
+            Assert.False(await reader.ReadAsync(TestContext.Current.CancellationToken));
         }
 
         // Upgrade database again to verify rollback worked
-        await migrator.MigrateAsync("InboxOutbox");
+        await migrator.MigrateAsync("InboxOutbox", TestContext.Current.CancellationToken);
 
         // By downgrading and upgrading again we loose the unique id and header
         beforeDowngrade.UniqueId = 0u;
         beforeDowngrade.Header = null;
 
-        InboxOutbox.InboxEmail afterUpgrade = await after.InboxEmails.SingleAsync();
+        InboxOutbox.InboxEmail afterUpgrade = await after.InboxEmails.SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equivalent(beforeDowngrade, afterUpgrade);
     }
 }

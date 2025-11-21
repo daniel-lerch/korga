@@ -24,10 +24,10 @@ public class VueSpaTests
         });
         HttpClient client = server.CreateClient();
 
-        var response = await client.GetAsync(pathbase + url);
+        var response = await client.GetAsync(pathbase + url, TestContext.Current.CancellationToken);
 
         Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
-        string body = await response.Content.ReadAsStringAsync();
+        string body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.True(body.StartsWith("<!DOCTYPE html>"), "Body is missing DOCTYPE");
         Assert.True(body.Contains($"window.basePath = '{pathbase}/'"), "Body is missing pathbase");
     }

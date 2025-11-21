@@ -224,9 +224,6 @@ public class GlobalPermissions
         [JsonPropertyName("view archive")]
         public required bool ViewArchive { get; set; }
 
-        [JsonPropertyName("view birthdaylist")]
-        public required bool ViewBirthdaylist { get; set; }
-
         [JsonPropertyName("view comments")]
         public required List<int> ViewComments { get; set; }
 
