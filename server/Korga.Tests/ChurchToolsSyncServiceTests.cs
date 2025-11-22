@@ -322,5 +322,15 @@ public class ChurchToolsSyncServiceTests : DatabaseTestBase
         {
             throw new NotImplementedException();
         }
+
+        public ValueTask<CustomModule> GetCustomModule(string key, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ValueTask<List<CustomModuleDataCategory>> GetCustomDataCategories(int moduleId, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

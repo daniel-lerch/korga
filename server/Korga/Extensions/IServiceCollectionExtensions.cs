@@ -2,25 +2,15 @@
 using Korga.Configuration;
 using Korga.EmailDelivery;
 using Korga.EmailRelay;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
+using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Http;
-using System.Security.Claims;
-using System.Text.Json;
-using System.Threading.Tasks;
-
-using OAuthOptions = Microsoft.AspNetCore.Authentication.OAuth.OAuthOptions;
-using KorgaOAuthOptions = Korga.Configuration.OAuthOptions;
 
 namespace Korga.Extensions;
 
@@ -34,8 +24,8 @@ public static class IServiceCollectionExtensions
         services.AddOptions<HostingOptions>()
             .Bind(configuration.GetSection("Hosting"))
             .ValidateDataAnnotations();
-        services.AddOptions<KorgaOAuthOptions>()
-            .Bind(configuration.GetSection("OAuth"))
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection("Jwt"))
             .ValidateDataAnnotations();
         services.AddOptions<ChurchToolsOptions>()
             .Bind(configuration.GetSection("ChurchTools"))
@@ -86,66 +76,23 @@ public static class IServiceCollectionExtensions
         services
             .AddAuthentication(options =>
             {
-                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = null; // Disable automatic challenge of OAuth
             })
-            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme);
+
+        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<ILogger<Startup>, IOptions<JwtOptions>>((options, logger, jwtConfig) =>
             {
-                options.ExpireTimeSpan = TimeSpan.FromDays(1);
-                options.Cookie.SameSite = SameSiteMode.Strict;
-                options.Cookie.SecurePolicy = environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
-                options.Cookie.HttpOnly = true;
-
-                // Disable automatic challenge of Cookie Authentication
-                // Setting LoginPath and AccessDeniedPath to null is not sufficient
-                options.Events.OnRedirectToLogin = context =>
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    context.Response.StatusCode = 401;
-                    return Task.CompletedTask;
-                };
-                options.Events.OnRedirectToAccessDenied = context =>
-                {
-                    context.Response.StatusCode = 403;
-                    return Task.CompletedTask;
-                };
-            })
-            .AddOAuth("OAuth", options => { });
-
-        services.AddOptions<OAuthOptions>("OAuth")
-            .Configure<ILogger<Startup>, IOptions<KorgaOAuthOptions>>((options, logger, oauthOptions) =>
-            {
-                options.CorrelationCookie.SameSite = SameSiteMode.Lax;
-                options.CorrelationCookie.SecurePolicy = environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
-                options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.AuthorizationEndpoint = oauthOptions.Value.AuthorizationEndpoint;
-                options.TokenEndpoint = oauthOptions.Value.TokenEndpoint;
-                options.UserInformationEndpoint = oauthOptions.Value.UserInformationEndpoint;
-                options.UsePkce = oauthOptions.Value.UsePkce;
-                options.CallbackPath = "/api/signin-oauth";
-                options.ClientId = oauthOptions.Value.ClientId;
-                options.ClientSecret = oauthOptions.Value.ClientSecret;
-                options.SaveTokens = true;
-
-                options.Scope.Add("openid");
-                options.Scope.Add("profile");
-
-                options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "sub");
-                options.ClaimActions.MapJsonKey(ClaimTypes.Name, "displayName");
-                options.ClaimActions.MapJsonKey(ClaimTypes.GivenName, "firstName");
-                options.ClaimActions.MapJsonKey(ClaimTypes.Surname, "lastName");
-                options.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
-                options.ClaimActions.MapJsonKey("picture", "imageUrl");
-
-                options.Events.OnCreatingTicket = async context =>
-                {
-                    var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-                    request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", context.AccessToken);
-
-                    var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-                    response.EnsureSuccessStatusCode();
-
-                    var user = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-                    context.RunClaimActions(user.RootElement);
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtConfig.Value.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwtConfig.Value.Audience,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(System.Convert.FromHexString(jwtConfig.Value.SigningKey)),
                 };
             });
 

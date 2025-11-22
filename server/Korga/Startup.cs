@@ -107,7 +107,5 @@ public class Startup
 
         app.UseOpenApi();
         app.UseSwaggerUi();
-
-        app.UseSpa(spa => spa.UseVueSpaFileProvider());
     }
 }

@@ -1,8 +1,8 @@
 <template>
   <header>
-    <nav class="navbar navbar-expand-md navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-sm navbar-dark bg-primary">
       <div class="container-fluid">
-        <router-link to="/service" class="navbar-brand">
+        <router-link to="/" class="navbar-brand">
           <img src="/brand.png" alt="Logo" width="24" height="24" class="d-inline-block align-text-top mx-1" />
           Korga
         </router-link>
@@ -11,20 +11,34 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav me-auto">
-            <li class="nav-item" v-if="user.profile">
-              <router-link :to="{ name: 'Service' }" class="nav-link">
-                Dienste
-              </router-link>
-            </li>
+          <ul class="navbar-nav">
+            <router-link to="/" class="nav-link">
+              E-Mail-Verteiler
+            </router-link>
           </ul>
-          <profile-nav></profile-nav>
+          <ul class="navbar-nav">
+            <router-link to="/setup" class="nav-link">
+              Einstellungen
+            </router-link>
+          </ul>
         </div>
       </div>
     </nav>
   </header>
   <main class="content">
-    <router-view v-bind="$attrs" />
+    <div v-if="extension.moduleId === 0">Loading...</div>
+    <Suspense v-else>
+      <template #default>
+        <router-view v-bind="$attrs" />
+      </template>
+      <template #fallback>
+        <div class="page-load-container">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </template>
+    </Suspense>
   </main>
   <footer>
     <div>
@@ -36,15 +50,15 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from "vue"
-import ProfileNav from "@/components/ProfileNav.vue"
-import { useUserStore } from "@/stores/user"
+import { churchtoolsClient } from "@churchtools/churchtools-client"
+import { useExtensionStore } from "./stores/extension"
+import { Suspense } from "vue"
 
-const user = useUserStore()
+const churchtoolsUrl = window.settings?.base_url ?? import.meta.env.VITE_CHURCHTOOLS_URL
+churchtoolsClient.setBaseUrl(churchtoolsUrl)
 
-onMounted(() => {
-  user.load()
-})
+const extension = useExtensionStore()
+
 </script>
 
 <style>

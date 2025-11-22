@@ -1,49 +1,104 @@
-﻿using Korga.Models.Json;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using ChurchTools;
+using Korga.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace Korga.Controllers;
 
 [ApiController]
 public class ProfileController : ControllerBase
 {
-    [HttpGet("~/api/profile")]
-    [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
-    public IActionResult Profile()
+    private readonly IOptions<JwtOptions> jwtOptions;
+    private readonly IChurchToolsApi churchTools;
+
+    public ProfileController(IOptions<JwtOptions> jwtOptions, IChurchToolsApi churchTools)
     {
-        string? id = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        string? displayName = User.FindFirstValue(ClaimTypes.Name);
-        string? givenName = User.FindFirstValue(ClaimTypes.GivenName);
-        string? familyName = User.FindFirstValue(ClaimTypes.Surname);
-        string? emailAddress = User.FindFirstValue(ClaimTypes.Email);
-        string? picture = User.FindFirstValue("picture");
+        this.jwtOptions = jwtOptions;
+        this.churchTools = churchTools;
+    }
 
-        if (id == null || displayName == null || givenName == null || familyName == null || emailAddress == null) return new JsonResult(null);
+    [HttpPost("~/api/token")]
+    [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<TokenResponse>> GetAccessToken([FromBody] TokenRequest request)
+    {
+        // NOTE: This is a placeholder implementation for tests and development.
+        // It issues a minimal JWT containing standard claims (sub, jti, iat, exp) and a role claim when appropriate.
+        // Replace the signing key and claims with real logic when integrating with real data.
 
-        return new JsonResult(new ProfileResponse
+        var systemPermissions = await churchTools.GetGlobalPermissions();
+        if (systemPermissions.Korga == null)
+            return StatusCode(500, "Korga's system user does not have permissions for Korga or the Korga plugin is not installed in ChurchTools");
+        if (!systemPermissions.Korga.View || systemPermissions.Korga.ViewCustomCategory.Count == 0)
+            return StatusCode(500, "Korga's system user does not have permissions for Korga");
+
+        var module = await churchTools.GetCustomModule("korga");
+        var categories = await churchTools.GetCustomDataCategories(module.Id);
+        var configCategory = categories.FirstOrDefault(c => c.Shorty == "config");
+        if (configCategory == null)
+            return BadRequest("Extension is not initialized. Custom data category 'config' was not found");
+
+        using var churchToolsFromRequest = ChurchToolsApi.CreateWithToken(new Uri(request.ChurchToolsUrl), request.LoginToken);
+        var user = await churchToolsFromRequest.GetPerson();
+        var permissions = await churchToolsFromRequest.GetGlobalPermissions();
+
+        if (permissions.Korga == null)
+            return BadRequest("User does not have permissions for Korga or the Korga plugin is not installed in ChurchTools");
+
+        if (!permissions.Korga.ViewCustomData.Contains(configCategory.Id))
+            return BadRequest($"User is not permitted to view custom data category {configCategory.Id} of Korga");
+
+        bool isAdmin = permissions.Korga.EditCustomData.Contains(configCategory.Id);
+
+        var key = new SymmetricSecurityKey(Convert.FromHexString(jwtOptions.Value.SigningKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var now = DateTime.UtcNow;
+        var expires = now.AddHours(1);
+
+        var claims = new List<Claim>
         {
-            Id = id,
-            DisplayName = displayName,
-            GivenName = givenName,
-            FamilyName = familyName,
-            EmailAddress = emailAddress,
-            Picture = picture
-        });
+            new Claim(JwtRegisteredClaimNames.Iss, jwtOptions.Value.Issuer),
+            new Claim(JwtRegisteredClaimNames.Aud, jwtOptions.Value.Audience),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            // iat as Unix time (seconds)
+            new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(now).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+        };
+
+        if (isAdmin)
+        {
+            // Add a "role" claim so ASP.NET Core authorization recognizes it as a role.
+            claims.Add(new Claim("role", "admin"));
+        }
+
+        var token = new JwtSecurityToken(
+            claims: claims,
+            notBefore: now,
+            expires: expires,
+            signingCredentials: creds
+        );
+
+        string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+        return new TokenResponse { AccessToken = tokenString };
     }
 
-    [HttpGet("~/api/challenge")]
-    public IActionResult ChallengeLogin([FromQuery] string redirect)
+    public class TokenRequest
     {
-        AuthenticationProperties properties = new() { RedirectUri = redirect };
-        return Challenge(properties, "OAuth");
+        public required string ChurchToolsUrl { get; init; }
+        public required string LoginToken { get; init; }
     }
 
-    [HttpGet("~/api/logout")]
-    public IActionResult Logout()
+    public class TokenResponse
     {
-        return SignOut(CookieAuthenticationDefaults.AuthenticationScheme);
+        public string AccessToken { get; set; } = string.Empty;
     }
 }
