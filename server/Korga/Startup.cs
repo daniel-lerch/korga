@@ -38,8 +38,6 @@ public class Startup
 
         services.AddTransient<PersonFilterService>();
 
-        services.AddSpaStaticFiles(options => options.RootPath = environment.WebRootPath);
-
         services.AddControllers();
 
         services.AddOpenApiDocument();
@@ -89,8 +87,6 @@ public class Startup
         }
 
         app.UseHosting();
-
-        app.UseSpaStaticFiles();
 
         app.UseRouting();
 
