@@ -22,7 +22,7 @@ export async function getDistributionLists(): Promise<DistributionList[]> {
   let response = await fetch(`${extension.backendUrl}/api/distribution-lists`, {
     headers: {
       Authorization: `Bearer ${extension.accessToken}`,
-    }
+    },
   })
   if (response.status === 401) {
     // Access token invalid, try to re-login
@@ -30,8 +30,10 @@ export async function getDistributionLists(): Promise<DistributionList[]> {
     response = await fetch(`${extension.backendUrl}/api/distribution-lists`, {
       headers: {
         Authorization: `Bearer ${extension.accessToken}`,
-      }
+      },
     })
+    if (response.status === 401)
+      throw new Error("Unauthorized: Access token is invalid even after re-login")
   }
   return await response.json()
 }

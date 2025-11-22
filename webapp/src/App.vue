@@ -52,7 +52,6 @@
 <script setup lang="ts">
 import { churchtoolsClient } from "@churchtools/churchtools-client"
 import { useExtensionStore } from "./stores/extension"
-import { Suspense } from "vue"
 
 const churchtoolsUrl = window.settings?.base_url ?? import.meta.env.VITE_CHURCHTOOLS_URL
 churchtoolsClient.setBaseUrl(churchtoolsUrl)

@@ -29,10 +29,6 @@ public class ProfileController : ControllerBase
     [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<TokenResponse>> GetAccessToken([FromBody] TokenRequest request)
     {
-        // NOTE: This is a placeholder implementation for tests and development.
-        // It issues a minimal JWT containing standard claims (sub, jti, iat, exp) and a role claim when appropriate.
-        // Replace the signing key and claims with real logic when integrating with real data.
-
         var systemPermissions = await churchTools.GetGlobalPermissions();
         if (systemPermissions.Korga == null)
             return StatusCode(500, "Korga's system user does not have permissions for Korga or the Korga plugin is not installed in ChurchTools");
@@ -65,8 +61,6 @@ public class ProfileController : ControllerBase
 
         var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Iss, jwtOptions.Value.Issuer),
-            new Claim(JwtRegisteredClaimNames.Aud, jwtOptions.Value.Audience),
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             // iat as Unix time (seconds)
@@ -76,10 +70,12 @@ public class ProfileController : ControllerBase
         if (isAdmin)
         {
             // Add a "role" claim so ASP.NET Core authorization recognizes it as a role.
-            claims.Add(new Claim("role", "admin"));
+            claims.Add(new Claim(ClaimTypes.Role, "admin"));
         }
 
         var token = new JwtSecurityToken(
+            issuer: jwtOptions.Value.Issuer,
+            audience: jwtOptions.Value.Audience,
             claims: claims,
             notBefore: now,
             expires: expires,

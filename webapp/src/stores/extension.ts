@@ -1,7 +1,12 @@
-import type { Person } from "@/utils/ct-types";
-import { createCustomDataCategory, getCustomDataCategories, getModule, updateCustomDataCategory } from "@/utils/kv-store";
-import { churchtoolsClient } from "@churchtools/churchtools-client";
-import { defineStore } from "pinia";
+import type { Person } from "@/utils/ct-types"
+import {
+  createCustomDataCategory,
+  getCustomDataCategories,
+  getModule,
+  updateCustomDataCategory,
+} from "@/utils/kv-store"
+import { churchtoolsClient } from "@churchtools/churchtools-client"
+import { defineStore } from "pinia"
 
 export const useExtensionStore = defineStore("extension", {
   state: () => ({
@@ -9,9 +14,6 @@ export const useExtensionStore = defineStore("extension", {
     backendUrl: "",
     accessToken: "",
   }),
-  getters: {
-    isConfigued: (state) => state.moduleId !== 0 && state.backendUrl.length > 0,
-  },
   actions: {
     async load() {
       const module = await getModule()
@@ -46,10 +48,15 @@ export const useExtensionStore = defineStore("extension", {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ churchToolsUrl: window.settings?.base_url ?? import.meta.env.VITE_CHURCHTOOLS_URL, loginToken }),
+        body: JSON.stringify({
+          churchToolsUrl: window.settings?.base_url ?? import.meta.env.VITE_CHURCHTOOLS_URL,
+          loginToken,
+        }),
       })
       if (!response.ok) {
-        throw new Error(`Login failed. ${backendUrl} replied with error ${response.status} ${response.statusText}`)
+        throw new Error(
+          `Login failed. ${backendUrl} replied with error ${response.status} ${response.statusText}`
+        )
       }
 
       if (backendUrl !== this.backendUrl) {
@@ -57,24 +64,31 @@ export const useExtensionStore = defineStore("extension", {
         const categories = await getCustomDataCategories(this.moduleId)
         const configCategory = categories.find((c) => c.shorty === "config")
         if (configCategory === undefined) {
-          await createCustomDataCategory({
-            customModuleId: this.moduleId,
-            name: "Configuration",
-            shorty: "config",
-            description: "Configuration for the Korga extension",
-            data: JSON.stringify({ backendUrl }),
-          }, this.moduleId)
+          await createCustomDataCategory(
+            {
+              customModuleId: this.moduleId,
+              name: "Configuration",
+              shorty: "config",
+              description: "Configuration for the Korga extension",
+              data: JSON.stringify({ backendUrl }),
+            },
+            this.moduleId
+          )
         } else {
-          await updateCustomDataCategory(configCategory.id, {
-            id: configCategory.id,
-            customModuleId: this.moduleId,
-            name: configCategory.name,
-            shorty: configCategory.shorty,
-            description: configCategory.description,
-            data: JSON.stringify({
-              backendUrl
-            }),
-          }, this.moduleId)
+          await updateCustomDataCategory(
+            configCategory.id,
+            {
+              id: configCategory.id,
+              customModuleId: this.moduleId,
+              name: configCategory.name,
+              shorty: configCategory.shorty,
+              description: configCategory.description,
+              data: JSON.stringify({
+                backendUrl,
+              }),
+            },
+            this.moduleId
+          )
         }
         this.backendUrl = backendUrl
       }
