@@ -1,6 +1,5 @@
 using Korga.Commands;
 using Korga.Extensions;
-using Korga.Filters;
 using Korga.Utilities;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.AspNetCore.Hosting;
@@ -83,6 +82,5 @@ public class Program
                 services.AddKorgaOptions(context.Configuration);
 				services.AddSingleton(PhysicalConsole.Singleton);
                 services.AddKorgaMySqlDatabase();
-                services.AddTransient<PersonFilterService>();
             });
 }

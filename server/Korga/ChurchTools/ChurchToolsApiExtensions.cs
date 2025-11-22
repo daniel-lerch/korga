@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Net.Http;
 
-namespace Korga.ChurchTools.Hosting;
+namespace Korga.ChurchTools;
 
 public static class ChurchToolsApiExtensions
 {

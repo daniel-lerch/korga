@@ -1,6 +1,4 @@
 ﻿using Korga.EmailRelay;
-using Korga.EmailRelay.Entities;
-using Korga.Filters.Entities;
 using Korga.Models.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -27,48 +25,14 @@ namespace Korga.Controllers
 		[ProducesResponseType(typeof(DistributionListResponse[]), StatusCodes.Status200OK)]
 		public async Task<IActionResult> GetDistributionLists()
 		{
-			List<DistributionList> distributionLists = await database.DistributionLists
-				.Include(dl => dl.PermittedRecipients)
-				.ThenInclude(fl => fl!.Filters)
+			List<DistributionListResponse> response = await database.DistributionLists
 				.OrderBy(dl => dl.Alias)
+                .Select(dl => new DistributionListResponse(
+                    dl.Id,
+                    dl.Alias,
+                    dl.Flags.HasFlag(DistributionListFlags.Newsletter),
+                    dl.RecipientsQuery))
 				.ToListAsync();
-
-			List<DistributionListResponse> response = [];
-
-			foreach (DistributionList distributionList in distributionLists)
-			{
-				List<DistributionListResponse.PersonFilter> filters = [];
-
-				foreach (PersonFilter personFilter in distributionList.PermittedRecipients?.Filters ?? [])
-				{
-					DistributionListResponse.PersonFilter filter = new() { Id = personFilter.Id, Discriminator = personFilter.GetType().Name };
-
-					if (personFilter is StatusFilter statusFilter)
-					{
-						filter.StatusName = await database.Status.Where(s => s.Id == statusFilter.StatusId).Select(s => s.Name).SingleAsync();
-					}
-					else if (personFilter is GroupFilter groupFilter)
-					{
-						filter.GroupName = await database.Groups.Where(g => g.Id == groupFilter.GroupId).Select(g => g.Name).SingleAsync();
-						if (groupFilter.GroupRoleId.HasValue)
-							filter.GroupRoleName = await database.GroupRoles.Where(r => r.Id == groupFilter.GroupRoleId.Value).Select(r => r.Name).SingleAsync();
-					}
-					else if (personFilter is GroupTypeFilter groupTypeFilter)
-					{
-						filter.GroupTypeName = await database.GroupTypes.Where(t => t.Id == groupTypeFilter.GroupTypeId).Select(t => t.Name).SingleAsync();
-						if (groupTypeFilter.GroupRoleId.HasValue)
-							filter.GroupRoleName = await database.GroupRoles.Where(r => r.Id == groupTypeFilter.GroupRoleId.Value).Select(r => r.Name).SingleAsync();
-					}
-					else if (personFilter is SinglePerson singlePerson)
-					{
-						filter.PersonFullName = await database.People.Where(p => p.Id == singlePerson.PersonId).Select(p => $"{p.FirstName} {p.LastName}").SingleAsync();
-					}
-
-					filters.Add(filter);
-				}
-
-				response.Add(new(distributionList.Id, distributionList.Alias, distributionList.Flags.HasFlag(DistributionListFlags.Newsletter), filters));
-			}
 
 			return new JsonResult(response);
 		}

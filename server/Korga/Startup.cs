@@ -1,5 +1,4 @@
 using Korga.ChurchTools;
-using Korga.ChurchTools.Hosting;
 using Korga.EmailRelay;
 using Korga.Extensions;
 using Korga.Utilities;
@@ -9,7 +8,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Korga.EmailDelivery;
-using Korga.Filters;
 using Microsoft.AspNetCore.DataProtection;
 using System.IO;
 
@@ -36,8 +34,6 @@ public class Startup
 
         services.AddKorgaMySqlDatabase();
 
-        services.AddTransient<PersonFilterService>();
-
         services.AddControllers();
 
         services.AddOpenApiDocument();
@@ -55,8 +51,6 @@ public class Startup
         // Instead of returning a fake service when disabled we don't register any hosted service at all
         if (Configuration.GetValue<bool>("ChurchTools:EnableSync"))
         {
-            services.AddTransient<ChurchToolsSyncService>();
-            services.AddHostedService<ChurchToolsSyncHostedService>();
             services.AddHostedService<ChurchToolsPermissionsHostedService>();
         }
 

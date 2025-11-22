@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Korga.ChurchTools.Hosting;
+namespace Korga.ChurchTools;
 
 public class ChurchToolsApiFactory
 {
