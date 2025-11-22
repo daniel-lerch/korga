@@ -38,6 +38,9 @@ public class GlobalPermissions
     [JsonPropertyName("finance")]
     public FinancePermissions? Finance { get; set; }
 
+    [JsonPropertyName("korga")]
+    public ExtensionPermissions? Korga { get; set; }
+
     [JsonPropertyName("post")]
     public PostPermissions? Post { get; set; }
 
@@ -388,6 +391,36 @@ public class GlobalPermissions
 
         [JsonPropertyName("view accounting period")]
         public required List<int> ViewAccountingPeriod { get; set; }
+    }
+
+    public class ExtensionPermissions
+    {
+        [JsonPropertyName("create custom category")]
+        public required bool CreateCustomCategory { get; set; }
+
+        [JsonPropertyName("create custom data")]
+        public required List<int> CreateCustomData { get; set; }
+
+        [JsonPropertyName("delete custom category")]
+        public required List<int> DeleteCustomCategory { get; set; }
+
+        [JsonPropertyName("delete custom data")]
+        public required List<int> DeleteCustomData { get; set; }
+
+        [JsonPropertyName("edit custom category")]
+        public required List<int> EditCustomCategory { get; set; }
+
+        [JsonPropertyName("edit custom data")]
+        public required List<int> EditCustomData { get; set; }
+
+        [JsonPropertyName("view")]
+        public required bool View { get; set; }
+
+        [JsonPropertyName("view custom category")]
+        public required List<int> ViewCustomCategory { get; set; }
+
+        [JsonPropertyName("view custom data")]
+        public required List<int> ViewCustomData { get; set; }
     }
 
     public class PostPermissions

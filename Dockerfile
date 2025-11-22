@@ -1,14 +1,3 @@
-FROM node:24 AS webapp
-WORKDIR /app
-
-# Copy package definition and restore node modules as distinct layers
-COPY webapp/package.json webapp/package-lock.json ./
-RUN npm install
-
-# Copy everything else and build
-COPY webapp ./
-RUN npm run build
-
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS server
 WORKDIR /app
 
@@ -33,7 +22,6 @@ RUN set -x \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=server /app/out .
-COPY --from=webapp /app/dist wwwroot/
 
 HEALTHCHECK \
     --interval=1m \

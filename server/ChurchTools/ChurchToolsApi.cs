@@ -57,10 +57,14 @@ public class ChurchToolsApi : IChurchToolsApi, IDisposable
     }
 
     public static ChurchToolsApi CreateWithToken(string host, string token) => CreateWithToken(new(), host, token);
+    public static ChurchToolsApi CreateWithToken(Uri uri, string token) => CreateWithToken(new(), uri, token);
 
     public static ChurchToolsApi CreateWithToken(HttpClient httpClient, string host, string loginToken)
+        => CreateWithToken(httpClient, new UriBuilder("https", host).Uri, loginToken);
+
+    public static ChurchToolsApi CreateWithToken(HttpClient httpClient, Uri uri, string loginToken)
     {
-        httpClient.BaseAddress = new UriBuilder("https", host).Uri;
+        httpClient.BaseAddress = uri;
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Login", loginToken);
 
         return new ChurchToolsApi(httpClient, null);
@@ -151,6 +155,16 @@ public class ChurchToolsApi : IChurchToolsApi, IDisposable
     public ValueTask<GlobalPermissions> GetGlobalPermissions(CancellationToken cancellationToken = default)
     {
         return InternalGetNonPaged<GlobalPermissions>("/api/permissions/global", cancellationToken);
+    }
+
+    public ValueTask<CustomModule> GetCustomModule(string key, CancellationToken cancellationToken = default)
+    {
+        return InternalGetNonPaged<CustomModule>($"/api/custommodules/{key}", cancellationToken);
+    }
+
+    public ValueTask<List<CustomModuleDataCategory>> GetCustomDataCategories(int moduleId, CancellationToken cancellationToken = default)
+    {
+        return InternalGetNonPaged<List<CustomModuleDataCategory>>($"/api/custommodules/{moduleId}/customdatacategories", cancellationToken);
     }
 
     public void Dispose()

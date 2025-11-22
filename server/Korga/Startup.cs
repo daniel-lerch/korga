@@ -38,8 +38,6 @@ public class Startup
 
         services.AddTransient<PersonFilterService>();
 
-        services.AddSpaStaticFiles(options => options.RootPath = environment.WebRootPath);
-
         services.AddControllers();
 
         services.AddOpenApiDocument();
@@ -90,8 +88,6 @@ public class Startup
 
         app.UseHosting();
 
-        app.UseSpaStaticFiles();
-
         app.UseRouting();
 
         app.UseKorgaCors();
@@ -107,7 +103,5 @@ public class Startup
 
         app.UseOpenApi();
         app.UseSwaggerUi();
-
-        app.UseSpa(spa => spa.UseVueSpaFileProvider());
     }
 }

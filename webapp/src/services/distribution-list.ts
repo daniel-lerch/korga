@@ -1,4 +1,4 @@
-import client from "./client"
+import { useExtensionStore } from "@/stores/extension"
 
 export interface DistributionList {
   id: number
@@ -17,6 +17,23 @@ export interface PersonFilter {
   personFullName: string | null
 }
 
-export function getDistributionLists(): Promise<DistributionList[]> {
-  return client.get("/api/distribution-lists")
+export async function getDistributionLists(): Promise<DistributionList[]> {
+  const extension = useExtensionStore()
+  let response = await fetch(`${extension.backendUrl}/api/distribution-lists`, {
+    headers: {
+      Authorization: `Bearer ${extension.accessToken}`,
+    },
+  })
+  if (response.status === 401) {
+    // Access token invalid, try to re-login
+    await extension.login()
+    response = await fetch(`${extension.backendUrl}/api/distribution-lists`, {
+      headers: {
+        Authorization: `Bearer ${extension.accessToken}`,
+      },
+    })
+    if (response.status === 401)
+      throw new Error("Unauthorized: Access token is invalid even after re-login")
+  }
+  return await response.json()
 }

@@ -1,6 +1,5 @@
 <template>
-  <LoadingSpinner v-if="!loaded" :state="{ error }" />
-  <div v-else class="container page-loaded-container">
+  <div class="container page-loaded-container">
     <h1>E-Mail-Verteiler</h1>
     <div class="container">
       <div v-for="dl in distributionLists" :key="dl.id" class="row border-bottom mb-2">
@@ -24,61 +23,34 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import type {
-  DistributionList,
   PersonFilter,
 } from "@/services/distribution-list"
-import { defineComponent, onMounted, ref } from "vue"
 import { getDistributionLists } from "@/services/distribution-list"
-import LoadingSpinner from "@/components/LoadingSpinner.vue"
 
-export default defineComponent({
-  components: { LoadingSpinner },
-  setup() {
-    const distributionLists = ref<DistributionList[]>([])
-    const loaded = ref(false)
-    const error = ref<string | null>(null)
+const distributionLists = await getDistributionLists()
 
-    onMounted(async () => {
-      try {
-        distributionLists.value.push(...(await getDistributionLists()))
-        loaded.value = true
-      } catch {
-        error.value =
-          "Die Verteilerlisten konnten nicht geladen werden. Bitte überprüfe deine Internetverbindung."
-      }
-    })
-
-    const shortText = function (filter: PersonFilter) {
-      switch (filter.discriminator) {
-        case "StatusFilter":
-          return "Status: " + filter.statusName
-        case "GroupFilter": {
-          const prefix = "Gruppe: " + filter.groupName
-          return filter.groupRoleName
-            ? prefix + " (" + filter.groupRoleName + ")"
-            : prefix
-        }
-        case "GroupTypeFilter": {
-          const prefix = "Gruppentyp: " + filter.groupTypeName
-          return filter.groupRoleName
-            ? prefix + " (" + filter.groupRoleName + ")"
-            : prefix
-        }
-        case "SinglePerson":
-          return "Person: " + filter.personFullName
-        default:
-          return "Unbekannter Filtertyp: " + filter.discriminator
-      }
+const shortText = function (filter: PersonFilter) {
+  switch (filter.discriminator) {
+    case "StatusFilter":
+      return "Status: " + filter.statusName
+    case "GroupFilter": {
+      const prefix = "Gruppe: " + filter.groupName
+      return filter.groupRoleName
+        ? prefix + " (" + filter.groupRoleName + ")"
+        : prefix
     }
-
-    return {
-      distributionLists,
-      loaded,
-      error,
-      shortText,
+    case "GroupTypeFilter": {
+      const prefix = "Gruppentyp: " + filter.groupTypeName
+      return filter.groupRoleName
+        ? prefix + " (" + filter.groupRoleName + ")"
+        : prefix
     }
-  },
-})
+    case "SinglePerson":
+      return "Person: " + filter.personFullName
+    default:
+      return "Unbekannter Filtertyp: " + filter.discriminator
+  }
+}
 </script>
