@@ -10,8 +10,8 @@
             </router-link>
           </div>
           <div class="nav-links flex items-center gap-2">
-            <router-link to="/" class="px-3 py-2 rounded hover:bg-white/10">E-Mail-Verteiler</router-link>
-            <router-link to="/setup" class="px-3 py-2 rounded hover:bg-white/10">Einstellungen</router-link>
+            <router-link to="/" class="px-3 py-2 rounded">E-Mail-Verteiler</router-link>
+            <router-link to="/setup" class="px-3 py-2 rounded">Einstellungen</router-link>
           </div>
         </div>
       </nav>
@@ -28,10 +28,9 @@
       </Suspense>
     </main>
     <footer>
-      <div class="max-w-7xl mx-auto px-4 py-3 text-xl text-gray-600">
+      <div class="max-w-7xl mx-auto px-4 py-3 text-gray-600">
         <small class="text-sm text-gray-500">
           Copyright &copy; 2022-2025 Daniel Lerch and Benjamin Stieler
-          <span class="ml-3 text-gray-400">v{{ appVersion }}</span>
         </small>
       </div>
     </footer>
@@ -41,12 +40,9 @@
 <script setup lang="ts">
 import { churchtoolsClient } from "@churchtools/churchtools-client"
 import { useExtensionStore } from "./stores/extension"
-import pkg from '../package.json'
 
 const churchtoolsUrl = window.settings?.base_url ?? import.meta.env.VITE_CHURCHTOOLS_URL
 churchtoolsClient.setBaseUrl(churchtoolsUrl)
 
 const extension = useExtensionStore()
-
-const appVersion = pkg?.version ?? 'dev'
 </script>

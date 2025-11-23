@@ -8,7 +8,7 @@
         </div>
         <div class="flex items-center md:justify-center">
           <span v-if="dl.newsletter"
-            class="inline-flex items-center bg-blue-600 text-white text-sm px-3 py-1 rounded-full">
+            class="inline-flex items-center bg-primary text-white text-sm px-3 py-1 rounded-full">
             Newsletter
           </span>
         </div>
