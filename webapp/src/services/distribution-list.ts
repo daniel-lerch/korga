@@ -8,6 +8,8 @@ export type CreateDistributionList = {
 
 export type DistributionList = CreateDistributionList & {
   id: number
+  recipientCount: number
+  recipientCountTime: string
 }
 
 export async function fetchWithAuth(input: RequestInfo, init?: RequestInit): Promise<Response> {

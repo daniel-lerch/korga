@@ -31,8 +31,12 @@ export const useExtensionStore = defineStore("extension", {
       const categories = await getCustomDataCategories<{ backendUrl?: string }>(module.id)
       const configCategory = categories.find((c) => c.shorty === "config")
       this.backendUrl = configCategory?.backendUrl ?? ""
-
-      if (this.backendUrl) {
+      // Try to restore access token from session storage so users don't have to
+      // re-login on page reload during the same browser session.
+      const stored = sessionStorage.getItem("korga.accessToken")
+      if (stored) {
+        this.accessToken = stored
+      } else if (this.backendUrl) {
         await this.login()
       }
     },
@@ -93,6 +97,7 @@ export const useExtensionStore = defineStore("extension", {
         this.backendUrl = backendUrl
       }
       this.accessToken = (await response.json()).accessToken
+      sessionStorage.setItem("korga.accessToken", this.accessToken)
     },
   },
 })

@@ -68,7 +68,7 @@ async function onSubmit() {
         await createDistributionList({
             alias: alias.value.trim(),
             newsletter: newsletter.value,
-            recipientsQuery: recipientsQuery.value,
+            recipientsQuery: JSON.parse(recipientsQuery.value),
         })
         router.push({ name: "DistributionLists" })
     } catch (e) {

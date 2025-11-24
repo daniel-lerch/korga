@@ -19,6 +19,10 @@
             class="inline-flex items-center bg-primary text-white text-sm px-3 py-1 rounded-full">
             Newsletter
           </span>
+          <span class="ml-3 inline-flex items-center text-sm text-gray-700" :title="dl.recipientCountTime ?? ''">
+            <strong class="mr-1">{{ dl.recipientCount ?? '-' }}</strong>
+            <span class="text-xs text-gray-500">Empfänger</span>
+          </span>
         </div>
         <div class="mt-2 md:mt-0 md:w-1/2">
           {{ recipientsLabel[dl.id] ?? JSON.stringify(dl.recipientsQuery) }}

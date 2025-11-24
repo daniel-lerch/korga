@@ -1,27 +1,18 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
 
 namespace Korga.Models.Json;
 
 public class CreateDistributionList
 {
-    public CreateDistributionList(string alias, bool newsletter, JsonElement? recipientsQuery)
-    {
-        Alias = alias;
-        Newsletter = newsletter;
-        RecipientsQuery = recipientsQuery;
-    }
-    public string Alias { get; set; }
-    public bool Newsletter { get; set; }
-    public JsonElement? RecipientsQuery { get; set; }
+    public required string Alias { get; init; }
+    public required bool Newsletter { get; init; }
+    public JsonElement? RecipientsQuery { get; init; }
 }
 
 public class DistributionList : CreateDistributionList
 {
-	public DistributionList(long id, string alias, bool newsletter, JsonElement? recipientsQuery)
-        : base(alias, newsletter, recipientsQuery)
-	{
-		Id = id;
-    }
-
-	public long Id { get; set; }
+	public required long Id { get; init; }
+    public int RecipientCount { get; init; }
+    public DateTime RecipientCountTime { get; init; }
 }
