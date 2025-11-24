@@ -1,7 +1,9 @@
 ﻿using ChurchTools;
+using ChurchTools.Model;
 using Korga.EmailRelay.Entities;
 using MimeKit;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,7 +22,10 @@ public class DistributionListService
     {
         if (string.IsNullOrEmpty(distributionList.RecipientsQuery)) return [];
 
-        var people = await churchTools.ChurchQuery<IdNameEmail>(distributionList.RecipientsQuery, cancellationToken);
+        JsonElement filter = JsonElement.Parse(distributionList.RecipientsQuery);
+        ChurchQueryRequest<IdNameEmail> query = new(filter);
+
+        var people = await churchTools.ChurchQuery(query, cancellationToken);
 
         return people
             .Where(p => !string.IsNullOrWhiteSpace(p.Email))

@@ -1,4 +1,5 @@
 ﻿using ChurchTools;
+using ChurchTools.Model;
 using Korga.EmailDelivery;
 using Korga.EmailRelay.Entities;
 using Microsoft.Extensions.Options;
@@ -6,6 +7,7 @@ using MimeKit;
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -128,15 +130,13 @@ public class MimeMessageCreationService
         if (!string.IsNullOrWhiteSpace(from.Name)) return from.Name;
 
         // If the email client did not add a from name, try to get the persons name from ChurchTools
-        string query = $$"""
+        string filter = $$"""
             {
-              "primaryEntityAlias": "person",
-              "responseFields": ["person.id", "person.firstName", "person.lastName", "person.email"],
-              "filter": { "==": [{ "var": "person.email" }, {{from.Address}}]},
-              "groupBy": ["person.id"],
+              "==": [{ "var": "person.email" }, {{from.Address}}]
             }
             """;
-        var results = await churchTools.ChurchQuery<IdNameEmail>(query, cancellationToken);
+        ChurchQueryRequest<IdNameEmail> query = new(JsonElement.Parse(filter));
+        var results = await churchTools.ChurchQuery(query, cancellationToken);
         if (results.Count > 0) return string.Join(", ", results.Select(p => $"{p.FirstName} {p.LastName}"));
 
         // If no name can be determined return address like: alice@example.org <noreply@example.org>

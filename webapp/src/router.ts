@@ -9,10 +9,15 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("./views/DistributionLists.vue"),
   },
   {
+    path: "/create",
+    name: "CreateDistributionList",
+    component: () => import("./views/CreateDistributionList.vue"),
+  },
+  {
     path: "/setup",
     name: "Setup",
     component: () => import("./views/ExtensionSetup.vue"),
-  }
+  },
 ]
 
 const router = createRouter({

@@ -1,4 +1,8 @@
 ﻿using ChurchTools;
+using ChurchTools.Model;
+using Korga.EmailRelay;
+using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -41,4 +45,48 @@ public class ChurchToolsApiTests
 
         await client.GetGlobalPermissions(TestContext.Current.CancellationToken);
     }
+
+    [Fact]
+    public async Task TestChurchQueryEmail()
+    {
+        using ChurchToolsApi client = await ChurchToolsApi.Login(churchToolsHost, churchToolsUsername, churchToolsPassword);
+
+        ChurchQueryRequest<IdNameEmail> query = new(JsonElement.Parse("{ \"==\": [{ \"var\": \"person.email\" }, \"support@example.com\"] }"));
+
+        var results = await client.ChurchQuery(query, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(results);
+        var arminAdendorf = results.Single();
+        Assert.Equal(1, arminAdendorf.Id);
+        Assert.Equal("Armin", arminAdendorf.FirstName);
+        Assert.Equal("Adendorf", arminAdendorf.LastName);
+        Assert.Equal("support@example.com", arminAdendorf.Email);
+    }
+
+    [Fact]
+    public async Task TestChurchQueryGroup()
+    {
+        using ChurchToolsApi client = await ChurchToolsApi.Login(churchToolsHost, churchToolsUsername, churchToolsPassword);
+
+        ChurchQueryRequest<IdNameEmail> query = new(JsonElement.Parse("""
+            {
+              "and": [
+                { "==": [{ "var": "person.isArchived" }, 0] },
+                { "isnull": [{ "var": "person.dateOfDeath" }] },
+                { "==": [{ "var": "groupmember.groupMemberStatus" }, "active"] },
+                { "oneof": [{ "var": "ctgroup.id" }, ["7"]] }
+              ]
+            }
+            """));
+
+        var results = await client.ChurchQuery(query, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(results);
+        Assert.True(results.Count >= 9);
+        var arminAdendorf = results.Single(p => p.Id == 1);
+        Assert.Equal("Armin", arminAdendorf.FirstName);
+        Assert.Equal("Adendorf", arminAdendorf.LastName);
+        Assert.Equal("support@example.com", arminAdendorf.Email);
+    }
+
 }

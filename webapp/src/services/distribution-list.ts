@@ -1,39 +1,79 @@
 import { useExtensionStore } from "@/stores/extension"
 
-export interface DistributionList {
-  id: number
+export type CreateDistributionList = {
   alias: string
   newsletter: boolean
-  permittedRecipients: PersonFilter[]
+  recipientsQuery: unknown | null
 }
 
-export interface PersonFilter {
+export type DistributionList = CreateDistributionList & {
   id: number
-  discriminator: string
-  statusName: string | null
-  groupName: string | null
-  groupRoleName: string | null
-  groupTypeName: string | null
-  personFullName: string | null
+}
+
+export async function fetchWithAuth(input: RequestInfo, init?: RequestInit): Promise<Response> {
+  const extension = useExtensionStore()
+
+  // clone init so we can safely modify headers
+  const initCopy: RequestInit = init ? { ...init } : {}
+  const headers: HeadersInit = initCopy.headers ? { ...(initCopy.headers as HeadersInit) } : {}
+  ;(headers as Record<string, string>)["Authorization"] = `Bearer ${extension.accessToken}`
+  initCopy.headers = headers
+
+  let response = await fetch(input, initCopy)
+  if (response.status === 401) {
+    // try to re-login once and retry
+    await extension.login()
+    ;(headers as Record<string, string>)["Authorization"] = `Bearer ${extension.accessToken}`
+    initCopy.headers = headers
+    response = await fetch(input, initCopy)
+    if (response.status === 401)
+      throw new Error("Unauthorized: Access token is invalid even after re-login")
+  }
+
+  return response
 }
 
 export async function getDistributionLists(): Promise<DistributionList[]> {
   const extension = useExtensionStore()
-  let response = await fetch(`${extension.backendUrl}/api/distribution-lists`, {
-    headers: {
-      Authorization: `Bearer ${extension.accessToken}`,
-    },
-  })
-  if (response.status === 401) {
-    // Access token invalid, try to re-login
-    await extension.login()
-    response = await fetch(`${extension.backendUrl}/api/distribution-lists`, {
-      headers: {
-        Authorization: `Bearer ${extension.accessToken}`,
-      },
-    })
-    if (response.status === 401)
-      throw new Error("Unauthorized: Access token is invalid even after re-login")
+  const url = `${extension.backendUrl}/api/distribution-lists`
+  const response = await fetchWithAuth(url)
+  if (!response.ok) {
+    const text = await response.text()
+    throw new Error(`Failed to fetch distribution lists: ${response.status} ${text}`)
   }
   return await response.json()
+}
+
+export async function createDistributionList(
+  request: CreateDistributionList
+): Promise<DistributionList> {
+  const extension = useExtensionStore()
+  const url = `${extension.backendUrl}/api/distribution-lists`
+  const response = await fetchWithAuth(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  })
+
+  if (response.status === 201) {
+    return await response.json()
+  }
+
+  const text = await response.text()
+  throw new Error(`Failed to create distribution list: ${response.status} ${text}`)
+}
+
+export async function deleteDistributionList(id: number): Promise<void> {
+  const extension = useExtensionStore()
+  const url = `${extension.backendUrl}/api/distribution-lists/${id}`
+  const response = await fetchWithAuth(url, { method: "DELETE" })
+
+  if (response.status === 204) {
+    return
+  }
+
+  const text = await response.text()
+  throw new Error(`Failed to delete distribution list: ${response.status} ${text}`)
 }

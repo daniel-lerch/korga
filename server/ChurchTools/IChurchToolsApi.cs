@@ -25,5 +25,5 @@ public interface IChurchToolsApi : IDisposable
     ValueTask<GlobalPermissions> GetGlobalPermissions(CancellationToken cancellationToken = default);
     ValueTask<CustomModule> GetCustomModule(string key, CancellationToken cancellationToken = default);
     ValueTask<List<CustomModuleDataCategory>> GetCustomDataCategories(int moduleId, CancellationToken cancellationToken = default);
-    ValueTask<List<T>> ChurchQuery<T>(string json, CancellationToken cancellationToken = default);
+    ValueTask<List<T>> ChurchQuery<T>(ChurchQueryRequest<T> request, CancellationToken cancellationToken = default) where T : IChurchQueryResult;
 }

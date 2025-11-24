@@ -16,14 +16,6 @@ public class Program
 {
     public static async Task<int> Main(string[] args)
     {
-#if DEBUG
-        if (Debugger.IsAttached && !NativeMethods.IsRunningInProcessIIS())
-        {
-            Console.Write("Korga server is running in debug mode. Please enter your command: ");
-            args = Console.ReadLine()?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? [];
-            Console.WriteLine();
-        }
-#endif
         if (args.Length == 0)
         {
             await CreateWebHostBuilder(args).Build()
