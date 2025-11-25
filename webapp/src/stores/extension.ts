@@ -16,9 +16,6 @@ export const useExtensionStore = defineStore("extension", {
   }),
   actions: {
     async load() {
-      const module = await getModule()
-      this.moduleId = module.id
-
       const username = import.meta.env.VITE_USERNAME
       const password = import.meta.env.VITE_PASSWORD
       if (import.meta.env.DEV && username && password) {
@@ -27,6 +24,9 @@ export const useExtensionStore = defineStore("extension", {
           password,
         })
       }
+
+      const module = await getModule()
+      this.moduleId = module.id
 
       const categories = await getCustomDataCategories<{ backendUrl?: string }>(module.id)
       const configCategory = categories.find((c) => c.shorty === "config")
