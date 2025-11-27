@@ -14,6 +14,17 @@ import { useExtensionStore } from '@/stores/extension';
 import { ref } from 'vue';
 
 const extension = useExtensionStore()
+if (extension.moduleId === 0) {
+  await extension.load()
+}
+
+if (extension.accessToken === "") {
+  try {
+    await extension.login()
+  } catch {
+    // TODO: Trigger validation error
+  }
+}
 
 const backendUrl = ref(extension.backendUrl);
 
@@ -24,5 +35,4 @@ async function save() {
     alert("Fehler bei der Verbindung: " + error)
   }
 }
-
 </script>

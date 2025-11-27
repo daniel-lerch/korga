@@ -36,8 +36,6 @@ export const useExtensionStore = defineStore("extension", {
       const stored = sessionStorage.getItem("korga.accessToken")
       if (stored) {
         this.accessToken = stored
-      } else if (this.backendUrl) {
-        await this.login()
       }
     },
     async login(backendUrl?: string) {

@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col min-h-screen">
     <header>
-      <Menubar :model="items" class="m-2">
+      <Menubar :model="items" breakpoint="480px" class="m-2">
         <template #start>
           <router-link to="/" class="flex items-center gap-2 no-underline">
             <img src="/brand.png" alt="Logo" width="24" height="24" class="inline-block" />
@@ -9,31 +9,27 @@
           </router-link>
         </template>
 
-        <template #item="{ item, props, hasSubmenu }">
-          <router-link v-if="item.route" v-slot="{ href, navigate }" :to="item.route" custom>
+        <template #item="{ item, props }">
+          <router-link v-slot="{ href, navigate }" :to="item.route" custom>
             <a v-bind="props.action" :href="href" @click="navigate">
-              <span v-if="item.icon" :class="item.icon" />
+              <span v-if="item.icon" :class="item.icon"></span>
               <span>{{ item.label }}</span>
             </a>
           </router-link>
-          <a v-else v-bind="props.action" :href="item.url" :target="item.target">
-            <span v-if="item.icon" :class="item.icon" />
-            <span>{{ item.label }}</span>
-            <span v-if="hasSubmenu" class="pi pi-fw pi-angle-down" />
-          </a>
         </template>
       </Menubar>
     </header>
     <main class="grow">
-      <div v-if="extension.moduleId === 0">Loading...</div>
-      <Suspense v-else>
-        <template #default>
-          <router-view v-bind="$attrs" />
-        </template>
-        <template #fallback>
-          <div>Loading...</div>
-        </template>
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense>
+          <template #default>
+            <router-view v-bind="$attrs" />
+          </template>
+          <template #fallback>
+            <div>Loading...</div>
+          </template>
+        </Suspense>
+      </ErrorBoundary>
     </main>
     <footer>
       <div class="max-w-7xl mx-auto px-4 py-3 text-gray-600">
@@ -46,15 +42,13 @@
 </template>
 
 <script setup lang="ts">
+import ErrorBoundary from "@/components/ErrorBoundary.vue"
 import Menubar from "primevue/menubar"
 import { churchtoolsClient } from "@churchtools/churchtools-client"
-import { useExtensionStore } from "./stores/extension"
 import { ref } from "vue"
 
 const churchtoolsUrl = window.settings?.base_url ?? import.meta.env.VITE_CHURCHTOOLS_URL
 churchtoolsClient.setBaseUrl(churchtoolsUrl)
-
-const extension = useExtensionStore()
 
 const items = ref([
   {

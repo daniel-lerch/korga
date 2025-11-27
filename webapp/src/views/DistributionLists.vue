@@ -46,6 +46,15 @@ import { ref } from "vue"
 import { getDistributionLists, deleteDistributionList } from "@/services/distribution-list"
 import type { DistributionList } from "@/services/distribution-list"
 import { getMailistFilters, type PersonFilter } from "@/services/churchquery"
+import { useExtensionStore } from "@/stores/extension"
+
+const extension = useExtensionStore()
+if (extension.moduleId === 0) {
+  await extension.load()
+}
+if (extension.accessToken === "") {
+  await extension.login()
+}
 
 const distributionLists = ref<DistributionList[]>([])
 const recipientsLabel = ref<Record<number, string>>({})
