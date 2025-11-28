@@ -38,11 +38,7 @@ export const useExtensionStore = defineStore("extension", {
         this.accessToken = stored
       }
     },
-    async login(backendUrl?: string) {
-      backendUrl = backendUrl ?? this.backendUrl
-      if (!backendUrl) {
-        throw new Error("Invalid operation: Cannot login when backendUrl is not set")
-      }
+    async authenticate(backendUrl: string): Promise<string> {
       const user = await churchtoolsClient.get<Person>("/whoami")
       const loginToken = await churchtoolsClient.get<string>(`/persons/${user.id}/logintoken`)
       const response = await fetch(`${backendUrl}/api/token`, {
@@ -60,7 +56,17 @@ export const useExtensionStore = defineStore("extension", {
           `Login failed. ${backendUrl} replied with error ${response.status} ${response.statusText}`
         )
       }
-
+      return (await response.json()).accessToken
+    },
+    async login(backendUrl?: string) {
+      backendUrl = backendUrl ?? this.backendUrl
+      if (!backendUrl) {
+        throw new Error("Invalid operation: Cannot login when backendUrl is not set")
+      }
+      this.accessToken = await this.authenticate(backendUrl)
+      sessionStorage.setItem("korga.accessToken", this.accessToken)
+    },
+    async setBackendUrl(backendUrl: string) {
       if (backendUrl !== this.backendUrl) {
         // Successful login, save backendUrl in ChurchTools value store
         const categories = await getCustomDataCategories(this.moduleId)
@@ -94,8 +100,6 @@ export const useExtensionStore = defineStore("extension", {
         }
         this.backendUrl = backendUrl
       }
-      this.accessToken = (await response.json()).accessToken
-      sessionStorage.setItem("korga.accessToken", this.accessToken)
     },
   },
 })
