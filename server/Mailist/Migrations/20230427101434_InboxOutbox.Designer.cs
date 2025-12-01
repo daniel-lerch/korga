@@ -22,7 +22,7 @@ namespace Mailist.Migrations
                 .HasAnnotation("ProductVersion", "7.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            modelBuilder.Entity("Korga.ChurchTools.Entities.Group", b =>
+            modelBuilder.Entity("Mailist.ChurchTools.Entities.Group", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("int");
@@ -41,7 +41,7 @@ namespace Mailist.Migrations
                     b.ToTable("Groups");
                 });
 
-            modelBuilder.Entity("Korga.ChurchTools.Entities.GroupMember", b =>
+            modelBuilder.Entity("Mailist.ChurchTools.Entities.GroupMember", b =>
                 {
                     b.Property<int>("PersonId")
                         .HasColumnType("int");
@@ -61,7 +61,7 @@ namespace Mailist.Migrations
                     b.ToTable("GroupMembers");
                 });
 
-            modelBuilder.Entity("Korga.ChurchTools.Entities.GroupRole", b =>
+            modelBuilder.Entity("Mailist.ChurchTools.Entities.GroupRole", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("int");
@@ -80,7 +80,7 @@ namespace Mailist.Migrations
                     b.ToTable("GroupRoles");
                 });
 
-            modelBuilder.Entity("Korga.ChurchTools.Entities.GroupType", b =>
+            modelBuilder.Entity("Mailist.ChurchTools.Entities.GroupType", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("int");
@@ -94,7 +94,7 @@ namespace Mailist.Migrations
                     b.ToTable("GroupTypes");
                 });
 
-            modelBuilder.Entity("Korga.ChurchTools.Entities.Person", b =>
+            modelBuilder.Entity("Mailist.ChurchTools.Entities.Person", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("int");
@@ -121,7 +121,7 @@ namespace Mailist.Migrations
                     b.ToTable("People");
                 });
 
-            modelBuilder.Entity("Korga.ChurchTools.Entities.Status", b =>
+            modelBuilder.Entity("Mailist.ChurchTools.Entities.Status", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("int");
@@ -135,7 +135,7 @@ namespace Mailist.Migrations
                     b.ToTable("Status");
                 });
 
-            modelBuilder.Entity("Korga.EmailDelivery.Entities.OutboxEmail", b =>
+            modelBuilder.Entity("Mailist.EmailDelivery.Entities.OutboxEmail", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -165,7 +165,7 @@ namespace Mailist.Migrations
                     b.ToTable("OutboxEmails");
                 });
 
-            modelBuilder.Entity("Korga.EmailRelay.Entities.DistributionList", b =>
+            modelBuilder.Entity("Mailist.EmailRelay.Entities.DistributionList", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -182,7 +182,7 @@ namespace Mailist.Migrations
                     b.ToTable("DistributionLists");
                 });
 
-            modelBuilder.Entity("Korga.EmailRelay.Entities.InboxEmail", b =>
+            modelBuilder.Entity("Mailist.EmailRelay.Entities.InboxEmail", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -236,7 +236,7 @@ namespace Mailist.Migrations
                     b.ToTable("InboxEmails");
                 });
 
-            modelBuilder.Entity("Korga.EmailRelay.Entities.PersonFilter", b =>
+            modelBuilder.Entity("Mailist.EmailRelay.Entities.PersonFilter", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -260,7 +260,7 @@ namespace Mailist.Migrations
                     b.UseTphMappingStrategy();
                 });
 
-            modelBuilder.Entity("Korga.EventRegistration.Entities.Event", b =>
+            modelBuilder.Entity("Mailist.EventRegistration.Entities.Event", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -275,7 +275,7 @@ namespace Mailist.Migrations
                     b.ToTable("Events");
                 });
 
-            modelBuilder.Entity("Korga.EventRegistration.Entities.EventParticipant", b =>
+            modelBuilder.Entity("Mailist.EventRegistration.Entities.EventParticipant", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -299,7 +299,7 @@ namespace Mailist.Migrations
                     b.ToTable("EventParticipants");
                 });
 
-            modelBuilder.Entity("Korga.EventRegistration.Entities.EventProgram", b =>
+            modelBuilder.Entity("Mailist.EventRegistration.Entities.EventProgram", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -322,7 +322,7 @@ namespace Mailist.Migrations
                     b.ToTable("EventPrograms");
                 });
 
-            modelBuilder.Entity("Korga.Ldap.Entities.PasswordReset", b =>
+            modelBuilder.Entity("Mailist.Ldap.Entities.PasswordReset", b =>
                 {
                     b.Property<Guid>("Token")
                         .ValueGeneratedOnAdd()
@@ -340,9 +340,9 @@ namespace Mailist.Migrations
                     b.ToTable("PasswordResets");
                 });
 
-            modelBuilder.Entity("Korga.EmailRelay.Entities.GroupFilter", b =>
+            modelBuilder.Entity("Mailist.EmailRelay.Entities.GroupFilter", b =>
                 {
-                    b.HasBaseType("Korga.EmailRelay.Entities.PersonFilter");
+                    b.HasBaseType("Mailist.EmailRelay.Entities.PersonFilter");
 
                     b.Property<int>("GroupId")
                         .HasColumnType("int");
@@ -357,9 +357,9 @@ namespace Mailist.Migrations
                     b.HasDiscriminator().HasValue("GroupFilter");
                 });
 
-            modelBuilder.Entity("Korga.EmailRelay.Entities.SinglePerson", b =>
+            modelBuilder.Entity("Mailist.EmailRelay.Entities.SinglePerson", b =>
                 {
-                    b.HasBaseType("Korga.EmailRelay.Entities.PersonFilter");
+                    b.HasBaseType("Mailist.EmailRelay.Entities.PersonFilter");
 
                     b.Property<int>("PersonId")
                         .HasColumnType("int");
@@ -369,9 +369,9 @@ namespace Mailist.Migrations
                     b.HasDiscriminator().HasValue("SinglePerson");
                 });
 
-            modelBuilder.Entity("Korga.EmailRelay.Entities.StatusFilter", b =>
+            modelBuilder.Entity("Mailist.EmailRelay.Entities.StatusFilter", b =>
                 {
-                    b.HasBaseType("Korga.EmailRelay.Entities.PersonFilter");
+                    b.HasBaseType("Mailist.EmailRelay.Entities.PersonFilter");
 
                     b.Property<int>("StatusId")
                         .HasColumnType("int");
@@ -381,9 +381,9 @@ namespace Mailist.Migrations
                     b.HasDiscriminator().HasValue("StatusFilter");
                 });
 
-            modelBuilder.Entity("Korga.ChurchTools.Entities.Group", b =>
+            modelBuilder.Entity("Mailist.ChurchTools.Entities.Group", b =>
                 {
-                    b.HasOne("Korga.ChurchTools.Entities.GroupType", "GroupType")
+                    b.HasOne("Mailist.ChurchTools.Entities.GroupType", "GroupType")
                         .WithMany()
                         .HasForeignKey("GroupTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -392,21 +392,21 @@ namespace Mailist.Migrations
                     b.Navigation("GroupType");
                 });
 
-            modelBuilder.Entity("Korga.ChurchTools.Entities.GroupMember", b =>
+            modelBuilder.Entity("Mailist.ChurchTools.Entities.GroupMember", b =>
                 {
-                    b.HasOne("Korga.ChurchTools.Entities.Group", "Group")
+                    b.HasOne("Mailist.ChurchTools.Entities.Group", "Group")
                         .WithMany()
                         .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Korga.ChurchTools.Entities.GroupRole", "GroupRole")
+                    b.HasOne("Mailist.ChurchTools.Entities.GroupRole", "GroupRole")
                         .WithMany()
                         .HasForeignKey("GroupRoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Korga.ChurchTools.Entities.Person", "Person")
+                    b.HasOne("Mailist.ChurchTools.Entities.Person", "Person")
                         .WithMany()
                         .HasForeignKey("PersonId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -419,9 +419,9 @@ namespace Mailist.Migrations
                     b.Navigation("Person");
                 });
 
-            modelBuilder.Entity("Korga.ChurchTools.Entities.GroupRole", b =>
+            modelBuilder.Entity("Mailist.ChurchTools.Entities.GroupRole", b =>
                 {
-                    b.HasOne("Korga.ChurchTools.Entities.GroupType", "GroupType")
+                    b.HasOne("Mailist.ChurchTools.Entities.GroupType", "GroupType")
                         .WithMany()
                         .HasForeignKey("GroupTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -430,9 +430,9 @@ namespace Mailist.Migrations
                     b.Navigation("GroupType");
                 });
 
-            modelBuilder.Entity("Korga.ChurchTools.Entities.Person", b =>
+            modelBuilder.Entity("Mailist.ChurchTools.Entities.Person", b =>
                 {
-                    b.HasOne("Korga.ChurchTools.Entities.Status", "Status")
+                    b.HasOne("Mailist.ChurchTools.Entities.Status", "Status")
                         .WithMany()
                         .HasForeignKey("StatusId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -441,27 +441,27 @@ namespace Mailist.Migrations
                     b.Navigation("Status");
                 });
 
-            modelBuilder.Entity("Korga.EmailDelivery.Entities.OutboxEmail", b =>
+            modelBuilder.Entity("Mailist.EmailDelivery.Entities.OutboxEmail", b =>
                 {
-                    b.HasOne("Korga.EmailRelay.Entities.InboxEmail", "InboxEmail")
+                    b.HasOne("Mailist.EmailRelay.Entities.InboxEmail", "InboxEmail")
                         .WithMany("Recipients")
                         .HasForeignKey("InboxEmailId");
 
                     b.Navigation("InboxEmail");
                 });
 
-            modelBuilder.Entity("Korga.EmailRelay.Entities.InboxEmail", b =>
+            modelBuilder.Entity("Mailist.EmailRelay.Entities.InboxEmail", b =>
                 {
-                    b.HasOne("Korga.EmailRelay.Entities.DistributionList", "DistributionList")
+                    b.HasOne("Mailist.EmailRelay.Entities.DistributionList", "DistributionList")
                         .WithMany()
                         .HasForeignKey("DistributionListId");
 
                     b.Navigation("DistributionList");
                 });
 
-            modelBuilder.Entity("Korga.EmailRelay.Entities.PersonFilter", b =>
+            modelBuilder.Entity("Mailist.EmailRelay.Entities.PersonFilter", b =>
                 {
-                    b.HasOne("Korga.EmailRelay.Entities.DistributionList", "DistributionList")
+                    b.HasOne("Mailist.EmailRelay.Entities.DistributionList", "DistributionList")
                         .WithMany("Filters")
                         .HasForeignKey("DistributionListId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -470,9 +470,9 @@ namespace Mailist.Migrations
                     b.Navigation("DistributionList");
                 });
 
-            modelBuilder.Entity("Korga.EventRegistration.Entities.EventParticipant", b =>
+            modelBuilder.Entity("Mailist.EventRegistration.Entities.EventParticipant", b =>
                 {
-                    b.HasOne("Korga.EventRegistration.Entities.EventProgram", "Program")
+                    b.HasOne("Mailist.EventRegistration.Entities.EventProgram", "Program")
                         .WithMany("Participants")
                         .HasForeignKey("ProgramId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -481,9 +481,9 @@ namespace Mailist.Migrations
                     b.Navigation("Program");
                 });
 
-            modelBuilder.Entity("Korga.EventRegistration.Entities.EventProgram", b =>
+            modelBuilder.Entity("Mailist.EventRegistration.Entities.EventProgram", b =>
                 {
-                    b.HasOne("Korga.EventRegistration.Entities.Event", "Event")
+                    b.HasOne("Mailist.EventRegistration.Entities.Event", "Event")
                         .WithMany()
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -492,15 +492,15 @@ namespace Mailist.Migrations
                     b.Navigation("Event");
                 });
 
-            modelBuilder.Entity("Korga.EmailRelay.Entities.GroupFilter", b =>
+            modelBuilder.Entity("Mailist.EmailRelay.Entities.GroupFilter", b =>
                 {
-                    b.HasOne("Korga.ChurchTools.Entities.Group", "Group")
+                    b.HasOne("Mailist.ChurchTools.Entities.Group", "Group")
                         .WithMany()
                         .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Korga.ChurchTools.Entities.GroupRole", "GroupRole")
+                    b.HasOne("Mailist.ChurchTools.Entities.GroupRole", "GroupRole")
                         .WithMany()
                         .HasForeignKey("GroupRoleId");
 
@@ -509,9 +509,9 @@ namespace Mailist.Migrations
                     b.Navigation("GroupRole");
                 });
 
-            modelBuilder.Entity("Korga.EmailRelay.Entities.SinglePerson", b =>
+            modelBuilder.Entity("Mailist.EmailRelay.Entities.SinglePerson", b =>
                 {
-                    b.HasOne("Korga.ChurchTools.Entities.Person", "Person")
+                    b.HasOne("Mailist.ChurchTools.Entities.Person", "Person")
                         .WithMany()
                         .HasForeignKey("PersonId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -520,9 +520,9 @@ namespace Mailist.Migrations
                     b.Navigation("Person");
                 });
 
-            modelBuilder.Entity("Korga.EmailRelay.Entities.StatusFilter", b =>
+            modelBuilder.Entity("Mailist.EmailRelay.Entities.StatusFilter", b =>
                 {
-                    b.HasOne("Korga.ChurchTools.Entities.Status", "Status")
+                    b.HasOne("Mailist.ChurchTools.Entities.Status", "Status")
                         .WithMany()
                         .HasForeignKey("StatusId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -531,17 +531,17 @@ namespace Mailist.Migrations
                     b.Navigation("Status");
                 });
 
-            modelBuilder.Entity("Korga.EmailRelay.Entities.DistributionList", b =>
+            modelBuilder.Entity("Mailist.EmailRelay.Entities.DistributionList", b =>
                 {
                     b.Navigation("Filters");
                 });
 
-            modelBuilder.Entity("Korga.EmailRelay.Entities.InboxEmail", b =>
+            modelBuilder.Entity("Mailist.EmailRelay.Entities.InboxEmail", b =>
                 {
                     b.Navigation("Recipients");
                 });
 
-            modelBuilder.Entity("Korga.EventRegistration.Entities.EventProgram", b =>
+            modelBuilder.Entity("Mailist.EventRegistration.Entities.EventProgram", b =>
                 {
                     b.Navigation("Participants");
                 });

@@ -30,12 +30,12 @@ public class ProfileController : ControllerBase
     public async Task<ActionResult<TokenResponse>> GetAccessToken([FromBody] TokenRequest request)
     {
         var systemPermissions = await churchTools.GetGlobalPermissions();
-        if (systemPermissions.Korga == null)
-            return StatusCode(500, "Korga's system user does not have permissions for Korga or the Korga plugin is not installed in ChurchTools");
-        if (!systemPermissions.Korga.View || systemPermissions.Korga.ViewCustomCategory.Count == 0)
-            return StatusCode(500, "Korga's system user does not have permissions for Korga");
+        if (systemPermissions.Mailist == null)
+            return StatusCode(500, "Mailist's system user does not have permissions for Mailist or the Mailist plugin is not installed in ChurchTools");
+        if (!systemPermissions.Mailist.View || systemPermissions.Mailist.ViewCustomCategory.Count == 0)
+            return StatusCode(500, "Mailist's system user does not have permissions for Mailist");
 
-        var module = await churchTools.GetCustomModule("korga");
+        var module = await churchTools.GetCustomModule("mailist");
         var categories = await churchTools.GetCustomDataCategories(module.Id);
         var configCategory = categories.FirstOrDefault(c => c.Shorty == "config");
         if (configCategory == null)
@@ -45,13 +45,13 @@ public class ProfileController : ControllerBase
         var user = await churchToolsFromRequest.GetPerson();
         var permissions = await churchToolsFromRequest.GetGlobalPermissions();
 
-        if (permissions.Korga == null)
-            return BadRequest("User does not have permissions for Korga or the Korga plugin is not installed in ChurchTools");
+        if (permissions.Mailist == null)
+            return BadRequest("User does not have permissions for Mailist or the Mailist plugin is not installed in ChurchTools");
 
-        if (!permissions.Korga.ViewCustomData.Contains(configCategory.Id))
-            return BadRequest($"User is not permitted to view custom data category {configCategory.Id} of Korga");
+        if (!permissions.Mailist.ViewCustomData.Contains(configCategory.Id))
+            return BadRequest($"User is not permitted to view custom data category {configCategory.Id} of Mailist");
 
-        bool isAdmin = permissions.Korga.EditCustomData.Contains(configCategory.Id);
+        bool isAdmin = permissions.Mailist.EditCustomData.Contains(configCategory.Id);
 
         var key = new SymmetricSecurityKey(Convert.FromHexString(jwtOptions.Value.SigningKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

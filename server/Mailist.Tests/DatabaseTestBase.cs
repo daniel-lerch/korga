@@ -19,7 +19,7 @@ public abstract class DatabaseTestBase : IDisposable
 
     public DatabaseTestBase(ITestOutputHelper? testOutput = null)
     {
-        databaseName = "Korga_" + GetType().Name.Replace("Tests", string.Empty);
+        databaseName = "Mailist_" + GetType().Name.Replace("Tests", string.Empty);
         shortConnectionString = "Server=localhost;Port=3306;User=root;Password=root;";
         connectionString = $"Server=localhost;Port=3306;Database={databaseName};User=root;Password=root;";
 

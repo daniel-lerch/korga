@@ -25,7 +25,7 @@ public static class IApplicationBuilderExtensions
         return app;
     }
 
-    public static IApplicationBuilder UseKorgaCors(this IApplicationBuilder app)
+    public static IApplicationBuilder UseMailistCors(this IApplicationBuilder app)
     {
         var options = app.ApplicationServices.GetRequiredService<IOptions<HostingOptions>>();
 

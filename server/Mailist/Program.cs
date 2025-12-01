@@ -20,7 +20,7 @@ public class Program
 #if DEBUG
         if (Debugger.IsAttached && !NativeMethods.IsRunningInProcessIIS())
         {
-            Console.Write("Korga server is running in debug mode. Please enter your command: ");
+            Console.Write("Mailist server is running in debug mode. Please enter your command: ");
             args = Console.ReadLine()?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? [];
             Console.WriteLine();
         }
@@ -45,7 +45,7 @@ public class Program
         IServiceScope? scope = null;
         try
         {
-            return await CreateCliHostBuilder().RunCommandLineApplicationAsync<KorgaCommand>(args, app =>
+            return await CreateCliHostBuilder().RunCommandLineApplicationAsync<MailistCommand>(args, app =>
             {
                 // This method disposes the host after shutdown. Therefore, it might be dangerous to dispose the scope after that.
                 var scope = app.CreateScope();
@@ -80,9 +80,9 @@ public class Program
             })
             .ConfigureServices((context, services) =>
             {
-                services.AddKorgaOptions(context.Configuration);
+                services.AddMailistOptions(context.Configuration);
 				services.AddSingleton(PhysicalConsole.Singleton);
-                services.AddKorgaMySqlDatabase();
+                services.AddMailistMySqlDatabase();
                 services.AddTransient<PersonFilterService>();
             });
 }

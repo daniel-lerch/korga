@@ -41,7 +41,7 @@ public class EmailDeliveryService
         await database.SaveChangesAsync(cancellationToken);
 
         // Explicitly free entity for garbage collection because our DbContext won't be disposed soon enough
-        // Without this line, Korga takes gigabytes of memory when sending large messages to many recipients
+        // Without this line, Mailist takes gigabytes of memory when sending large messages to many recipients
         database.Entry(outboxEmail).State = EntityState.Detached;
 
         jobQueue.EnsureRunning();

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2>Korga Backend</h2>
+    <h2>Mailist Backend</h2>
     <form @submit.prevent="save">
       <input type="text" v-model="backendUrl" placeholder="Backend URL" />
       <button type="submit">Speichern</button>

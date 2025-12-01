@@ -59,7 +59,7 @@ public class DatabaseCommand
 
     private static async Task DeleteDatabase(CommandLineApplication app, DatabaseContext database)
     {
-        if (Prompt.GetYesNo("Do you really want to delete the Korga database?", false))
+        if (Prompt.GetYesNo("Do you really want to delete the Mailist database?", false))
         {
             bool deleted = await database.Database.EnsureDeletedAsync();
             if (!deleted) app.Error.WriteLine("Notice: No database found to delete.");

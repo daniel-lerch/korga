@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Korga\Korga.csproj" />
+    <ProjectReference Include="..\Mailist\Mailist.csproj" />
   </ItemGroup>
 
 </Project>

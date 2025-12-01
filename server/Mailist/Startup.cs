@@ -30,11 +30,11 @@ public class Startup
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddKorgaOptions(Configuration);
+        services.AddMailistOptions(Configuration);
 
         services.AddChurchToolsApi();
 
-        services.AddKorgaMySqlDatabase();
+        services.AddMailistMySqlDatabase();
 
         services.AddTransient<PersonFilterService>();
 
@@ -90,7 +90,7 @@ public class Startup
 
         app.UseRouting();
 
-        app.UseKorgaCors();
+        app.UseMailistCors();
 
         app.UseAuthentication();
         app.UseAuthorization();

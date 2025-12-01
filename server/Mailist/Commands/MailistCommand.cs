@@ -4,9 +4,9 @@
 
 namespace Mailist.Commands;
 
-[Command("korga", Description = "Korga server management console")]
+[Command("mailist", Description = "Mailist server management console")]
 [Subcommand(typeof(DatabaseCommand), typeof(DistributionListCommand))]
-public class KorgaCommand
+public class MailistCommand
 {
     private int OnExecute(CommandLineApplication app)
     {

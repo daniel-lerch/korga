@@ -7,7 +7,7 @@ using Mailist.EmailDelivery.Entities;
 namespace Mailist;
 
 /// <summary>
-/// Central entrypoint for Korga's entire database.
+/// Central entrypoint for Mailist's entire database.
 /// </summary>
 /// <remarks>
 /// Using multiple DbContexts on a single database would come with major drawbacks:<br />

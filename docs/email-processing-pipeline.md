@@ -1,4 +1,4 @@
-# Korga email processing pipeline architecture
+# Mailist email processing pipeline architecture
 
 ## Design goals
 
@@ -24,6 +24,7 @@ This means that each step can be executed repeatedly without affecting the resul
 #### Responsibility: Retrieve emails via IMAP and write to database
 
 `ImapReceiverService.FetchAsync()`
+
 - Mark emails as _seen_ if already in database
 
 ### 2. Validation section
@@ -31,7 +32,9 @@ This means that each step can be executed repeatedly without affecting the resul
 Applies to: `InboxEmails.Where(email => email.ProcessingCompletedTime == default)`
 
 #### Responsibility: context-free verification (Receiver, max. size)
+
 #### Responsibility: context-based verification (Alias, sender permission)
+
 #### Responsibility: Fetch recipients
 
 `DistributionListService.GetRecipients(DistributionList distributionList)`
@@ -39,9 +42,11 @@ Applies to: `InboxEmails.Where(email => email.ProcessingCompletedTime == default
 #### Responsibility: Prepare email for delivery (Resent headers)
 
 `MimeMessageCreationService.PrepareForResentTo(long emailId, string mailAddress)`
+
 - Adds `Resent` headers and returns a `MimeMessage`
 
 `EmailDeliveryService.Enqueue(MimeMessage message, long? emailId)`
+
 - Add to email queue
 - (optional) link to received email
 
@@ -52,6 +57,7 @@ Applies to: `OutboxEmails.Where(email => email.DeliveryTime == default)`
 #### Responsibility: Deliver emails (not idempotent on abort)
 
 `EmailDeliveryJobController.ExecuteJob`
+
 - Fetch mailqueue and send
 - Might use a decreasing priority with every error in the future
 - Could be replaced by other services for MailChimp, MailJet, MailGun, etc.

@@ -21,17 +21,17 @@ public static class TestHost
             .Build();
 
         var services = new ServiceCollection();
-        services.AddKorgaOptions(configuration);
+        services.AddMailistOptions(configuration);
         services.AddSingleton<ILoggerFactory>(new NullLoggerFactory());
-        services.AddKorgaMySqlDatabase();
+        services.AddMailistMySqlDatabase();
         return services;
     }
 
     public static TestServer CreateTestServer(IEnumerable<KeyValuePair<string, string?>>? configuration = null)
     {
         return new TestServer(new WebHostBuilder()
-            // Working directory: Korga.Tests/bin/Debug/net8.0
-            .UseWebRoot("../../../../Korga/wwwroot")
+            // Working directory: Mailist.Tests/bin/Debug/net8.0
+            .UseWebRoot("../../../../Mailist/wwwroot")
             .ConfigureAppConfiguration(builder =>
             {
                 builder.AddJsonFile("appsettings.json", optional: false);
@@ -54,9 +54,9 @@ public static class TestHost
             })
             .ConfigureServices((context, services) =>
             {
-                services.AddKorgaOptions(context.Configuration);
+                services.AddMailistOptions(context.Configuration);
                 services.AddSingleton<IConsole>(NullConsole.Singleton);
-                services.AddKorgaMySqlDatabase();
+                services.AddMailistMySqlDatabase();
             });
     }
 }

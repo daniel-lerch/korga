@@ -16,7 +16,7 @@ namespace Mailist.Extensions;
 
 public static class IServiceCollectionExtensions
 {
-    public static IServiceCollection AddKorgaOptions(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddMailistOptions(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<DatabaseOptions>()
             .Bind(configuration.GetSection("Database"))
@@ -55,7 +55,7 @@ public static class IServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddKorgaMySqlDatabase(this IServiceCollection services)
+    public static IServiceCollection AddMailistMySqlDatabase(this IServiceCollection services)
     {
         services.AddDbContextPool<DatabaseContext>((services, optionsBuilder) =>
         {

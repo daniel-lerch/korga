@@ -69,7 +69,7 @@ export const useExtensionStore = defineStore("extension", {
               customModuleId: this.moduleId,
               name: "Configuration",
               shorty: "config",
-              description: "Configuration for the Korga extension",
+              description: "Configuration for the Mailist extension",
               data: JSON.stringify({ backendUrl }),
             },
             this.moduleId

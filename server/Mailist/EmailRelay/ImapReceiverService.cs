@@ -48,7 +48,7 @@ public class ImapReceiverService
 
             if (savedEmail == null)
             {
-                // Leave this message as is if it has been read by a user other than Korga
+                // Leave this message as is if it has been read by a user other than Mailist
                 if (message.Flags!.Value.HasFlag(MessageFlags.Seen)) continue;
 
                 await QueueEmailForProcessing(imap, message, stoppingToken);
