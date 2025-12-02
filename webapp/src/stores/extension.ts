@@ -33,7 +33,7 @@ export const useExtensionStore = defineStore("extension", {
       this.backendUrl = configCategory?.backendUrl ?? ""
       // Try to restore access token from session storage so users don't have to
       // re-login on page reload during the same browser session.
-      const stored = sessionStorage.getItem("korga.accessToken")
+      const stored = sessionStorage.getItem("mailist.accessToken")
       if (stored) {
         this.accessToken = stored
       }
@@ -64,7 +64,7 @@ export const useExtensionStore = defineStore("extension", {
         throw new Error("Invalid operation: Cannot login when backendUrl is not set")
       }
       this.accessToken = await this.authenticate(backendUrl)
-      sessionStorage.setItem("korga.accessToken", this.accessToken)
+      sessionStorage.setItem("mailist.accessToken", this.accessToken)
     },
     async setBackendUrl(backendUrl: string) {
       if (backendUrl !== this.backendUrl) {
@@ -77,7 +77,7 @@ export const useExtensionStore = defineStore("extension", {
               customModuleId: this.moduleId,
               name: "Configuration",
               shorty: "config",
-              description: "Configuration for the Korga extension",
+              description: "Configuration for the Mailist extension",
               data: JSON.stringify({ backendUrl }),
             },
             this.moduleId

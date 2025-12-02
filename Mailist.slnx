@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/docs/">
+    <File Path="docs/compose.yaml" />
+    <File Path="docs/configuration.md" />
+    <File Path="docs/email-processing-pipeline.md" />
+    <File Path="docs/frontend.md" />
+  </Folder>
+  <Folder Name="/server/">
+    <Project Path="server/ChurchTools/ChurchTools.csproj" />
+    <Project Path="server/Mailist.Tests/Mailist.Tests.csproj" />
+    <Project Path="server/Mailist/Mailist.csproj" />
+  </Folder>
+  <Folder Name="/_/">
+    <File Path="Dockerfile" />
+    <File Path="README.md" />
+  </Folder>
+</Solution>

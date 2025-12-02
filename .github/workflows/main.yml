@@ -3,75 +3,75 @@ name: Build and tests
 on:
   push:
     branches:
-    - "**"
+      - "**"
     tags-ignore:
-    - "*"
+      - "*"
 
 jobs:
   server:
     name: Backend build and integration tests
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup .NET SDK
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-    - name: Restore NuGet packages
-      run: dotnet restore
-    - name: Build
-      run: dotnet build -c Release --no-restore
-    - name: Repare test environment
-      run: |
-        set -x
+      - uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore NuGet packages
+        run: dotnet restore
+      - name: Build
+        run: dotnet build -c Release --no-restore
+      - name: Repare test environment
+        run: |
+          set -x
 
-        # Launch and prepare MySQL server  
-        sudo systemctl start mysql.service
-        dotnet run -c Release --no-build --project server/Korga -- database create
-    - name: Test
-      run: dotnet test -c Release --no-build --verbosity normal
+          # Launch and prepare MySQL server  
+          sudo systemctl start mysql.service
+          dotnet run -c Release --no-build --project server/Mailist -- database create
+      - name: Test
+        run: dotnet test -c Release --no-build --verbosity normal
 
   webapp:
     name: Frontend build
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup NodeJS
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-    - name: Restore NPM packages
-      run: npm install
-      working-directory: webapp
-    - name: Build
-      run: npm run build
-      working-directory: webapp
+      - uses: actions/checkout@v4
+      - name: Setup NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Restore NPM packages
+        run: npm install
+        working-directory: webapp
+      - name: Build
+        run: npm run build
+        working-directory: webapp
 
   docker:
     name: Docker build
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v4
-    - name: Docker meta
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: |
-          ghcr.io/daniel-lerch/korga
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-    - name: Login to GitHub Container Registry
-      if: ${{ github.event_name != 'pull_request' }}
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Build and push
-      uses: docker/build-push-action@v6
-      with:
-        context: .
-        push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
+      - uses: actions/checkout@v4
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/daniel-lerch/mailist
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+      - name: Login to GitHub Container Registry
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

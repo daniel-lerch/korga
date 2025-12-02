@@ -38,8 +38,8 @@ public class GlobalPermissions
     [JsonPropertyName("finance")]
     public FinancePermissions? Finance { get; set; }
 
-    [JsonPropertyName("korga")]
-    public ExtensionPermissions? Korga { get; set; }
+    [JsonPropertyName("mailist")]
+    public ExtensionPermissions? Mailist { get; set; }
 
     [JsonPropertyName("post")]
     public PostPermissions? Post { get; set; }

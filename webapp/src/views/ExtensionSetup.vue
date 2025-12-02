@@ -1,6 +1,6 @@
 <template>
   <div class="m-2">
-    <h2>Korga Backend</h2>
+    <h2>Mailist Backend</h2>
     <Form v-slot="$form" :initialValues="{ backendUrl: extension.backendUrl }" :resolver="validate"
       :validateOnValueUpdate="false" :validateOnMount="true" @submit="save">
       <div class="flex flex-col gap-1 mb-4">
