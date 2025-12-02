@@ -30,7 +30,7 @@ public class DistributionListCommand
         {
             if (!string.IsNullOrWhiteSpace(Alias))
             {
-                database.DistributionLists.Add(new(Alias) { RecipientsQuery = RecipientsQuery });
+                database.DistributionLists.Add(new(Alias, RecipientsQuery ?? "null"));
                 await database.SaveChangesAsync();
 
                 return 0;
