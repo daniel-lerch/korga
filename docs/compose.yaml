@@ -1,16 +1,16 @@
 services:
   app:
-    image: daniellerch/korga:latest
+    image: daniellerch/mailist:latest
     restart: unless-stopped
     mem_limit: 512m
     environment:
       # Change this according to your database settings
-      - Database__ConnectionString=Server=db;Port=3306;Database=korga;User=korga;Password=korga;
+      - Database__ConnectionString=Server=db;Port=3306;Database=mailist;User=mailist;Password=mailist;
       
-      # Uncomment below if you want to use Korga in a subfolder like example.com/korga
-      #- Hosting__PathBase=/korga
+      # Uncomment below if you want to use Mailist in a subfolder like example.com/mailist
+      #- Hosting__PathBase=/mailist
 
-      # Uncomment below if you want to use Korga behind a reverse proxy like NGINX
+      # Uncomment below if you want to use Mailist behind a reverse proxy like NGINX
       #- Hosting__AllowProxies=true
 
       # Uncomment below to login via OAuth 2.0, e.g. with ChurchTools
@@ -48,9 +48,9 @@ services:
     mem_limit: 512m
     environment:
       - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=korga
-      - MYSQL_USER=korga
-      - MYSQL_PASSWORD=korga
+      - MYSQL_DATABASE=mailist
+      - MYSQL_USER=mailist
+      - MYSQL_PASSWORD=mailist
     volumes:
       - ./data/mysql:/var/lib/mysql
 

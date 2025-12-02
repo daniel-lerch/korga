@@ -1,43 +1,46 @@
-# Korga
+# Mailist
 
-[![Build and tests](https://github.com/daniel-lerch/korga/actions/workflows/main.yml/badge.svg)](https://github.com/daniel-lerch/korga/actions/workflows/main.yml)
-[![](https://img.shields.io/docker/pulls/daniellerch/korga.svg)](https://hub.docker.com/r/daniellerch/korga)
-[![](https://img.shields.io/docker/image-size/daniellerch/korga/latest.svg)](https://hub.docker.com/r/daniellerch/korga)
+[![Build and tests](https://github.com/daniel-lerch/mailist/actions/workflows/main.yml/badge.svg)](https://github.com/daniel-lerch/mailist/actions/workflows/main.yml)
+[![](https://img.shields.io/docker/pulls/daniellerch/mailist.svg)](https://hub.docker.com/r/daniellerch/mailist)
+[![](https://img.shields.io/docker/image-size/daniellerch/mailist/latest.svg)](https://hub.docker.com/r/daniellerch/mailist)
 
-Korga stands for the german term _**K**irchen **Orga**nisation_ (church organization).
-It synchronizes people and groups with [ChurchTools](https://church.tools) and provides specialized features like email distribution lists.
+Mailist is a ChurchTools extension that enables you to create email distribution lists without operating an own mailserver and synchronize recipients with ChurchTools.
 
-## What can Korga already do?
+Mailist was previously named _Korga_ for the german term _**K**irchen **Orga**nisation_ (church organization).
+It started as a standalone CMS and soon became an extension platform for ChurchTools when ChurchTools' extensions were not available.
+
+## What can Mailist already do?
 
 ### Email distribution lists
 
-Korga makes it possible to send emails to ChurchTools groups via email.
-For example, anyone can send an email to _youth@example.org_ and Korga will forward it to all members of your ChurchTools group _Youth_ with role _Leader_. 
+Mailist makes it possible to send emails to ChurchTools groups via email.
+For example, anyone can send an email to _youth@example.org_ and Mailist will forward it to all members of your ChurchTools group _Youth_ with role _Leader_.
 
 There is no Web UI available yet to manage distribution lists so you must stick to the CLI inside the Docker container:
 
 ```
-./Korga dist create youth
-./Korga dist add-recipient youth -g 137
+./Mailist dist create youth
+./Mailist dist add-recipient youth -g 137
 ```
 
 This command creates a distribution list _youth@example.org_ which forwards emails to every member of group #137.
 
 ## Installation
 
-The only officially supported distribution are Docker containers. An official image is available at [daniellerch/korga](https://hub.docker.com/r/daniellerch/korga).
+The only officially supported distribution are Docker containers. An official image is available at [daniellerch/mailist](https://hub.docker.com/r/daniellerch/mailist).
 If you are using Docker Compose, take a look our [example compose file](docs/compose.yaml) in the `docs` folder.
 
-Korga has multiple modules that must be enabled via configuration to use them:
+Mailist has multiple modules that must be enabled via configuration to use them:
+
 - ChurchTools sync
 - Email delivery
 - Email relay
 
-See [Korga server configuration](docs/configuration.md) for a full list of configuration options.
+See [Mailist server configuration](docs/configuration.md) for a full list of configuration options.
 
 ### OAuth authentication
 
-Korga uses single sign-on via OAuth 2.0. It is the only authentication mechanism Korga supports and required to start the application.
+Mailist uses single sign-on via OAuth 2.0. It is the only authentication mechanism Mailist supports and required to start the application.
 
 These instructions assume you use ChurchTools as OAuth provider (supported since December 2024).
 Other OAuth 2.0 and OpenID Connect identity providers should also work.
@@ -46,13 +49,13 @@ Other OAuth 2.0 and OpenID Connect identity providers should also work.
 
 2. Go to _Integrations_ > _Login to third-party system_ and click on _Add OAuth-Client_
 
-3. Choose a name (will be displayed to users when they log in) and enter the URL of your Korga instance as _Redirect-URI_ e.g. `https://korga.example.org/api/signin-oauth`
+3. Choose a name (will be displayed to users when they log in) and enter the URL of your Mailist instance as _Redirect-URI_ e.g. `https://mailist.example.org/api/signin-oauth`
 
-After creating an OAuth client for Korga in ChurchTools, you can configure it via [environment variables](docs/configuration.md#oauth) in `compose.yaml`.
+After creating an OAuth client for Mailist in ChurchTools, you can configure it via [environment variables](docs/configuration.md#oauth) in `compose.yaml`.
 
 ### ChurchTools sync
 
-First you must create a service account which Korga can use for API access to ChurchTools:
+First you must create a service account which Mailist can use for API access to ChurchTools:
 
 1. Create a person with email address in your ChurchTools instance  
    You might want to define a special status for API users
@@ -64,9 +67,9 @@ First you must create a service account which Korga can use for API access to Ch
 Steps 4. and 5. can also be performed in the ChurchTools web interface: [Official Documentation](https://hilfe.church.tools/wiki/0/API%20Authentifizierung#logintoken)
 
 > [!WARNING]
-> For security reasons it is not recommended to let Korga use your ChurchTools admin account.
+> For security reasons it is not recommended to let Mailist use your ChurchTools admin account.
 
-Grant the following permissions to Korga's user:
+Grant the following permissions to Mailist's user:
 
 - Administration > Berechtigungen anpassen `churchcore:administer persons`
 - Personen & Gruppen > "Personen & Gruppen" sehen `churchdb:view`
@@ -78,7 +81,7 @@ Grant the following permissions to Korga's user:
 - Events > Dienste einzelner Dienstgruppen einsehen (Alle) `churchservice:view servicegroup(-1)`
 - Events > Events von einzelnen Kalendern sehen (Alle) `churchservice:view events(-1)`
 
-After creating and configuring a ChurchTools user for Korga you can finally configure it via [environment variables](docs/configuration.md#churchtools) in `compose.yaml`.
+After creating and configuring a ChurchTools user for Mailist you can finally configure it via [environment variables](docs/configuration.md#churchtools) in `compose.yaml`.
 
 Do not forget to recreate your container to take these changes into effect.
 
@@ -91,7 +94,7 @@ Email delivery can be configured via [environment variables](docs/configuration.
 
 ### Email relay
 
-Korga's email relay requires a catchall IMAP inbox.
+Mailist's email relay requires a catchall IMAP inbox.
 Such an inbox receives all emails sent to a domain where no matching inbox was found, i.e. `*@example.org`.
 It can be configured via [environment variables](docs/configuration.md#email-relay) in `compose.yaml`.
 
@@ -99,26 +102,30 @@ It can be configured via [environment variables](docs/configuration.md#email-rel
 
 Contributions are highly welcome. Please open an issue before implementing a feature to discuss your plans.
 
-Korga's source code is split into the backend (located in `server`) and the frontend (located in `webapp`).
+Mailist's source code is split into the backend (located in `server`) and the frontend (located in `webapp`).
 The following instructions are written for Windows but generally also apply to Linux development setups.
 
 ### Backend
-- Visual Studio 2022
-- .NET SDK 8.0
+
+- Visual Studio 2026
+- .NET SDK 10.0
 - EF Core CLI Tools _(e.g. `dotnet tool install -g dotnet-ef`)_
 - MySQL or MariaDB _(e.g. from [PSModules](https://github.com/daniel-lerch/psmodules))_
 
 ### Frontend
+
 - Visual Studio Code
 - Vue Language Features (Volar) Extension
-- NodeJS 22 LTS
+- NodeJS 24 LTS
 
 During development the frontend running on the Vue CLI development server will use _http://localhost:10501_ as API endpoint.
 That means the backend can be running in Visual Studio with Debugger attached.
 
 If you just want to work on the frontend you can also use a public test server by creating a file `webapp/.env.development.local`
+
 ```env
 VITE_API_ORIGIN=https://lerchen.net
 VITE_API_BASE_PATH=/korga/
 ```
+
 Then you don't have to setup a database server and the ASP.NET Core backend.
