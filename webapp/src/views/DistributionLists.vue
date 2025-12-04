@@ -2,12 +2,12 @@
   <div class="p-4">
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-bold">E-Mail-Verteiler</h1>
-      <router-link to="/create" class="inline-block">
+      <RouterLink to="/new" class="inline-block">
         <button type="button"
           class="ml-3 inline-flex items-center px-3 py-2 bg-primary text-white rounded hover:bg-blue-700">
           Neuer Verteiler
         </button>
-      </router-link>
+      </RouterLink>
     </div>
     <DataTable :value="distributionLists">
       <Column field="alias" header="Alias" />
@@ -15,6 +15,15 @@
       <Column field="recipientsQuery" header="Empfänger">
         <template #body="slotProps">
           <PersonFilterCell :filter="slotProps.data.recipientsQuery" />
+        </template>
+      </Column>
+      <Column>
+        <template #body="{ data }">
+          <Button asChild v-slot="slotProps" type="button" severity="secondary" variant="text">
+            <RouterLink :to="`/${data.id}`" :class="slotProps.class" class="p-button-icon-only">
+              <i class="pi pi-pencil"></i>
+            </RouterLink>
+          </Button>
         </template>
       </Column>
       <Column>

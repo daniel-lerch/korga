@@ -13,7 +13,7 @@ export type GroupFilter = {
   roleIds: number[]
 }
 
-export type PersonFilter = SinglePersonFilter | GroupFilter | null
+export type PersonFilter = SinglePersonFilter | GroupFilter
 
 export type SinglePersonFilterWithNames = SinglePersonFilter & {
   name: string | null
@@ -24,13 +24,13 @@ export type GroupFilterWithNames = GroupFilter & {
   roles: (string | null)[]
 }
 
-export type PersonFilterWithNames = SinglePersonFilterWithNames | GroupFilterWithNames | null
+export type PersonFilterWithNames = SinglePersonFilterWithNames | GroupFilterWithNames
 
 function varObj(name: string) {
   return z.object({ var: z.literal(name) })
 }
 
-function getGroupFilter(filter: unknown[]): PersonFilter {
+function getGroupFilter(filter: unknown[]): PersonFilter | null {
   const groupFilter = z
     .tuple([
       z.object({ "==": z.tuple([varObj("ctgroup.id"), z.string()]) }),
@@ -64,7 +64,7 @@ function getGroupFilter(filter: unknown[]): PersonFilter {
   }
 }
 
-function getSinglePersonFilter(filter: unknown[]): PersonFilter {
+function getSinglePersonFilter(filter: unknown[]): PersonFilter | null {
   const singlePersonFilter = z.tuple([
     z.object({ "==": z.tuple([varObj("person.id"), z.string()]) }),
   ])
@@ -75,7 +75,7 @@ function getSinglePersonFilter(filter: unknown[]): PersonFilter {
   return { kind: "person", personId: parseInt(singlePersonFilterResult.data[0]["=="][1]) }
 }
 
-function getPersonFilter(filter: unknown[]): PersonFilter {
+function getPersonFilter(filter: unknown[]): PersonFilter | null {
   const groupFilter = getGroupFilter(filter)
   if (groupFilter !== null) return groupFilter
 
@@ -105,17 +105,68 @@ export function getMailistFilters(query: unknown): PersonFilter[] | null {
   ])
   const secondLevelOrResult = z.safeParse(secondLevelOr, remainingFilters)
   if (secondLevelOrResult.success) {
-    const groupFilters = []
+    const personFilters = []
     for (const x of secondLevelOrResult.data[0].or) {
-      groupFilters.push(getPersonFilter(x.and))
+      const personFilter = getPersonFilter(x.and)
+      if (personFilter === null) {
+        return null
+      }
+      personFilters.push(personFilter)
     }
-    return groupFilters
+    return personFilters
   } else {
     const personFilter = getPersonFilter(remainingFilters)
     if (personFilter === null) {
       return null
     }
     return [personFilter]
+  }
+}
+
+function getChurchQueryFilterPart(filter: PersonFilter): unknown[] {
+  if (filter.kind === "group") {
+    const group: unknown[] = [
+      {
+        "==": [{ var: "ctgroup.id" }, `${filter.groupId}`],
+      },
+      {
+        "==": [{ var: "groupmember.groupMemberStatus" }, "active"],
+      },
+    ]
+    if (filter.roleIds.length > 0) {
+      group.push({
+        oneof: [{ var: "role.id" }, filter.roleIds.map((id) => `${id}`)],
+      })
+    }
+    return group
+  } else {
+    return [
+      {
+        "==": [{ var: "person.id" }, `${filter.personId}`],
+      },
+    ]
+  }
+}
+
+export function getChurchQueryFilter(filters: PersonFilter[]) {
+  if (filters.length === 0) {
+    return null
+  } else if (filters.length === 1) {
+    return {
+      and: [
+        { "==": [{ var: "person.isArchived" }, 0] },
+        { isnull: [{ var: "person.dateOfDeath" }] },
+        ...getChurchQueryFilterPart(filters[0]!),
+      ],
+    }
+  } else {
+    return {
+      and: [
+        { "==": [{ var: "person.isArchived" }, 0] },
+        { isnull: [{ var: "person.dateOfDeath" }] },
+        { or: filters.map((filter) => ({ and: getChurchQueryFilterPart(filter) })) },
+      ],
+    }
   }
 }
 

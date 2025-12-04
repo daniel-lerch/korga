@@ -46,6 +46,17 @@ export async function getDistributionLists(): Promise<DistributionList[]> {
   return await response.json()
 }
 
+export async function getDistributionList(id: number): Promise<DistributionList> {
+  const extension = useExtensionStore()
+  const url = `${extension.backendUrl}/api/distribution-lists/${id}`
+  const response = await fetchWithAuth(url)
+  if (!response.ok) {
+    const text = await response.text()
+    throw new Error(`Failed to fetch distribution list: ${response.status} ${text}`)
+  }
+  return await response.json()
+}
+
 export async function createDistributionList(
   request: CreateDistributionList
 ): Promise<DistributionList> {
@@ -65,6 +76,28 @@ export async function createDistributionList(
 
   const text = await response.text()
   throw new Error(`Failed to create distribution list: ${response.status} ${text}`)
+}
+
+export async function modifyDistributionList(
+  id: number,
+  request: CreateDistributionList
+): Promise<DistributionList> {
+  const extension = useExtensionStore()
+  const url = `${extension.backendUrl}/api/distribution-lists/${id}`
+  const response = await fetchWithAuth(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  })
+
+  if (response.ok) {
+    return await response.json()
+  }
+
+  const text = await response.text()
+  throw new Error(`Failed to modify distribution list: ${response.status} ${text}`)
 }
 
 export async function deleteDistributionList(id: number): Promise<void> {

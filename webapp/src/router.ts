@@ -8,9 +8,15 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("./views/DistributionLists.vue"),
   },
   {
-    path: "/create",
+    path: "/new",
     name: "CreateDistributionList",
-    component: () => import("./views/CreateDistributionList.vue"),
+    component: () => import("./views/EditDistributionList.vue"),
+  },
+  {
+    path: "/:id",
+    name: "EditDistributionList",
+    component: () => import("./views/EditDistributionList.vue"),
+    props: true,
   },
   {
     path: "/setup",

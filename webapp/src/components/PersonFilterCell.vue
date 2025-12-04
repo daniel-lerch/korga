@@ -5,8 +5,7 @@
   </div>
   <div v-else>
     <div v-for="(f, index) in parsedFilters" :key="index" class="mb-2">
-      <div v-if="f === null" class="italic text-gray-500">Unknown filter</div>
-      <div v-else-if="f.kind === 'person'">
+      <div v-if="f.kind === 'person'">
         <div v-if="f.name">
           <i class="pi pi-user"></i>
           {{ f.name }}
