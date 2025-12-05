@@ -4,19 +4,7 @@
       Füge Filterkriterien hinzu um Empfänger auszuwählen.
     </div>
     <div v-for="(filter, index) in filters" :key="index">
-      <div v-if="filter.kind === 'person'">
-        <InputGroup>
-          <InputGroupAddon>
-            <i class="pi pi-user"></i>
-          </InputGroupAddon>
-          <Select v-model="filter.personId" :options="persons" filter optionLabel="name" optionValue="id"
-            placeholder="Person auswählen" />
-          <InputGroupAddon>
-            <Button type="button" icon="pi pi-trash" severity="danger" variant="text" @click="removeFilter(index)" />
-          </InputGroupAddon>
-        </InputGroup>
-      </div>
-      <div v-else-if="filter.kind === 'group'">
+      <div v-if="filter.kind === 'group'">
         <InputGroup>
           <InputGroupAddon>
             <i class="pi pi-users"></i>
@@ -29,17 +17,42 @@
         </InputGroup>
         <RoleCheckboxGroup v-model="filter.roleIds" :roles="groups.find(g => g.id === filter.groupId)?.roles || []" />
       </div>
+      <div v-else-if="filter.kind === 'person'">
+        <InputGroup>
+          <InputGroupAddon>
+            <i class="pi pi-user"></i>
+          </InputGroupAddon>
+          <Select v-model="filter.personId" :options="persons" filter optionLabel="name" optionValue="id"
+            placeholder="Person auswählen" />
+          <InputGroupAddon>
+            <Button type="button" icon="pi pi-trash" severity="danger" variant="text" @click="removeFilter(index)" />
+          </InputGroupAddon>
+        </InputGroup>
+      </div>
+      <div v-else>
+        <InputGroup>
+          <InputGroupAddon>
+            <i class="pi pi-user"></i>
+          </InputGroupAddon>
+          <Select v-model="filter.statusId" :options="statuses" optionLabel="name" optionValue="id"
+            placeholder="Status auswählen" />
+          <InputGroupAddon>
+            <Button type="button" icon="pi pi-trash" severity="danger" variant="text" @click="removeFilter(index)" />
+          </InputGroupAddon>
+        </InputGroup>
+      </div>
     </div>
     <ButtonGroup>
-      <Button type="button" label="Gruppe" icon="pi pi-plus" @click="addGroupFilter" />
-      <Button type="button" label="Person" icon="pi pi-plus" @click="addSinglePersonFilter" />
+      <Button type="button" label="Gruppe" icon="pi pi-plus" variant="text" @click="addGroupFilter" />
+      <Button type="button" label="Person" icon="pi pi-plus" variant="text" @click="addSinglePersonFilter" />
+      <Button type="button" label="Status" icon="pi pi-plus" variant="text" @click="addStatusFilter" />
     </ButtonGroup>
   </div>
 </template>
 
 <script setup lang="ts">
-import { getChurchQueryFilter, getMailistFilters, type GroupFilter, type SinglePersonFilter } from "@/services/churchquery";
-import type { Group, GroupRole, Person } from "@/utils/ct-types";
+import { getChurchQueryFilter, getMailistFilters, type GroupFilter, type SinglePersonFilter, type StatusFilter } from "@/services/churchquery";
+import type { Group, GroupRole, Person, Status } from "@/utils/ct-types";
 import { churchtoolsClient } from "@churchtools/churchtools-client";
 import Button from "primevue/button";
 import ButtonGroup from "primevue/buttongroup";
@@ -60,19 +73,26 @@ const emit = defineEmits<{
 }>()
 
 const parsedFilters = getMailistFilters(props.modelValue)
-const filters = ref<(SinglePersonFilter | GroupFilter)[]>(parsedFilters || [])
+const filters = ref<(SinglePersonFilter | GroupFilter | StatusFilter)[]>(parsedFilters || [])
 
-const persons = ref<{ id: number, name: string }[]>([])
 const groups = ref<{ id: number, name: string, roles?: GroupRole[] }[]>([])
+const persons = ref<{ id: number, name: string }[]>([])
+const statuses = ref<{ id: number, name: string }[]>([])
 
 onMounted(() => {
-  churchtoolsClient.getAllPages<Person>("/persons").then((data) => persons.value = data.map(p => {
-    if (p.nickname)
-      return { id: p.id, name: `${p.firstName} (${p.nickname}) ${p.lastName}` }
-    else
-      return { id: p.id, name: `${p.firstName} ${p.lastName}` }
-  }))
-  churchtoolsClient.getAllPages<Group>("/groups", { include: ["roles"] }).then((data) => groups.value = data.map(g => ({ id: g.id, name: g.name, roles: g.roles })))
+  churchtoolsClient.getAllPages<Group>("/groups", { include: ["roles"] })
+    .then((data) => groups.value = data.map(g => ({ id: g.id, name: g.name, roles: g.roles })))
+
+  churchtoolsClient.getAllPages<Person>("/persons")
+    .then((data) => persons.value = data.map(p => {
+      if (p.nickname)
+        return { id: p.id, name: `${p.firstName} (${p.nickname}) ${p.lastName}` }
+      else
+        return { id: p.id, name: `${p.firstName} ${p.lastName}` }
+    }))
+
+  churchtoolsClient.get<Status[]>("/statuses")
+    .then((data) => statuses.value = data.map(s => ({ id: s.id, name: s.nameTranslated })))
 })
 
 watch(filters, (newValue) => {
@@ -80,12 +100,16 @@ watch(filters, (newValue) => {
   emit('update:modelValue', filter)
 }, { deep: true })
 
+function addGroupFilter() {
+  filters.value.push({ kind: "group", groupId: 0, roleIds: [] })
+}
+
 function addSinglePersonFilter() {
   filters.value.push({ kind: "person", personId: 0 })
 }
 
-function addGroupFilter() {
-  filters.value.push({ kind: "group", groupId: 0, roleIds: [] })
+function addStatusFilter() {
+  filters.value.push({ kind: "status", statusId: 0 })
 }
 
 function removeFilter(index: number) {

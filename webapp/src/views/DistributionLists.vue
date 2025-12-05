@@ -1,13 +1,13 @@
 <template>
   <div class="p-4">
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-bold">E-Mail-Verteiler</h1>
-      <RouterLink to="/new" class="inline-block">
-        <button type="button"
-          class="ml-3 inline-flex items-center px-3 py-2 bg-primary text-white rounded hover:bg-blue-700">
+      <h1 class="text-3xl">E-Mail-Verteiler</h1>
+      <Button asChild v-slot="slotProps" type="button" severity="primary">
+        <RouterLink :to="`/new`" :class="slotProps.class">
+          <i class="pi pi-plus"></i>
           Neuer Verteiler
-        </button>
-      </RouterLink>
+        </RouterLink>
+      </Button>
     </div>
     <DataTable :value="distributionLists">
       <Column field="alias" header="Alias" />

@@ -1,4 +1,4 @@
-import type { Person, Group } from "@/utils/ct-types"
+import type { Person, Group, Status } from "@/utils/ct-types"
 import { churchtoolsClient } from "@churchtools/churchtools-client"
 import { z } from "zod"
 
@@ -13,7 +13,12 @@ export type GroupFilter = {
   roleIds: number[]
 }
 
-export type PersonFilter = SinglePersonFilter | GroupFilter
+export type StatusFilter = {
+  kind: "status"
+  statusId: number
+}
+
+export type PersonFilter = SinglePersonFilter | GroupFilter | StatusFilter
 
 export type SinglePersonFilterWithNames = SinglePersonFilter & {
   name: string | null
@@ -24,13 +29,20 @@ export type GroupFilterWithNames = GroupFilter & {
   roles: (string | null)[]
 }
 
-export type PersonFilterWithNames = SinglePersonFilterWithNames | GroupFilterWithNames
+export type StatusFilterWithNames = StatusFilter & {
+  name: string | null
+}
+
+export type PersonFilterWithNames =
+  | SinglePersonFilterWithNames
+  | GroupFilterWithNames
+  | StatusFilterWithNames
 
 function varObj(name: string) {
   return z.object({ var: z.literal(name) })
 }
 
-function getGroupFilter(filter: unknown[]): PersonFilter | null {
+function getGroupFilter(filter: unknown[]): GroupFilter | null {
   const groupFilter = z
     .tuple([
       z.object({ "==": z.tuple([varObj("ctgroup.id"), z.string()]) }),
@@ -64,7 +76,7 @@ function getGroupFilter(filter: unknown[]): PersonFilter | null {
   }
 }
 
-function getSinglePersonFilter(filter: unknown[]): PersonFilter | null {
+function getSinglePersonFilter(filter: unknown[]): SinglePersonFilter | null {
   const singlePersonFilter = z.tuple([
     z.object({ "==": z.tuple([varObj("person.id"), z.string()]) }),
   ])
@@ -75,11 +87,25 @@ function getSinglePersonFilter(filter: unknown[]): PersonFilter | null {
   return { kind: "person", personId: parseInt(singlePersonFilterResult.data[0]["=="][1]) }
 }
 
+function getStatusFilter(filter: unknown[]): StatusFilter | null {
+  const statusFilter = z.tuple([
+    z.object({ "==": z.tuple([varObj("person.statusId"), z.string()]) }),
+  ])
+  const statusFilterResult = z.safeParse(statusFilter, filter)
+  if (!statusFilterResult.success) {
+    return null
+  }
+  return { kind: "status", statusId: parseInt(statusFilterResult.data[0]["=="][1]) }
+}
+
 function getPersonFilter(filter: unknown[]): PersonFilter | null {
   const groupFilter = getGroupFilter(filter)
   if (groupFilter !== null) return groupFilter
 
-  return getSinglePersonFilter(filter)
+  const singlePersonFilter = getSinglePersonFilter(filter)
+  if (singlePersonFilter !== null) return singlePersonFilter
+
+  return getStatusFilter(filter)
 }
 
 export function getMailistFilters(query: unknown): PersonFilter[] | null {
@@ -139,10 +165,16 @@ function getChurchQueryFilterPart(filter: PersonFilter): unknown[] {
       })
     }
     return group
-  } else {
+  } else if (filter.kind === "person") {
     return [
       {
         "==": [{ var: "person.id" }, `${filter.personId}`],
+      },
+    ]
+  } else {
+    return [
+      {
+        "==": [{ var: "person.statusId" }, `${filter.statusId}`],
       },
     ]
   }
@@ -188,25 +220,23 @@ export async function getMailistFiltersWithNames(
     return null
   }
 
-  const personIds = new Set<number>()
   const groupIds = new Set<number>()
+  const personIds = new Set<number>()
+  const statusIds = new Set<number>()
+
   for (const filter of filters) {
-    if (filter?.kind === "person") {
-      personIds.add(filter.personId)
-    } else if (filter?.kind === "group") {
+    if (filter?.kind === "group") {
       groupIds.add(filter.groupId)
+    } else if (filter?.kind === "person") {
+      personIds.add(filter.personId)
+    } else {
+      statusIds.add(filter.statusId)
     }
   }
-  const persons = new Map<number, Person>()
   const groups = new Map<number, Group>()
-  if (personIds.size > 0) {
-    const personResponse = await churchtoolsClient.get<Person[]>("/persons", {
-      ids: Array.from(personIds),
-    })
-    for (const person of personResponse) {
-      persons.set(person.id, person)
-    }
-  }
+  const persons = new Map<number, Person>()
+  const statuses = new Map<number, Status>()
+
   if (groupIds.size > 0) {
     const groupResponse = await churchtoolsClient.get<Group[]>("/groups", {
       ids: Array.from(groupIds),
@@ -216,12 +246,26 @@ export async function getMailistFiltersWithNames(
     }
   }
 
+  if (personIds.size > 0) {
+    const personResponse = await churchtoolsClient.get<Person[]>("/persons", {
+      ids: Array.from(personIds),
+    })
+    for (const person of personResponse) {
+      persons.set(person.id, person)
+    }
+  }
+
+  if (statusIds.size > 0) {
+    const statusResponse = await churchtoolsClient.get<Status[]>("/statuses")
+    for (const status of statusResponse) {
+      statuses.set(status.id, status)
+    }
+  }
+
   const filtersWithNames = []
 
   for (const filter of filters) {
-    if (filter?.kind === "person") {
-      filtersWithNames.push({ ...filter, name: getPersonName(persons.get(filter.personId)) })
-    } else if (filter?.kind === "group") {
+    if (filter?.kind === "group") {
       const group = groups.get(filter.groupId)
       filtersWithNames.push({
         ...filter,
@@ -230,6 +274,10 @@ export async function getMailistFiltersWithNames(
           (roleId) => group?.roles?.find((role) => role.groupTypeRoleId === roleId)?.name ?? null
         ),
       })
+    } else if (filter?.kind === "person") {
+      filtersWithNames.push({ ...filter, name: getPersonName(persons.get(filter.personId)) })
+    } else {
+      filtersWithNames.push({ ...filter, name: statuses.get(filter.statusId)?.name ?? null })
     }
   }
 

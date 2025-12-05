@@ -5,18 +5,7 @@
   </div>
   <div v-else>
     <div v-for="(f, index) in parsedFilters" :key="index" class="mb-2">
-      <div v-if="f.kind === 'person'">
-        <div v-if="f.name">
-          <i class="pi pi-user"></i>
-          {{ f.name }}
-          <span class="text-sm text-gray-500">#{{ f.personId }}</span>
-        </div>
-        <div v-else class="text-red-600">
-          <i class="pi pi-user"></i>
-          Unbekannte Person (ID: {{ f.personId }})
-        </div>
-      </div>
-      <div v-else-if="f.kind === 'group'">
+      <div v-if="f.kind === 'group'">
         <div v-if="f.name">
           <i class="pi pi-users"></i>
           {{ f.name }}
@@ -29,6 +18,28 @@
         <div v-else class="text-red-600">
           <i class="pi pi-users"></i>
           Unbekannte Gruppe (ID: {{ f.groupId }})
+        </div>
+      </div>
+      <div v-else-if="f.kind === 'person'">
+        <div v-if="f.name">
+          <i class="pi pi-user"></i>
+          {{ f.name }}
+          <span class="text-sm text-gray-500">#{{ f.personId }}</span>
+        </div>
+        <div v-else class="text-red-600">
+          <i class="pi pi-user"></i>
+          Unbekannte Person (ID: {{ f.personId }})
+        </div>
+      </div>
+      <div v-else>
+        <div v-if="f.name">
+          <i class="pi pi-id-card"></i>
+          {{ f.name }}
+          <span class="text-sm text-gray-500">#{{ f.statusId }}</span>
+        </div>
+        <div v-else class="text-red-600">
+          <i class="pi pi-id-card"></i>
+          Unbekannter Status (ID: {{ f.statusId }})
         </div>
       </div>
     </div>
