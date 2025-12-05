@@ -2,7 +2,7 @@
 
 namespace ChurchTools.Model;
 
-public class Person : IIdentifiable<int>
+public class Person
 {
     public Person(int id, int statusId, List<int> departmentIds, string firstName, string lastName, string email)
     {

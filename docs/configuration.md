@@ -1,4 +1,4 @@
-# Mailist server configuration
+﻿# Mailist server configuration
 
 Configuration can be set as enviroment variables or by creating a custom config file.
 I recommend to use environment variables and will explain them in the following sections.
@@ -34,51 +34,35 @@ Enable this if you run Mailist behind a reverse proxy like NGINX. Make sure Mail
 
 Default: `false`
 
-### OAuth
+### JWT
 
-#### `OAuth__AuthorizationEndpoint`
+#### `Jwt__Issuer`
 
-The endpoint used to initiate the OAuth authorization process.
+The issuer (`iss`) claim of issued tokens. Use the public URL of your Mailist backend.
 
-Example: `https://demo.church.tools/oauth/authorize`
+Example: `https://mailist.example.org`
 
-#### `OAuth__TokenEndpoint`
+#### `Jwt__Audience`
 
-The endpoint used to obtain the OAuth access token.
+The audience (`aud`) claim of issued tokens. Use the public URL of your Mailist backend.
 
-Example: `https://demo.church.tools/oauth/access_token`
+Example: `https://mailist.example.org`
 
-#### `OAuth__UserInformationEndpoint`
+#### `Jwt__SigningKey`
 
-The endpoint used to retrieve user information after obtaining the access token.
+A 256‑bit signing key represented as a hex string (exactly 64 hex characters).
 
-Example: `https://demo.church.tools/oauth/userinfo`
+Example: `3f9a1b2c...` (64 hex chars)
 
-#### `OAuth__UsePkce`
+Generate a secure 256‑bit hex key with OpenSSL:
 
-Indicates whether to use Proof Key for Code Exchange (PKCE) during the OAuth authorization process.
+`openssl rand -hex 32`
 
-Default: `true`
+Or with PowerShell:
 
-#### `OAuth__ClientId`
-
-The client identifier issued to the client during the registration process.
-
-Example: `2807de0033284e12bab29389b8bd1ea3acc0352b6bdc4ce8936aa854a555391d`
-
-#### `OAuth__ClientSecret`
-
-The client secret issued to the client during the registration process. This configuration is not required for ChurchTools as identity provider.
-
-Default: `undefined`
+`[System.BitConverter]::ToString([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))`
 
 ### ChurchTools
-
-#### `ChurchTools__EnableSync`
-
-Enable or disable periodic synchronization of people, groups and memberships with ChurchTools.
-
-Default: `false`
 
 #### `ChurchTools__Host`
 

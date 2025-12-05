@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace ChurchTools.Model;
 
-public class Group : IIdentifiable<int>
+public class Group
 {
     public Group(int id, Guid guid, string name, Dictionary<string, JsonElement> information)
     {
