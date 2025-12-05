@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Mailist.EmailRelay.Entities;
+﻿namespace Mailist.EmailRelay.Entities;
 
 public class DistributionList
 {
@@ -14,6 +12,4 @@ public class DistributionList
 	public string Alias { get; set; }
 	public DistributionListFlags Flags { get; set; }
     public string RecipientsQuery { get; set; }
-    public int RecipientCount { get; set; }
-    public DateTime RecipientCountTime { get; set; }
 }

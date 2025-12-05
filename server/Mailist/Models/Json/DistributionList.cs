@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace Mailist.Models.Json;
 
@@ -13,6 +12,5 @@ public class CreateDistributionList
 public class DistributionList : CreateDistributionList
 {
     public required long Id { get; init; }
-    public int RecipientCount { get; init; }
-    public DateTime RecipientCountTime { get; init; }
+    public int RecipientCount { get; set; }
 }

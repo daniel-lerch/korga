@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,35 +20,26 @@ public class DistributionListController : ControllerBase
 {
     private readonly DatabaseContext database;
     private readonly IChurchToolsApi churchTools;
+    private readonly IMemoryCache memoryCache;
 
-    public DistributionListController(DatabaseContext database, IChurchToolsApi churchTools)
+    public DistributionListController(DatabaseContext database, IChurchToolsApi churchTools, IMemoryCache memoryCache)
     {
         this.database = database;
         this.churchTools = churchTools;
+        this.memoryCache = memoryCache;
     }
 
     [Authorize]
     [HttpGet("~/api/distribution-lists")]
     [ProducesResponseType(typeof(DistributionList[]), StatusCodes.Status200OK)]
-    public async Task<ActionResult<List<DistributionList>>> GetDistributionLists()
+    public async Task<ActionResult<DistributionList[]>> GetDistributionLists()
     {
         var lists = await database.DistributionLists
+            .AsNoTracking()
             .OrderBy(dl => dl.Alias)
             .ToListAsync();
 
-        //await UpdateCachedRecipientCount(lists);
-
-        List<DistributionList> response = lists
-            .Select(dl => new DistributionList
-            {
-                Id = dl.Id,
-                Alias = dl.Alias,
-                Newsletter = dl.Flags.HasFlag(DistributionListFlags.Newsletter),
-                RecipientsQuery = JsonElement.Parse(dl.RecipientsQuery),
-                RecipientCount = dl.RecipientCount,
-                RecipientCountTime = dl.RecipientCountTime,
-            })
-            .ToList();
+        DistributionList[] response = await Task.WhenAll(lists.Select(AddCachedRecipientCount));
 
         return response;
     }
@@ -56,46 +48,41 @@ public class DistributionListController : ControllerBase
     [HttpGet("~/api/distribution-lists/{id:long}")]
     [ProducesResponseType(typeof(DistributionList), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetDistributionList([FromRoute] long id)
+    public async Task<ActionResult<DistributionList>> GetDistributionList([FromRoute] long id)
     {
-        var distributionList = await database.DistributionLists.FindAsync(id);
+        var distributionList = await database.DistributionLists.AsNoTracking().SingleOrDefaultAsync(dl => dl.Id == id);
         if (distributionList == null)
             return NotFound();
 
-        // Refresh cached recipient count if stale
-        await UpdateCachedRecipientCount([distributionList]);
+        DistributionList response = await AddCachedRecipientCount(distributionList);
 
-        var response = new DistributionList
-        {
-            Id = distributionList.Id,
-            Alias = distributionList.Alias,
-            Newsletter = distributionList.Flags.HasFlag(DistributionListFlags.Newsletter),
-            RecipientsQuery = JsonElement.Parse(distributionList.RecipientsQuery),
-            RecipientCount = distributionList.RecipientCount,
-            RecipientCountTime = distributionList.RecipientCountTime,
-        };
-
-        return Ok(response);
+        return response;
     }
 
-    private async ValueTask UpdateCachedRecipientCount(List<EmailRelay.Entities.DistributionList> lists)
+    private async Task<DistributionList> AddCachedRecipientCount(EmailRelay.Entities.DistributionList dl)
     {
-        // Update recipient counts for lists with a query older than one hour
-        var oneHourAgo = DateTime.UtcNow.AddHours(-1);
+        JsonElement recipientsQuery = JsonElement.Parse(dl.RecipientsQuery);
+        int recipientCount = 0;
 
-        var tasks = lists
-            .Where(dl => dl.RecipientsQuery != "null" && dl.RecipientCountTime < oneHourAgo)
-            .Select(async dl =>
+        if (recipientsQuery.ValueKind != JsonValueKind.Null)
+        {
+            recipientCount = await memoryCache.GetOrCreateAsync(dl.Id, async cacheEntry =>
             {
-                ChurchQueryRequest<IdNameEmail> query = new(JsonElement.Parse(dl.RecipientsQuery));
+                cacheEntry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+                ChurchQueryRequest<IdNameEmail> query = new(recipientsQuery);
                 var recipients = await churchTools.ChurchQuery(query);
-                dl.RecipientCount = recipients.Count;
-                dl.RecipientCountTime = DateTime.UtcNow;
+                return recipients.Count;
             });
+        }
 
-        await Task.WhenAll(tasks);
-
-        await database.SaveChangesAsync();
+        return new DistributionList
+        {
+            Id = dl.Id,
+            Alias = dl.Alias,
+            Newsletter = dl.Flags.HasFlag(DistributionListFlags.Newsletter),
+            RecipientsQuery = recipientsQuery,
+            RecipientCount = recipientCount,
+        };
     }
 
     [Authorize(Roles = "admin")]
@@ -107,25 +94,30 @@ public class DistributionListController : ControllerBase
             return BadRequest("Alias must not be empty");
 
         int recipientCount = 0;
-        DateTime recipientCountTime = default;
 
         if (request.RecipientsQuery.ValueKind != JsonValueKind.Null)
         {
-            ChurchQueryRequest<IdNameEmail> query = new(request.RecipientsQuery);
-            var recipients = await churchTools.ChurchQuery(query);
-            recipientCount = recipients.Count;
-            recipientCountTime = DateTime.UtcNow;
+            try // Evaluate query to make sure it's valid
+            {
+                ChurchQueryRequest<IdNameEmail> query = new(request.RecipientsQuery);
+                var recipients = await churchTools.ChurchQuery(query);
+                recipientCount = recipients.Count;
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Invalid RecipientsQuery: {ex.Message}");
+            }
         }
 
         var distributionList = new EmailRelay.Entities.DistributionList(request.Alias, request.RecipientsQuery.GetRawText())
         {
             Flags = request.Newsletter ? DistributionListFlags.Newsletter : DistributionListFlags.None,
-            RecipientCount = recipientCount,
-            RecipientCountTime = recipientCountTime,
         };
 
         database.DistributionLists.Add(distributionList);
         await database.SaveChangesAsync();
+
+        memoryCache.Set(distributionList.Id, recipientCount, TimeSpan.FromMinutes(5));
 
         var response = new DistributionList
         {
@@ -134,7 +126,6 @@ public class DistributionListController : ControllerBase
             Newsletter = distributionList.Flags.HasFlag(DistributionListFlags.Newsletter),
             RecipientsQuery = JsonElement.Parse(distributionList.RecipientsQuery),
             RecipientCount = recipientCount,
-            RecipientCountTime = recipientCountTime,
         };
 
         return Created($"/api/distribution-lists/{distributionList.Id}", response);
@@ -158,20 +149,18 @@ public class DistributionListController : ControllerBase
         distributionList.Flags = request.Newsletter ? DistributionListFlags.Newsletter : DistributionListFlags.None;
         distributionList.RecipientsQuery = request.RecipientsQuery.GetRawText();
 
-        if (request.RecipientsQuery.ValueKind == JsonValueKind.Null)
-        {
-            distributionList.RecipientCount = 0;
-            distributionList.RecipientCountTime = default;
-        }
-        else
+        int recipientCount = 0;
+
+        if (request.RecipientsQuery.ValueKind != JsonValueKind.Null)
         {
             ChurchQueryRequest<IdNameEmail> query = new(request.RecipientsQuery);
             var recipients = await churchTools.ChurchQuery(query);
-            distributionList.RecipientCount = recipients.Count;
-            distributionList.RecipientCountTime = DateTime.UtcNow;
+            recipientCount = recipients.Count;
         }
 
         await database.SaveChangesAsync();
+
+        memoryCache.Set(distributionList.Id, recipientCount, TimeSpan.FromMinutes(5));
 
         var response = new DistributionList
         {
@@ -179,8 +168,7 @@ public class DistributionListController : ControllerBase
             Alias = distributionList.Alias,
             Newsletter = distributionList.Flags.HasFlag(DistributionListFlags.Newsletter),
             RecipientsQuery = JsonElement.Parse(distributionList.RecipientsQuery),
-            RecipientCount = distributionList.RecipientCount,
-            RecipientCountTime = distributionList.RecipientCountTime,
+            RecipientCount = recipientCount,
         };
 
         return Ok(response);

@@ -34,6 +34,8 @@ public class Startup
 
         services.AddMailistMySqlDatabase();
 
+        services.AddMemoryCache();
+
         services.AddControllers();
 
         services.AddOpenApiDocument();
