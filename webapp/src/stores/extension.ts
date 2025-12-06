@@ -66,8 +66,9 @@ export const useExtensionStore = defineStore("extension", {
         }),
       })
       if (!response.ok) {
+        const text = await response.text()
         throw new Error(
-          `Login failed. ${backendUrl} replied with error ${response.status} ${response.statusText}`
+          `Login failed. ${backendUrl} replied with error ${response.status} ${response.statusText}: ${text}`
         )
       }
       return (await response.json()).accessToken
