@@ -5,7 +5,8 @@
       Ungültiges JSON. Bitte überprüfe die Syntax.
     </Message>
     <Message severity="secondary" size="small" variant="simple">
-      Du kannst hier beliebig komplexe Filterausdrücke aus <a href="/churchquery">ChurchQuery</a> verwenden.
+      Du kannst hier beliebig komplexe Filterausdrücke aus <a href="/churchquery" class="text-blue-500">ChurchQuery</a>
+      verwenden.
     </Message>
   </div>
 </template>

@@ -32,7 +32,7 @@
       <div v-else>
         <InputGroup>
           <InputGroupAddon>
-            <i class="pi pi-user"></i>
+            <i class="pi pi-id-card"></i>
           </InputGroupAddon>
           <Select v-model="filter.statusId" :options="statuses" optionLabel="name" optionValue="id"
             placeholder="Status auswählen" />

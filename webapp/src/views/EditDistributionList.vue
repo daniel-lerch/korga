@@ -18,7 +18,7 @@
       </div>
       <Divider />
       <div class="mb-2">Empfänger</div>
-      <div class="mb-4 rounded-lg bg-gray-100">
+      <div class="mb-4 rounded-lg bg-gray-100 dark:bg-gray-950">
         <SelectButton v-model="mode" :options="modes" optionLabel="label" :allowEmpty="false" />
         <PersonFilterEditor v-if="mode.name === 'default'" v-model="recipientsQuery" class="p-2" />
         <AdvancedFilterEditor v-else-if="mode.name === 'advanced'" v-model="recipientsQuery" class="p-2" />

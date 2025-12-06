@@ -49,7 +49,7 @@ function getGroupFilter(filter: unknown[]): GroupFilter | null {
       z.object({ "==": z.tuple([varObj("groupmember.groupMemberStatus"), z.literal("active")]) }),
     ])
     .rest(z.unknown())
-  const groupFilterResult = z.safeParse(groupFilter, filter)
+  const groupFilterResult = groupFilter.safeParse(filter)
   if (!groupFilterResult.success) {
     return null
   }
@@ -61,7 +61,7 @@ function getGroupFilter(filter: unknown[]): GroupFilter | null {
     const groupRoleFilter = z.tuple([
       z.object({ oneof: z.tuple([varObj("role.id"), z.array(z.string())]) }),
     ])
-    const groupRoleFilterResult = z.safeParse(groupRoleFilter, remainingFilters)
+    const groupRoleFilterResult = groupRoleFilter.safeParse(remainingFilters)
     if (!groupRoleFilterResult.success) {
       return null
     }
@@ -80,7 +80,7 @@ function getSinglePersonFilter(filter: unknown[]): SinglePersonFilter | null {
   const singlePersonFilter = z.tuple([
     z.object({ "==": z.tuple([varObj("person.id"), z.string()]) }),
   ])
-  const singlePersonFilterResult = z.safeParse(singlePersonFilter, filter)
+  const singlePersonFilterResult = singlePersonFilter.safeParse(filter)
   if (!singlePersonFilterResult.success) {
     return null
   }
@@ -91,7 +91,7 @@ function getStatusFilter(filter: unknown[]): StatusFilter | null {
   const statusFilter = z.tuple([
     z.object({ "==": z.tuple([varObj("person.statusId"), z.string()]) }),
   ])
-  const statusFilterResult = z.safeParse(statusFilter, filter)
+  const statusFilterResult = statusFilter.safeParse(filter)
   if (!statusFilterResult.success) {
     return null
   }
@@ -117,7 +117,7 @@ export function getMailistFilters(query: unknown): PersonFilter[] | null {
       ])
       .rest(z.unknown()),
   })
-  const topLevelAndResult = z.safeParse(topLevelAnd, query)
+  const topLevelAndResult = topLevelAnd.safeParse(query)
   if (!topLevelAndResult.success) {
     return null
   }
@@ -129,7 +129,7 @@ export function getMailistFilters(query: unknown): PersonFilter[] | null {
       or: z.array(z.object({ and: z.array(z.unknown()) })),
     }),
   ])
-  const secondLevelOrResult = z.safeParse(secondLevelOr, remainingFilters)
+  const secondLevelOrResult = secondLevelOr.safeParse(remainingFilters)
   if (secondLevelOrResult.success) {
     const personFilters = []
     for (const x of secondLevelOrResult.data[0].or) {
