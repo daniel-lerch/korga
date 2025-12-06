@@ -64,11 +64,34 @@ namespace Mailist.Migrations
                 nullable: false,
                 defaultValue: "null")
                 .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_InboxEmails_DistributionLists_DistributionListId",
+                table: "InboxEmails");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_InboxEmails_DistributionLists_DistributionListId",
+                table: "InboxEmails",
+                column: "DistributionListId",
+                principalTable: "DistributionLists",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.SetNull);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_InboxEmails_DistributionLists_DistributionListId",
+                table: "InboxEmails");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_InboxEmails_DistributionLists_DistributionListId",
+                table: "InboxEmails",
+                column: "DistributionListId",
+                principalTable: "DistributionLists",
+                principalColumn: "Id");
+
             migrationBuilder.DropColumn(
                 name: "RecipientsQuery",
                 table: "DistributionLists");

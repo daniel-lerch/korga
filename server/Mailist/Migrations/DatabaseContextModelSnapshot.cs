@@ -184,7 +184,8 @@ namespace Mailist.Migrations
                 {
                     b.HasOne("Mailist.EmailRelay.Entities.DistributionList", "DistributionList")
                         .WithMany()
-                        .HasForeignKey("DistributionListId");
+                        .HasForeignKey("DistributionListId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("DistributionList");
                 });

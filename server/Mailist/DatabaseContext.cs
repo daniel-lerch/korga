@@ -35,7 +35,8 @@ public sealed class DatabaseContext : DbContext
     {
         var inboxEmail = modelBuilder.Entity<InboxEmail>();
         inboxEmail.HasKey(e => e.Id);
-        inboxEmail.HasOne(e => e.DistributionList).WithMany().HasForeignKey(e => e.DistributionListId);
+        inboxEmail.HasOne(e => e.DistributionList).WithMany().HasForeignKey(e => e.DistributionListId)
+            .OnDelete(DeleteBehavior.SetNull);
         inboxEmail.HasIndex(e => e.UniqueId).IsUnique();
         inboxEmail.HasIndex(e => e.ProcessingCompletedTime);
         inboxEmail.Property(e => e.DownloadTime).HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
