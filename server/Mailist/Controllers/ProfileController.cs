@@ -17,30 +17,16 @@ namespace Mailist.Controllers;
 public class ProfileController : ControllerBase
 {
     private readonly IOptions<JwtOptions> jwtOptions;
-    private readonly IChurchToolsApi churchTools;
 
-    public ProfileController(IOptions<JwtOptions> jwtOptions, IChurchToolsApi churchTools)
+    public ProfileController(IOptions<JwtOptions> jwtOptions)
     {
         this.jwtOptions = jwtOptions;
-        this.churchTools = churchTools;
     }
 
     [HttpPost("~/api/token")]
     [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<TokenResponse>> GetAccessToken([FromBody] TokenRequest request)
     {
-        var systemPermissions = await churchTools.GetGlobalPermissions();
-        if (systemPermissions.Mailist == null)
-            return StatusCode(500, "Mailist's system user does not have permissions for Mailist or the Mailist plugin is not installed in ChurchTools");
-        if (!systemPermissions.Mailist.View || systemPermissions.Mailist.ViewCustomCategory.Count == 0)
-            return StatusCode(500, "Mailist's system user does not have permissions for Mailist");
-
-        var module = await churchTools.GetCustomModule("mailist");
-        var categories = await churchTools.GetCustomDataCategories(module.Id);
-        var configCategory = categories.FirstOrDefault(c => c.Shorty == "config");
-        if (configCategory == null)
-            return BadRequest("Extension is not initialized. Custom data category 'config' was not found");
-
         using var churchToolsFromRequest = ChurchToolsApi.CreateWithToken(new Uri(request.ChurchToolsUrl), request.LoginToken);
         var user = await churchToolsFromRequest.GetPerson();
         var permissions = await churchToolsFromRequest.GetGlobalPermissions();
@@ -48,8 +34,11 @@ public class ProfileController : ControllerBase
         if (permissions.Mailist == null)
             return BadRequest("User does not have permissions for Mailist or the Mailist plugin is not installed in ChurchTools");
 
-        if (!permissions.Mailist.ViewCustomData.Contains(configCategory.Id))
-            return BadRequest($"User is not permitted to view custom data category {configCategory.Id} of Mailist");
+        var module = await churchToolsFromRequest.GetCustomModule("mailist");
+        var categories = await churchToolsFromRequest.GetCustomDataCategories(module.Id);
+        var configCategory = categories.FirstOrDefault(c => c.Shorty == "config");
+        if (configCategory == null)
+            return BadRequest("Extension is not initialized. Custom data category 'config' was not found");
 
         bool isAdmin = permissions.Mailist.EditCustomData.Contains(configCategory.Id);
 

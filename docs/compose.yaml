@@ -13,6 +13,9 @@ services:
       # Uncomment below if you want to use Mailist behind a reverse proxy like NGINX
       #- Hosting__AllowProxies=true
 
+      # Change this to your ChurchTools URL
+      - Hosting__CorsOrigins__0=https://demo.church.tools
+
       # Change this
       - Jwt__Issuer=https://mailist.example.org
       - Jwt__Audience=https://mailist.example.org

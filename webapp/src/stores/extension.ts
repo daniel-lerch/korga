@@ -11,6 +11,7 @@ import { defineStore } from "pinia"
 export const useExtensionStore = defineStore("extension", {
   state: () => ({
     moduleId: 0,
+    configCategoryId: 0,
     backendUrl: "",
     accessToken: "",
   }),
@@ -29,8 +30,21 @@ export const useExtensionStore = defineStore("extension", {
       this.moduleId = module.id
 
       const categories = await getCustomDataCategories<{ backendUrl?: string }>(module.id)
-      const configCategory = categories.find((c) => c.shorty === "config")
+      let configCategory = categories.find((c) => c.shorty === "config")
       this.backendUrl = configCategory?.backendUrl ?? ""
+      if (configCategory === undefined) {
+        configCategory = await createCustomDataCategory(
+          {
+            customModuleId: this.moduleId,
+            name: "Configuration",
+            shorty: "config",
+            description: "Configuration for the Mailist extension",
+            data: JSON.stringify({ backendUrl: this.backendUrl }),
+          },
+          this.moduleId
+        )
+      }
+      this.configCategoryId = configCategory.id
       // Try to restore access token from session storage so users don't have to
       // re-login on page reload during the same browser session.
       const stored = sessionStorage.getItem("mailist.accessToken")
@@ -69,37 +83,22 @@ export const useExtensionStore = defineStore("extension", {
     async setBackendUrl(backendUrl: string) {
       if (backendUrl !== this.backendUrl) {
         // Successful login, save backendUrl in ChurchTools value store
-        const categories = await getCustomDataCategories(this.moduleId)
-        const configCategory = categories.find((c) => c.shorty === "config")
-        if (configCategory === undefined) {
-          await createCustomDataCategory(
-            {
-              customModuleId: this.moduleId,
-              name: "Configuration",
-              shorty: "config",
-              description: "Configuration for the Mailist extension",
-              data: JSON.stringify({ backendUrl }),
-            },
-            this.moduleId
-          )
-        } else {
-          await updateCustomDataCategory(
-            configCategory.id,
-            {
-              id: configCategory.id,
-              customModuleId: this.moduleId,
-              name: configCategory.name,
-              shorty: configCategory.shorty,
-              description: configCategory.description,
-              data: JSON.stringify({
-                backendUrl,
-              }),
-            },
-            this.moduleId
-          )
-        }
-        this.backendUrl = backendUrl
+        await updateCustomDataCategory(
+          this.configCategoryId,
+          {
+            id: this.configCategoryId,
+            customModuleId: this.moduleId,
+            name: "Configuration",
+            shorty: "config",
+            description: "Configuration for the Mailist extension",
+            data: JSON.stringify({
+              backendUrl,
+            }),
+          },
+          this.moduleId
+        )
       }
+      this.backendUrl = backendUrl
     },
   },
 })
