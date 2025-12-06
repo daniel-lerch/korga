@@ -10,14 +10,14 @@ namespace Mailist.Tests;
 
 public class ChurchToolsApiTests
 {
-    private const string churchToolsHost = "demo.church.tools";
-    private const string churchToolsUsername = "churchtools";
-    private const string churchToolsPassword = "churchtools";
+    public const string ChurchToolsHost = "demo.church.tools";
+    public const string ChurchToolsUsername = "churchtools";
+    public const string ChurchToolsPassword = "churchtools";
 
     [Fact]
     public async Task TestLogin()
     {
-        using ChurchToolsApi client = await ChurchToolsApi.Login(churchToolsHost, churchToolsUsername, churchToolsPassword);
+        using ChurchToolsApi client = await ChurchToolsApi.Login(ChurchToolsHost, ChurchToolsUsername, ChurchToolsPassword);
         
         // This call fails if client is not authenticated
         await client.GetPerson(TestContext.Current.CancellationToken);
@@ -27,12 +27,12 @@ public class ChurchToolsApiTests
     public async Task TestCreateWithToken()
     {
         // This test depends on login because login tokens might change without notice
-        using ChurchToolsApi bootstrap = await ChurchToolsApi.Login(churchToolsHost, churchToolsUsername, churchToolsPassword);
+        using ChurchToolsApi bootstrap = await ChurchToolsApi.Login(ChurchToolsHost, ChurchToolsUsername, ChurchToolsPassword);
         Assert.NotNull(bootstrap.User);
 
         string loginToken = await bootstrap.GetPersonLoginToken(bootstrap.User.PersonId, TestContext.Current.CancellationToken);
 
-        using ChurchToolsApi client = ChurchToolsApi.CreateWithToken(churchToolsHost, loginToken);
+        using ChurchToolsApi client = ChurchToolsApi.CreateWithToken(ChurchToolsHost, loginToken);
 
         // This call fails if client is not authenticated
         await client.GetPerson(TestContext.Current.CancellationToken);
@@ -41,7 +41,7 @@ public class ChurchToolsApiTests
     [Fact]
     public async Task TestGetGlobalPermissions()
     {
-        using ChurchToolsApi client = await ChurchToolsApi.Login(churchToolsHost, churchToolsUsername, churchToolsPassword);
+        using ChurchToolsApi client = await ChurchToolsApi.Login(ChurchToolsHost, ChurchToolsUsername, ChurchToolsPassword);
 
         await client.GetGlobalPermissions(TestContext.Current.CancellationToken);
     }
@@ -49,7 +49,7 @@ public class ChurchToolsApiTests
     [Fact]
     public async Task TestChurchQueryEmail()
     {
-        using ChurchToolsApi client = await ChurchToolsApi.Login(churchToolsHost, churchToolsUsername, churchToolsPassword);
+        using ChurchToolsApi client = await ChurchToolsApi.Login(ChurchToolsHost, ChurchToolsUsername, ChurchToolsPassword);
 
         ChurchQueryRequest<IdNameEmail> query = new(JsonElement.Parse("{ \"==\": [{ \"var\": \"person.email\" }, \"support@example.com\"] }"));
 
@@ -66,7 +66,7 @@ public class ChurchToolsApiTests
     [Fact]
     public async Task TestChurchQueryGroup()
     {
-        using ChurchToolsApi client = await ChurchToolsApi.Login(churchToolsHost, churchToolsUsername, churchToolsPassword);
+        using ChurchToolsApi client = await ChurchToolsApi.Login(ChurchToolsHost, ChurchToolsUsername, ChurchToolsPassword);
 
         ChurchQueryRequest<IdNameEmail> query = new(JsonElement.Parse("""
             {

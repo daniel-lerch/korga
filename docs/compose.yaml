@@ -6,18 +6,18 @@ services:
     environment:
       # Change this according to your database settings
       - Database__ConnectionString=Server=db;Port=3306;Database=mailist;User=mailist;Password=mailist;
-      
+
       # Uncomment below if you want to use Mailist in a subfolder like example.com/mailist
       #- Hosting__PathBase=/mailist
 
       # Uncomment below if you want to use Mailist behind a reverse proxy like NGINX
       #- Hosting__AllowProxies=true
 
-      # Change this 
+      # Change this
       - Jwt__Issuer=https://mailist.example.org
       - Jwt__Audience=https://mailist.example.org
       # 256 bit hex string, e.g. generated with `openssl rand -hex 32`
-      - Jwt__Secret=0000deadbeef00000000deadbeef00000000deadbeef00000000deadbeef0000
+      - Jwt__SigningKey=0000deadbeef00000000deadbeef00000000deadbeef00000000deadbeef0000
 
       # Change this according to your ChurchTools instance and user
       # See the main README for instructions on how to get a login token and configure permissions

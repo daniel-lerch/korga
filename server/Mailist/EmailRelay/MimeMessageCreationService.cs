@@ -132,7 +132,7 @@ public class MimeMessageCreationService
         // If the email client did not add a from name, try to get the persons name from ChurchTools
         string filter = $$"""
             {
-              "==": [{ "var": "person.email" }, {{from.Address}}]
+              "==": [{ "var": "person.email" }, {{JsonSerializer.Serialize(from.Address)}}]
             }
             """;
         ChurchQueryRequest<IdNameEmail> query = new(JsonElement.Parse(filter));
