@@ -1,16 +1,14 @@
 using Mailist.ChurchTools;
-using Mailist.ChurchTools.Hosting;
+using Mailist.EmailDelivery;
 using Mailist.EmailRelay;
 using Mailist.Extensions;
 using Mailist.Utilities;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Mailist.EmailDelivery;
-using Mailist.Filters;
-using Microsoft.AspNetCore.DataProtection;
 using System.IO;
 
 namespace Mailist;
@@ -36,7 +34,7 @@ public class Startup
 
         services.AddMailistMySqlDatabase();
 
-        services.AddTransient<PersonFilterService>();
+        services.AddMemoryCache();
 
         services.AddControllers();
 
@@ -51,15 +49,10 @@ public class Startup
 
         services.AddOAuthAuthentication(Configuration, environment);
 
+        services.AddHostedService<ChurchToolsPermissionsHostedService>();
+
         // Use Configuration manually because options are not available in ConfigureService
         // Instead of returning a fake service when disabled we don't register any hosted service at all
-        if (Configuration.GetValue<bool>("ChurchTools:EnableSync"))
-        {
-            services.AddTransient<ChurchToolsSyncService>();
-            services.AddHostedService<ChurchToolsSyncHostedService>();
-            services.AddHostedService<ChurchToolsPermissionsHostedService>();
-        }
-
         if (Configuration.GetValue<bool>("EmailDelivery:Enable"))
         {
             services.AddSingleton<JobQueue<EmailDeliveryJobController>>();

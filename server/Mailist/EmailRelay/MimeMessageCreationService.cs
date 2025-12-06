@@ -1,12 +1,13 @@
-﻿using Mailist.EmailDelivery;
+﻿using ChurchTools;
+using ChurchTools.Model;
+using Mailist.EmailDelivery;
 using Mailist.EmailRelay.Entities;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,13 +17,13 @@ public class MimeMessageCreationService
 {
     private readonly IOptions<EmailRelayOptions> relayOptions;
     private readonly IOptions<EmailDeliveryOptions> deliveryOptions;
-    private readonly DatabaseContext database;
+    private readonly IChurchToolsApi churchTools;
 
-    public MimeMessageCreationService(IOptions<EmailRelayOptions> relayOptions, IOptions<EmailDeliveryOptions> deliveryOptions, DatabaseContext database)
+    public MimeMessageCreationService(IOptions<EmailRelayOptions> relayOptions, IOptions<EmailDeliveryOptions> deliveryOptions, IChurchToolsApi churchTools)
     {
         this.relayOptions = relayOptions;
         this.deliveryOptions = deliveryOptions;
-        this.database = database;
+        this.churchTools = churchTools;
     }
 
     /// <summary>
@@ -129,8 +130,14 @@ public class MimeMessageCreationService
         if (!string.IsNullOrWhiteSpace(from.Name)) return from.Name;
 
         // If the email client did not add a from name, try to get the persons name from ChurchTools
-        List<string> names = await database.People.Where(p => p.Email == from.Address).Select(p => $"{p.FirstName} {p.LastName}").ToListAsync(cancellationToken);
-        if (names.Count > 0) return string.Join(", ", names);
+        string filter = $$"""
+            {
+              "==": [{ "var": "person.email" }, {{JsonSerializer.Serialize(from.Address)}}]
+            }
+            """;
+        ChurchQueryRequest<IdNameEmail> query = new(JsonElement.Parse(filter));
+        var results = await churchTools.ChurchQuery(query, cancellationToken);
+        if (results.Count > 0) return string.Join(", ", results.Select(p => $"{p.FirstName} {p.LastName}"));
 
         // If no name can be determined return address like: alice@example.org <noreply@example.org>
         return from.Address;

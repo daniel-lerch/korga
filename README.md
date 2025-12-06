@@ -9,9 +9,7 @@ Mailist is a ChurchTools extension that enables you to create email distribution
 Mailist was previously named _Korga_ for the german term _**K**irchen **Orga**nisation_ (church organization).
 It started as a standalone CMS and soon became an extension platform for ChurchTools when ChurchTools' extensions were not available.
 
-## What can Mailist already do?
-
-### Email distribution lists
+## What can Mailist do?
 
 Mailist makes it possible to send emails to ChurchTools groups via email.
 For example, anyone can send an email to _youth@example.org_ and Mailist will forward it to all members of your ChurchTools group _Youth_ with role _Leader_.
@@ -30,30 +28,9 @@ This command creates a distribution list _youth@example.org_ which forwards emai
 The only officially supported distribution are Docker containers. An official image is available at [daniellerch/mailist](https://hub.docker.com/r/daniellerch/mailist).
 If you are using Docker Compose, take a look our [example compose file](docs/compose.yaml) in the `docs` folder.
 
-Mailist has multiple modules that must be enabled via configuration to use them:
-
-- ChurchTools sync
-- Email delivery
-- Email relay
-
 See [Mailist server configuration](docs/configuration.md) for a full list of configuration options.
 
-### OAuth authentication
-
-Mailist uses single sign-on via OAuth 2.0. It is the only authentication mechanism Mailist supports and required to start the application.
-
-These instructions assume you use ChurchTools as OAuth provider (supported since December 2024).
-Other OAuth 2.0 and OpenID Connect identity providers should also work.
-
-1. Login to ChurchTools as an administrator and open _System settings_ from the navbar
-
-2. Go to _Integrations_ > _Login to third-party system_ and click on _Add OAuth-Client_
-
-3. Choose a name (will be displayed to users when they log in) and enter the URL of your Mailist instance as _Redirect-URI_ e.g. `https://mailist.example.org/api/signin-oauth`
-
-After creating an OAuth client for Mailist in ChurchTools, you can configure it via [environment variables](docs/configuration.md#oauth) in `compose.yaml`.
-
-### ChurchTools sync
+### ChurchTools integration
 
 First you must create a service account which Mailist can use for API access to ChurchTools:
 
@@ -77,9 +54,6 @@ Grant the following permissions to Mailist's user:
 - Personen & Gruppen > Alle Personen des jeweiligen Bereiches sichtbar machen (Alle) `churchdb:view alldata(-1)`
 - Personen & Gruppen > Einzelne Gruppen inkl. der enthaltenen Personen sehen (gilt auch für versteckte Gruppen) (Alle) `churchdb:view group(-1)`
 - Personen & Gruppen > Gruppenmitgliedschaften aller sichtbaren Personen bearbeiten `churchdb:edit group memberships`
-- Events > "Events" sehen `churchservice:view`
-- Events > Dienste einzelner Dienstgruppen einsehen (Alle) `churchservice:view servicegroup(-1)`
-- Events > Events von einzelnen Kalendern sehen (Alle) `churchservice:view events(-1)`
 
 After creating and configuring a ChurchTools user for Mailist you can finally configure it via [environment variables](docs/configuration.md#churchtools) in `compose.yaml`.
 
@@ -105,27 +79,32 @@ Contributions are highly welcome. Please open an issue before implementing a fea
 Mailist's source code is split into the backend (located in `server`) and the frontend (located in `webapp`).
 The following instructions are written for Windows but generally also apply to Linux development setups.
 
-### Backend
+### Tech Stack
 
+Backend
+- ASP.NET Core
+- Entity Framework Core
+- MySQL / MariaDB
+- Docker
+
+Frontend
+- Vue 3
+- TypeScript
+- PrimeVue
+- Tailwind CSS
+
+### Development Setup
+
+Backend
 - Visual Studio 2026
 - .NET SDK 10.0
 - EF Core CLI Tools _(e.g. `dotnet tool install -g dotnet-ef`)_
 - MySQL or MariaDB _(e.g. from [PSModules](https://github.com/daniel-lerch/psmodules))_
 
-### Frontend
-
+Frontend
 - Visual Studio Code
 - Vue Language Features (Volar) Extension
 - NodeJS 24 LTS
 
 During development the frontend running on the Vue CLI development server will use _http://localhost:10501_ as API endpoint.
 That means the backend can be running in Visual Studio with Debugger attached.
-
-If you just want to work on the frontend you can also use a public test server by creating a file `webapp/.env.development.local`
-
-```env
-VITE_API_ORIGIN=https://lerchen.net
-VITE_API_BASE_PATH=/korga/
-```
-
-Then you don't have to setup a database server and the ASP.NET Core backend.

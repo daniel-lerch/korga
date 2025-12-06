@@ -6,24 +6,26 @@ services:
     environment:
       # Change this according to your database settings
       - Database__ConnectionString=Server=db;Port=3306;Database=mailist;User=mailist;Password=mailist;
-      
+
       # Uncomment below if you want to use Mailist in a subfolder like example.com/mailist
       #- Hosting__PathBase=/mailist
 
       # Uncomment below if you want to use Mailist behind a reverse proxy like NGINX
       #- Hosting__AllowProxies=true
 
-      # Uncomment below to login via OAuth 2.0, e.g. with ChurchTools
-      #- OAuth__AuthorizationEndpoint=https://example.church.tools/oauth/authorize
-      #- OAuth__TokenEndpoint=https://example.church.tools/oauth/access_token
-      #- OAuth__UserInformationEndpoint=https://example.church.tools/oauth/userinfo
-      #- OAuth__ClientId=2807de0033284e12bab29389b8bd1ea3acc0352b6bdc4ce8936aa854a555391d
+      # Change this to your ChurchTools URL
+      - Hosting__CorsOrigins__0=https://demo.church.tools
 
-      # Uncomment the three options below to sync with ChurchTools
+      # Change this
+      - Jwt__Issuer=https://mailist.example.org
+      - Jwt__Audience=https://mailist.example.org
+      # 256 bit hex string, e.g. generated with `openssl rand -hex 32`
+      - Jwt__SigningKey=0000deadbeef00000000deadbeef00000000deadbeef00000000deadbeef0000
+
+      # Change this according to your ChurchTools instance and user
       # See the main README for instructions on how to get a login token and configure permissions
-      #- ChurchTools__EnableSync=true
-      #- ChurchTools__Host=example.church.tools
-      #- ChurchTools__LoginToken=DuIojxSyqCIMLf8JXEhQCshetSCZFP2dCuNIzHtgrKxqK13e80MdPY15wjt2jUNpWZzlCpEkJVTxYr6MCx3WZpmY5w8CeiwJbke1lKZ4GfD2jc3niVbiRI66obQtfJH8biXw2HXgZVbgMnK4aMQGOlY7Ssfp8SwyZMki1RoIYNBjWPAGAWyeAD5Dp1cApB74BqoWyziSTIE0EP6DQA8HV7n2IUZCVdgnlQkypcM7YeUTGiex57vdHrfH1foJvwax
+      - ChurchTools__Host=example.church.tools
+      - ChurchTools__LoginToken=DuIojxSyqCIMLf8JXEhQCshetSCZFP2dCuNIzHtgrKxqK13e80MdPY15wjt2jUNpWZzlCpEkJVTxYr6MCx3WZpmY5w8CeiwJbke1lKZ4GfD2jc3niVbiRI66obQtfJH8biXw2HXgZVbgMnK4aMQGOlY7Ssfp8SwyZMki1RoIYNBjWPAGAWyeAD5Dp1cApB74BqoWyziSTIE0EP6DQA8HV7n2IUZCVdgnlQkypcM7YeUTGiex57vdHrfH1foJvwax
 
       # Uncomment these options and fill in your SMTP account
       #- EmailDelivery__Enable=true

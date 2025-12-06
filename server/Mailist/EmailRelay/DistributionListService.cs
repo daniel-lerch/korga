@@ -1,7 +1,9 @@
-﻿using Mailist.EmailRelay.Entities;
-using Mailist.Filters;
+﻿using ChurchTools;
+using ChurchTools.Model;
+using Mailist.EmailRelay.Entities;
 using MimeKit;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,18 +11,23 @@ namespace Mailist.EmailRelay;
 
 public class DistributionListService
 {
-    private readonly PersonFilterService filterService;
+    private readonly IChurchToolsApi churchTools;
 
-    public DistributionListService(PersonFilterService filterService)
+    public DistributionListService(IChurchToolsApi churchTools)
     {
-        this.filterService = filterService;
+        this.churchTools = churchTools;
     }
 
     public async ValueTask<MailboxAddress[]> GetRecipients(DistributionList distributionList, CancellationToken cancellationToken)
     {
-        if (!distributionList.PermittedRecipientsId.HasValue) return [];
+        if (string.IsNullOrEmpty(distributionList.RecipientsQuery)) return [];
 
-        return (await filterService.GetPeople(distributionList.PermittedRecipientsId.Value, cancellationToken))
+        JsonElement filter = JsonElement.Parse(distributionList.RecipientsQuery);
+        ChurchQueryRequest<IdNameEmail> query = new(filter);
+
+        var people = await churchTools.ChurchQuery(query, cancellationToken);
+
+        return people
             .Where(p => !string.IsNullOrWhiteSpace(p.Email))
         // Avoid duplicate emails for married couples with a shared email address
             .GroupBy(p => p.Email)

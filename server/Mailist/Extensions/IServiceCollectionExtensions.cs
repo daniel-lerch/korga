@@ -29,12 +29,7 @@ public static class IServiceCollectionExtensions
             .ValidateDataAnnotations();
         services.AddOptions<ChurchToolsOptions>()
             .Bind(configuration.GetSection("ChurchTools"))
-            .Validate(options =>
-            {
-                if (!options.EnableSync) return true;
-                ValidationContext context = new(options);
-                return Validator.TryValidateObject(options, context, null);
-            });
+            .ValidateDataAnnotations();
         services.AddOptions<EmailDeliveryOptions>()
             .Bind(configuration.GetSection("EmailDelivery"))
             .Validate(options =>
@@ -62,6 +57,7 @@ public static class IServiceCollectionExtensions
             var options = services.GetRequiredService<IOptions<DatabaseOptions>>();
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
             optionsBuilder.UseLoggerFactory(loggerFactory);
+            optionsBuilder.EnableSensitiveDataLogging();
             optionsBuilder.UseMySql(
                 options.Value.ConnectionString,
                 ServerVersion.AutoDetect(options.Value.ConnectionString),

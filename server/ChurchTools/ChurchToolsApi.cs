@@ -167,6 +167,15 @@ public class ChurchToolsApi : IChurchToolsApi, IDisposable
         return InternalGetNonPaged<List<CustomModuleDataCategory>>($"/api/custommodules/{moduleId}/customdatacategories", cancellationToken);
     }
 
+    public async ValueTask<List<T>> ChurchQuery<T>(ChurchQueryRequest<T> request, CancellationToken cancellationToken = default) where T : IChurchQueryResult
+    {
+        HttpResponseMessage response = await httpClient.PostAsJsonAsync("/api/churchquery/debug/json", request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        Response<List<T>> result = await response.Content.ReadFromJsonAsync<Response<List<T>>>(cancellationToken)
+            ?? throw new InvalidDataException("ChurchQuery returned an invalid response");
+        return result.Data;
+    }
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);

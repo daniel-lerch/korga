@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Net.Http;
 
-namespace Mailist.ChurchTools.Hosting;
+namespace Mailist.ChurchTools;
 
 public static class ChurchToolsApiExtensions
 {

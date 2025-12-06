@@ -1,6 +1,13 @@
+/*
+Recommended imports by Joscha Ziegler 
 @import "tailwindcss/theme.css";
 @import "tailwindcss/preflight.css";
 @import "tailwindcss/utilities.css";
+*/
+
+@import "tailwindcss";
+@import "tailwindcss-primeui";
+@import "primeicons/primeicons.css";
 
 @theme {
   --color-primary: #223859;

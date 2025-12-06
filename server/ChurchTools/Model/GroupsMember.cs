@@ -1,6 +1,6 @@
 ﻿namespace ChurchTools.Model;
 
-public class GroupsMember : IIdentifiable<long>
+public class GroupsMember
 {
     public GroupsMember(int personId, int groupId, int groupTypeRoleId, string groupMemberStatus)
     {
@@ -14,6 +14,4 @@ public class GroupsMember : IIdentifiable<long>
     public int GroupId { get; set; }
     public int GroupTypeRoleId { get; set; }
     public string GroupMemberStatus { get; set; }
-
-    long IIdentifiable<long>.Id => (long)PersonId << 32 | (long)GroupId;
 }

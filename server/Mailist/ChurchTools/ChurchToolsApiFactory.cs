@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Mailist.ChurchTools.Hosting;
+namespace Mailist.ChurchTools;
 
 public class ChurchToolsApiFactory
 {

@@ -1,57 +1,82 @@
 <template>
-  <div class="px-4">
-    <h1 class="text-2xl font-bold mb-4">E-Mail-Verteiler</h1>
-    <div v-for="dl in distributionLists" :key="dl.id" class="py-3 border-b border-gray-200 last:border-b-0">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div class="md:w-1/4 lg:w-1/6">
-          <h6 class="text-lg font-semibold">{{ dl.alias }}</h6>
-        </div>
-        <div class="flex items-center md:justify-center">
-          <span v-if="dl.newsletter"
-            class="inline-flex items-center bg-primary text-white text-sm px-3 py-1 rounded-full">
-            Newsletter
-          </span>
-        </div>
-        <div class="mt-2 md:mt-0 md:w-1/2">
-          <ul class="list-none mb-0 space-y-1">
-            <li v-for="filter in dl.permittedRecipients" :key="filter.id" class="text-sm text-gray-700">
-              {{ shortText(filter) }}
-            </li>
-          </ul>
-        </div>
-      </div>
+  <div class="p-4">
+    <ConfirmDialog />
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-3xl">E-Mail-Verteiler</h1>
+      <Button asChild v-slot="slotProps" type="button" severity="primary">
+        <RouterLink :to="`/new`" :class="slotProps.class">
+          <i class="pi pi-plus"></i>
+          Neuer Verteiler
+        </RouterLink>
+      </Button>
     </div>
+    <DataTable :value="distributionLists">
+      <Column field="alias" header="Alias" />
+      <Column field="recipientCount" header="Anzahl Empfänger" />
+      <Column field="recipientsQuery" header="Empfänger">
+        <template #body="slotProps">
+          <PersonFilterCell :filter="slotProps.data.recipientsQuery" />
+        </template>
+      </Column>
+      <Column>
+        <template #body="{ data }">
+          <Button asChild v-slot="slotProps" type="button" severity="secondary" variant="text">
+            <RouterLink :to="`/${data.id}`" :class="slotProps.class" class="p-button-icon-only">
+              <i class="pi pi-pencil"></i>
+            </RouterLink>
+          </Button>
+        </template>
+      </Column>
+      <Column>
+        <template #body="{ data }">
+          <Button type="button" icon="pi pi-trash" severity="danger" variant="text" @click="remove(data.id)" />
+        </template>
+      </Column>
+    </DataTable>
   </div>
 </template>
 
 <script setup lang="ts">
-import type {
-  PersonFilter,
-} from "@/services/distribution-list"
-import { getDistributionLists } from "@/services/distribution-list"
+import Column from "primevue/column"
+import ConfirmDialog from "primevue/confirmdialog"
+import Button from "primevue/button"
+import DataTable from "primevue/datatable"
+import { ref } from "vue"
+import { getDistributionLists, deleteDistributionList } from "@/services/distribution-list"
+import PersonFilterCell from "@/components/PersonFilterCell.vue"
+import { useExtensionStore } from "@/stores/extension"
+import { useConfirm } from "primevue/useconfirm"
 
-const distributionLists = await getDistributionLists()
+const confirm = useConfirm()
 
-const shortText = function (filter: PersonFilter) {
-  switch (filter.discriminator) {
-    case "StatusFilter":
-      return "Status: " + filter.statusName
-    case "GroupFilter": {
-      const prefix = "Gruppe: " + filter.groupName
-      return filter.groupRoleName
-        ? prefix + " (" + filter.groupRoleName + ")"
-        : prefix
-    }
-    case "GroupTypeFilter": {
-      const prefix = "Gruppentyp: " + filter.groupTypeName
-      return filter.groupRoleName
-        ? prefix + " (" + filter.groupRoleName + ")"
-        : prefix
-    }
-    case "SinglePerson":
-      return "Person: " + filter.personFullName
-    default:
-      return "Unbekannter Filtertyp: " + filter.discriminator
+const extension = useExtensionStore()
+if (extension.moduleId === 0) {
+  await extension.load()
+}
+if (extension.accessToken === "") {
+  await extension.login()
+}
+
+const distributionLists = ref(await getDistributionLists())
+
+function remove(id: number) {
+  confirm.require({
+    message: 'Möchtest du diesen Verteiler wirklich löschen?',
+    header: 'Löschen bestätigen',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Löschen',
+    rejectLabel: 'Abbrechen',
+    acceptClass: 'p-button-danger',
+    accept: () => removeConfirmed(id),
+  })
+}
+
+async function removeConfirmed(id: number) {
+  try {
+    await deleteDistributionList(id)
+    distributionLists.value = distributionLists.value.filter((dl) => dl.id !== id)
+  } catch (e) {
+    console.log(e)
   }
 }
 </script>

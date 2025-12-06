@@ -33,11 +33,18 @@ public class JobQueue<TController> : BackgroundService where TController : IJobC
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (await QueryAndExecute(stoppingToken))
-                await @event.WaitAsync(RetryInterval, stoppingToken);
-            else
-                // A transient failure occurred. Therefore we wait regardless of calls to EnsureRunning().
-                await Task.Delay(RetryInterval, stoppingToken);
+            try
+            {
+                if (await QueryAndExecute(stoppingToken))
+                    await @event.WaitAsync(RetryInterval, stoppingToken);
+                else
+                    // A transient failure occurred. Therefore we wait regardless of calls to EnsureRunning().
+                    await Task.Delay(RetryInterval, stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
         }
     }
 

@@ -1,76 +1,193 @@
-﻿using Mailist.EmailRelay;
-using Mailist.EmailRelay.Entities;
-using Mailist.Filters.Entities;
+﻿using ChurchTools;
+using ChurchTools.Model;
+using Mailist.EmailRelay;
 using Mailist.Models.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Mailist.Controllers
+namespace Mailist.Controllers;
+
+[ApiController]
+public class DistributionListController : ControllerBase
 {
-	[ApiController]
-	public class DistributionListController : ControllerBase
-	{
-		private readonly DatabaseContext database;
+    private readonly DatabaseContext database;
+    private readonly IChurchToolsApi churchTools;
+    private readonly IMemoryCache memoryCache;
 
-		public DistributionListController(DatabaseContext database)
-		{
-			this.database = database;
-		}
+    public DistributionListController(DatabaseContext database, IChurchToolsApi churchTools, IMemoryCache memoryCache)
+    {
+        this.database = database;
+        this.churchTools = churchTools;
+        this.memoryCache = memoryCache;
+    }
 
-		[Authorize]
-		[HttpGet("~/api/distribution-lists")]
-		[ProducesResponseType(typeof(DistributionListResponse[]), StatusCodes.Status200OK)]
-		public async Task<IActionResult> GetDistributionLists()
-		{
-			List<DistributionList> distributionLists = await database.DistributionLists
-				.Include(dl => dl.PermittedRecipients)
-				.ThenInclude(fl => fl!.Filters)
-				.OrderBy(dl => dl.Alias)
-				.ToListAsync();
+    [Authorize]
+    [HttpGet("~/api/distribution-lists")]
+    [ProducesResponseType(typeof(DistributionList[]), StatusCodes.Status200OK)]
+    public async Task<ActionResult<DistributionList[]>> GetDistributionLists()
+    {
+        var lists = await database.DistributionLists
+            .AsNoTracking()
+            .OrderBy(dl => dl.Alias)
+            .ToListAsync();
 
-			List<DistributionListResponse> response = [];
+        DistributionList[] response = await Task.WhenAll(lists.Select(AddCachedRecipientCount));
 
-			foreach (DistributionList distributionList in distributionLists)
-			{
-				List<DistributionListResponse.PersonFilter> filters = [];
+        return response;
+    }
 
-				foreach (PersonFilter personFilter in distributionList.PermittedRecipients?.Filters ?? [])
-				{
-					DistributionListResponse.PersonFilter filter = new() { Id = personFilter.Id, Discriminator = personFilter.GetType().Name };
+    [Authorize]
+    [HttpGet("~/api/distribution-lists/{id:long}")]
+    [ProducesResponseType(typeof(DistributionList), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<DistributionList>> GetDistributionList([FromRoute] long id)
+    {
+        var distributionList = await database.DistributionLists.AsNoTracking().SingleOrDefaultAsync(dl => dl.Id == id);
+        if (distributionList == null)
+            return NotFound();
 
-					if (personFilter is StatusFilter statusFilter)
-					{
-						filter.StatusName = await database.Status.Where(s => s.Id == statusFilter.StatusId).Select(s => s.Name).SingleAsync();
-					}
-					else if (personFilter is GroupFilter groupFilter)
-					{
-						filter.GroupName = await database.Groups.Where(g => g.Id == groupFilter.GroupId).Select(g => g.Name).SingleAsync();
-						if (groupFilter.GroupRoleId.HasValue)
-							filter.GroupRoleName = await database.GroupRoles.Where(r => r.Id == groupFilter.GroupRoleId.Value).Select(r => r.Name).SingleAsync();
-					}
-					else if (personFilter is GroupTypeFilter groupTypeFilter)
-					{
-						filter.GroupTypeName = await database.GroupTypes.Where(t => t.Id == groupTypeFilter.GroupTypeId).Select(t => t.Name).SingleAsync();
-						if (groupTypeFilter.GroupRoleId.HasValue)
-							filter.GroupRoleName = await database.GroupRoles.Where(r => r.Id == groupTypeFilter.GroupRoleId.Value).Select(r => r.Name).SingleAsync();
-					}
-					else if (personFilter is SinglePerson singlePerson)
-					{
-						filter.PersonFullName = await database.People.Where(p => p.Id == singlePerson.PersonId).Select(p => $"{p.FirstName} {p.LastName}").SingleAsync();
-					}
+        DistributionList response = await AddCachedRecipientCount(distributionList);
 
-					filters.Add(filter);
-				}
+        return response;
+    }
 
-				response.Add(new(distributionList.Id, distributionList.Alias, distributionList.Flags.HasFlag(DistributionListFlags.Newsletter), filters));
-			}
+    private async Task<DistributionList> AddCachedRecipientCount(EmailRelay.Entities.DistributionList dl)
+    {
+        JsonElement recipientsQuery = JsonElement.Parse(dl.RecipientsQuery);
+        int recipientCount = 0;
 
-			return new JsonResult(response);
-		}
-	}
+        if (recipientsQuery.ValueKind != JsonValueKind.Null)
+        {
+            recipientCount = await memoryCache.GetOrCreateAsync(dl.Id, async cacheEntry =>
+            {
+                cacheEntry.SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+                ChurchQueryRequest<IdNameEmail> query = new(recipientsQuery);
+                var recipients = await churchTools.ChurchQuery(query);
+                return recipients.Count;
+            });
+        }
+
+        return new DistributionList
+        {
+            Id = dl.Id,
+            Alias = dl.Alias,
+            Newsletter = dl.Flags.HasFlag(DistributionListFlags.Newsletter),
+            RecipientsQuery = recipientsQuery,
+            RecipientCount = recipientCount,
+        };
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpPost("~/api/distribution-lists")]
+    [ProducesResponseType(typeof(DistributionList), StatusCodes.Status201Created)]
+    public async Task<IActionResult> CreateDistributionList([FromBody] CreateDistributionList request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Alias))
+            return BadRequest("Alias must not be empty");
+
+        int recipientCount = 0;
+
+        if (request.RecipientsQuery.ValueKind != JsonValueKind.Null)
+        {
+            try // Evaluate query to make sure it's valid
+            {
+                ChurchQueryRequest<IdNameEmail> query = new(request.RecipientsQuery);
+                var recipients = await churchTools.ChurchQuery(query);
+                recipientCount = recipients.Count;
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Invalid RecipientsQuery: {ex.Message}");
+            }
+        }
+
+        var distributionList = new EmailRelay.Entities.DistributionList(request.Alias, request.RecipientsQuery.GetRawText())
+        {
+            Flags = request.Newsletter ? DistributionListFlags.Newsletter : DistributionListFlags.None,
+        };
+
+        database.DistributionLists.Add(distributionList);
+        await database.SaveChangesAsync();
+
+        memoryCache.Set(distributionList.Id, recipientCount, TimeSpan.FromMinutes(5));
+
+        var response = new DistributionList
+        {
+            Id = distributionList.Id,
+            Alias = distributionList.Alias,
+            Newsletter = distributionList.Flags.HasFlag(DistributionListFlags.Newsletter),
+            RecipientsQuery = JsonElement.Parse(distributionList.RecipientsQuery),
+            RecipientCount = recipientCount,
+        };
+
+        return Created($"/api/distribution-lists/{distributionList.Id}", response);
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpPut("~/api/distribution-lists/{id:long}")]
+    [ProducesResponseType(typeof(DistributionList), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ModifyDistributionList([FromRoute] long id, [FromBody] CreateDistributionList request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Alias))
+            return BadRequest("Alias must not be empty");
+
+        var distributionList = await database.DistributionLists.FindAsync(id);
+        if (distributionList == null)
+            return NotFound();
+
+        distributionList.Alias = request.Alias;
+        distributionList.Flags = request.Newsletter ? DistributionListFlags.Newsletter : DistributionListFlags.None;
+        distributionList.RecipientsQuery = request.RecipientsQuery.GetRawText();
+
+        int recipientCount = 0;
+
+        if (request.RecipientsQuery.ValueKind != JsonValueKind.Null)
+        {
+            ChurchQueryRequest<IdNameEmail> query = new(request.RecipientsQuery);
+            var recipients = await churchTools.ChurchQuery(query);
+            recipientCount = recipients.Count;
+        }
+
+        await database.SaveChangesAsync();
+
+        memoryCache.Set(distributionList.Id, recipientCount, TimeSpan.FromMinutes(5));
+
+        var response = new DistributionList
+        {
+            Id = distributionList.Id,
+            Alias = distributionList.Alias,
+            Newsletter = distributionList.Flags.HasFlag(DistributionListFlags.Newsletter),
+            RecipientsQuery = JsonElement.Parse(distributionList.RecipientsQuery),
+            RecipientCount = recipientCount,
+        };
+
+        return Ok(response);
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpDelete("~/api/distribution-lists/{id:long}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteDistributionList([FromRoute] long id)
+    {
+        var distributionList = await database.DistributionLists.FindAsync(id);
+
+        if (distributionList == null)
+            return NotFound();
+
+        database.DistributionLists.Remove(distributionList);
+        await database.SaveChangesAsync();
+
+        return NoContent();
+    }
 }
